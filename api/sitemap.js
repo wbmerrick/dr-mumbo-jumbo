@@ -6,7 +6,7 @@ const denial = require('../lib/codes-denial.js');
 const BASE = 'https://dr-mumbo-jumbo.com';
 
 module.exports = (req, res) => {
-  const urls = [`${BASE}/`, `${BASE}/appeal`, `${BASE}/denials`, `${BASE}/codes/`, ...[...cpt, ...icd, ...denial].map((e) => `${BASE}/codes/${e.slug}`)];
+  const urls = [`${BASE}/`, `${BASE}/appeal`, `${BASE}/fightpack`, `${BASE}/denials`, `${BASE}/codes/`, ...[...cpt, ...icd, ...denial].map((e) => `${BASE}/codes/${e.slug}`)];
   const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls
     .map((u) => `  <url><loc>${u}</loc></url>`)
     .join('\n')}\n</urlset>\n`;
