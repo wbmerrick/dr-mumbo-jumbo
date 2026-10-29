@@ -1,5 +1,5 @@
 // Dr Mumbo Jumbo — server-rendered plain-English code pages (/codes/:slug).
-const cpt = require('../lib/codes-cpt.js');
+const cpt = [...require('../lib/codes-cpt-a.js'), ...require('../lib/codes-cpt-b.js'), ...require('../lib/codes-cpt-c.js')];
 const icd = require('../lib/codes-icd.js');
 const denial = require('../lib/codes-denial.js');
 
