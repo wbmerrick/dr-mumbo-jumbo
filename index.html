@@ -1,0 +1,639 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dr Mumbo Jumbo — Your doctor said what?</title>
+<meta name="description" content="Paste the medical mumbo jumbo — visit notes, lab results, discharge papers, bills — and get it back in plain English. A free patient-education translator.">
+<meta property="og:title" content="Dr Mumbo Jumbo">
+<meta property="og:description" content="Your doctor said what? Paste the jargon, get plain English back.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://dr-mumbo-jumbo.com">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Crect%20width='100'%20height='100'%20rx='22'%20fill='%236C3BFF'/%3E%3Ctext%20x='50'%20y='70'%20font-size='54'%20text-anchor='middle'%20font-family='Arial,Helvetica,sans-serif'%20font-weight='900'%20fill='%23FAF3E7'%3E%3F!%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FAF3E7;
+    --paper-deep:#F3E8D2;
+    --ink:#1D1033;
+    --ink-soft:#4A3D66;
+    --violet:#6C3BFF;
+    --violet-deep:#5226DD;
+    --coral:#FF5A3C;
+    --teal:#0FB5AE;
+    --yellow:#FFC838;
+    --card:#FFFDF7;
+    --border:3px solid var(--ink);
+    --shadow:7px 7px 0 var(--ink);
+    --shadow-sm:4px 4px 0 var(--ink);
+    --radius:18px;
+    --display:"Bricolage Grotesque",system-ui,sans-serif;
+    --body:"Inter",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:var(--body);
+    background:var(--paper);
+    color:var(--ink);
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    background-image:radial-gradient(rgba(29,16,51,.055) 1.2px, transparent 1.2px);
+    background-size:26px 26px;
+  }
+  .wrap{max-width:1020px;margin:0 auto;padding:0 20px}
+
+  /* ---------- header ---------- */
+  header{padding:22px 0}
+  .bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .wordmark{
+    font-family:var(--display);font-weight:800;font-size:1.35rem;letter-spacing:.02em;
+    display:inline-flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);
+  }
+  .wordmark .glyph{
+    width:40px;height:40px;border-radius:12px;background:var(--violet);color:var(--paper);
+    display:inline-flex;align-items:center;justify-content:center;
+    font-size:1.1rem;font-weight:800;border:var(--border);box-shadow:var(--shadow-sm);
+  }
+  .pill{
+    font-size:.78rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+    background:var(--yellow);border:var(--border);border-radius:999px;padding:6px 14px;
+    box-shadow:var(--shadow-sm);
+  }
+
+  /* ---------- hero ---------- */
+  .hero{padding:44px 0 10px;text-align:center}
+  .eyebrow{
+    display:inline-block;background:var(--card);border:var(--border);border-radius:999px;
+    padding:7px 16px;font-size:.8rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+    transform:rotate(-1.5deg);box-shadow:var(--shadow-sm);margin-bottom:26px;
+  }
+  h1{
+    font-family:var(--display);font-weight:800;
+    font-size:clamp(2.6rem,7.5vw,4.9rem);
+    line-height:1.02;letter-spacing:-.015em;
+  }
+  h1 .zing{
+    color:var(--coral);
+    text-decoration:underline wavy var(--violet);
+    text-decoration-thickness:5px;text-underline-offset:9px;
+    white-space:nowrap;
+  }
+  .sub{
+    max-width:640px;margin:24px auto 0;font-size:clamp(1.05rem,2.2vw,1.25rem);
+    color:var(--ink-soft);font-weight:500;
+  }
+  .sub strong{color:var(--ink)}
+
+  /* ---------- translator ---------- */
+  .translator{padding:40px 0 20px}
+  .machine{
+    background:var(--card);border:var(--border);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:26px;
+  }
+  .machine-top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+  .slot-label{
+    font-family:var(--display);font-weight:800;font-size:.95rem;letter-spacing:.09em;text-transform:uppercase;
+  }
+  .slot-label .dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--coral);margin-right:8px}
+  .count{font-size:.8rem;font-weight:600;color:var(--ink-soft)}
+  textarea{
+    width:100%;min-height:190px;resize:vertical;
+    font-family:var(--body);font-size:1rem;line-height:1.55;color:var(--ink);
+    background:var(--paper);border:var(--border);border-radius:14px;padding:16px;
+  }
+  textarea:focus{outline:3px solid var(--violet);outline-offset:2px}
+  textarea::placeholder{color:#8d82a8}
+  .controls{display:flex;gap:14px;align-items:center;margin-top:18px;flex-wrap:wrap}
+  .btn{
+    font-family:var(--display);font-weight:800;font-size:1.05rem;letter-spacing:.02em;
+    border:var(--border);border-radius:14px;padding:14px 26px;cursor:pointer;
+    box-shadow:var(--shadow-sm);transition:transform .12s ease,box-shadow .12s ease;
+  }
+  .btn:hover{transform:translate(-2px,-2px);box-shadow:6px 6px 0 var(--ink)}
+  .btn:active{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--ink)}
+  .btn:focus-visible{outline:3px solid var(--coral);outline-offset:3px}
+  .btn-primary{background:var(--violet);color:#fff}
+  .btn-primary:disabled{background:#9d85e0;cursor:wait;transform:none;box-shadow:var(--shadow-sm)}
+  .btn-ghost{background:var(--card);color:var(--ink);font-size:.95rem;padding:13px 20px}
+  .filechip{display:none;margin-top:14px;align-items:center;gap:10px;font-weight:700;font-size:.85rem;background:var(--paper);border:2px solid var(--ink);border-radius:999px;padding:8px 14px;width:max-content;max-width:100%;box-shadow:3px 3px 0 var(--ink)}
+  .filechip.on{display:inline-flex}
+  .filechip .x{cursor:pointer;border:none;background:var(--ink);color:var(--paper);border-radius:50%;width:20px;height:20px;line-height:1;font-weight:800;font-size:.72rem;flex:none}
+  .whisper{font-size:.82rem;color:var(--ink-soft);margin-top:14px}
+
+  /* loading */
+  .loading{display:none;align-items:center;gap:12px;margin-top:20px;font-weight:600}
+  .loading.on{display:flex}
+  .spinner{
+    width:22px;height:22px;border-radius:50%;flex:none;
+    border:3px solid var(--ink);border-top-color:var(--coral);
+    animation:spin .8s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* error */
+  .error{
+    display:none;margin-top:20px;padding:16px 18px;border:3px solid var(--coral);
+    border-radius:14px;background:#FFF1ED;font-weight:600;color:#A32B14;
+  }
+  .error.on{display:block}
+
+  /* result */
+  .result{display:none;margin-top:26px}
+  .result.on{display:block}
+  .result-card{
+    background:var(--ink);color:var(--paper);border:var(--border);border-radius:var(--radius);
+    box-shadow:7px 7px 0 var(--violet);padding:28px;
+  }
+  .result-top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+  .result-label{
+    font-family:var(--display);font-weight:800;font-size:.95rem;letter-spacing:.09em;text-transform:uppercase;color:var(--yellow);
+  }
+  .copy-btn{
+    font-family:var(--body);font-weight:700;font-size:.8rem;cursor:pointer;
+    background:transparent;color:var(--paper);border:2px solid var(--paper);border-radius:999px;padding:6px 14px;
+  }
+  .copy-btn:hover{background:var(--paper);color:var(--ink)}
+  .result-body h3{
+    font-family:var(--display);font-weight:800;font-size:1.25rem;color:var(--yellow);
+    margin:22px 0 8px;
+  }
+  .result-body h3:first-child{margin-top:10px}
+  .result-body p{margin:10px 0;color:#EDE6F6}
+  .result-body ul,.result-body ol{margin:10px 0 10px 22px;color:#EDE6F6}
+  .result-body li{margin:7px 0}
+  .result-body strong{color:#fff}
+  .result-note{
+    margin-top:22px;padding-top:16px;border-top:2px dashed rgba(250,243,231,.35);
+    font-size:.82rem;color:#C9BEE0;
+  }
+
+  /* ---------- sections ---------- */
+  section{padding:56px 0}
+  .kicker{
+    font-family:var(--display);font-weight:800;font-size:clamp(1.7rem,4vw,2.5rem);
+    letter-spacing:-.01em;text-align:center;margin-bottom:36px;
+  }
+  .kicker em{font-style:normal;color:var(--violet)}
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+  .step{
+    background:var(--card);border:var(--border);border-radius:var(--radius);
+    box-shadow:var(--shadow-sm);padding:24px;
+  }
+  .step .num{
+    font-family:var(--display);font-weight:800;font-size:1rem;
+    display:inline-flex;align-items:center;justify-content:center;
+    width:42px;height:42px;border-radius:50%;border:var(--border);margin-bottom:14px;
+  }
+  .step:nth-child(1) .num{background:var(--yellow)}
+  .step:nth-child(2) .num{background:var(--teal);color:#fff}
+  .step:nth-child(3) .num{background:var(--coral);color:#fff}
+  .step h3{font-family:var(--display);font-weight:800;font-size:1.2rem;margin-bottom:8px}
+  .step p{color:var(--ink-soft);font-size:.95rem}
+
+  .is-isnt{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  .panel{border:var(--border);border-radius:var(--radius);padding:26px;box-shadow:var(--shadow-sm)}
+  .panel.yes{background:#E9FBF4}
+  .panel.no{background:#FFF1ED}
+  .panel h3{font-family:var(--display);font-weight:800;font-size:1.25rem;margin-bottom:12px}
+  .panel ul{list-style:none}
+  .panel li{padding-left:30px;position:relative;margin:10px 0;font-size:.96rem}
+  .panel.yes li::before{content:"✓";position:absolute;left:0;font-weight:800;color:var(--teal)}
+  .panel.no li::before{content:"✕";position:absolute;left:0;font-weight:800;color:var(--coral)}
+  .panel .fine{margin-top:14px;font-size:.85rem;font-weight:600}
+
+  .privacy{
+    background:var(--violet);color:#fff;border:var(--border);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:30px;display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;
+  }
+  .privacy .lock{
+    font-size:1.6rem;width:56px;height:56px;flex:none;border-radius:16px;border:3px solid #fff;
+    display:flex;align-items:center;justify-content:center;background:var(--violet-deep);
+  }
+  .privacy h3{font-family:var(--display);font-weight:800;font-size:1.3rem;margin-bottom:6px}
+  .privacy p{color:#E7DEFF;max-width:640px;font-size:.97rem}
+  .privacy strong{color:#fff}
+
+  /* mode tabs */
+  .modes{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+  .mode{font-family:var(--display);font-weight:800;font-size:.9rem;border:var(--border);border-radius:999px;padding:9px 18px;background:var(--paper);cursor:pointer;box-shadow:var(--shadow-sm)}
+  .mode.on{background:var(--ink);color:var(--paper)}
+  .pill-link{text-decoration:none;color:var(--ink);background:var(--card)}
+
+  /* fight pack */
+  .fight{background:var(--ink);color:var(--paper);border:var(--border);border-radius:var(--radius);box-shadow:8px 8px 0 var(--coral);padding:34px}
+  .fight h2{font-family:var(--display);font-weight:800;font-size:clamp(1.8rem,4.5vw,2.6rem);line-height:1.08}
+  .fight h2 .zap{color:var(--coral)}
+  .fight-badge{display:inline-block;background:var(--yellow);color:var(--ink);border:2px solid var(--paper);border-radius:999px;padding:5px 14px;font-size:.75rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin-bottom:14px;transform:rotate(-1.5deg)}
+  .fight-sub{color:#EDE6F6;max-width:660px;margin:12px 0 22px;font-size:.98rem}
+  .fight-form{display:flex;gap:10px;flex-wrap:wrap}
+  .fight-form input,.fight-form select{font-family:var(--body);font-size:.95rem;padding:12px 14px;border:3px solid var(--paper);border-radius:12px;background:#2A1E4A;color:var(--paper);flex:1;min-width:190px}
+  .fight-form input::placeholder{color:#9d8fc4}
+  .fight .btn{border-color:var(--paper);box-shadow:none;background:var(--coral);color:#fff}
+  .fight-fine{font-size:.78rem;color:#C9BEE0;margin-top:12px}
+  .fight-msg{display:none;margin-top:14px;font-weight:700;padding:12px 16px;border-radius:12px;border:2px solid var(--paper)}
+  .fight-msg.ok{display:block;background:var(--teal);color:#fff}
+  .fight-msg.err{display:block;background:#FFF1ED;color:#A32B14;border-color:#A32B14}
+  .result-note a{color:var(--yellow);font-weight:700}
+
+  /* ---------- footer ---------- */
+  footer{padding:50px 0 60px;text-align:center}
+  footer .rule{border:none;border-top:3px solid var(--ink);margin-bottom:36px}
+  .foot-mark{font-family:var(--display);font-weight:800;font-size:1.2rem;margin-bottom:10px}
+  .credo{font-weight:600;color:var(--ink-soft);margin-bottom:22px}
+  .legal{
+    max-width:720px;margin:0 auto;font-size:.8rem;color:var(--ink-soft);line-height:1.7;
+  }
+  .legal strong{color:var(--ink)}
+  .copyright{margin-top:18px;font-size:.8rem;font-weight:600}
+
+  @media (max-width:760px){
+    .steps,.is-isnt{grid-template-columns:1fr}
+    .machine{padding:20px}
+    .result-card{padding:22px}
+    section{padding:44px 0}
+  }
+</style>
+</head>
+<body>
+
+<header class="wrap">
+  <div class="bar">
+    <a class="wordmark" href="/"><span class="glyph">?!</span> DR MUMBO JUMBO</a>
+    <nav style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><a class="pill pill-link" href="/appeal" style="background:var(--coral);color:#fff">Fight a denial →</a><a class="pill pill-link" href="/codes/">Code library</a></nav>
+  </div>
+</header>
+
+<main>
+  <div class="hero wrap">
+    <span class="eyebrow">For patients, families &amp; the thoroughly confused</span>
+    <h1>Your doctor said <span class="zing">what?</span></h1>
+    <p class="sub">Paste the medical mumbo jumbo — <strong>visit notes, lab results, discharge papers, bills</strong> — and get it back in plain English. Free, fast, and finally understandable.</p>
+  </div>
+
+  <div class="translator wrap">
+    <div class="machine" id="translator">
+      <div class="modes">
+        <button type="button" class="mode on" id="mode-jargon">🩺 Doctor-speak</button>
+        <button type="button" class="mode" id="mode-bill">📄 Bill or denial</button>
+      </div>
+      <div class="machine-top">
+        <span class="slot-label"><span class="dot"></span><span id="slotlabel">Paste the mumbo jumbo</span></span>
+        <span class="count" id="count">0 / 6,000</span>
+      </div>
+      <textarea id="input" maxlength="6000" spellcheck="false" aria-label="Paste medical text to translate" placeholder="e.g. &quot;Acute on chronic systolic heart failure, EF 35%, BNP 1840. Started IV diuresis, strict I/Os, holding ACE-I for AKI…&quot;"></textarea>
+      <div class="controls">
+        <button class="btn btn-primary" id="go">Translate it →</button>
+        <button class="btn btn-ghost" id="attach" type="button">＋ Photo / PDF</button>
+        <button class="btn btn-ghost" id="example" type="button">Try an example</button>
+      </div>
+      <input type="file" id="file" accept="image/*,application/pdf,.pdf" hidden>
+      <div class="filechip" id="filechip"><span id="filename"></span><button class="x" id="fileclear" type="button" aria-label="Remove file">✕</button></div>
+      <p class="whisper">Tip: snap a photo or upload the PDF with ＋ — or paste the text. Leave out names, birthdates, and ID numbers; nothing you paste or upload is stored.</p>
+      <div class="loading" id="loading" role="status"><span class="spinner"></span><span id="loadmsg">Decoding the hieroglyphics…</span></div>
+      <div class="error" id="error" role="alert"></div>
+    </div>
+
+    <div class="result" id="result" aria-live="polite">
+      <div class="result-card">
+        <div class="result-top">
+          <span class="result-label">The plain English</span>
+          <button class="copy-btn" id="copy" type="button">Copy</button>
+        </div>
+        <div class="result-body" id="output"></div>
+        <p class="result-note">This is education, not medical advice — your care team makes the calls. Spot something urgent-sounding? Call them today. Fighting a denial? <a href="/appeal">Draft your appeal letter free →</a> Full strategy: <a href="/denials">the Denial Playbook</a>.</p>
+      </div>
+    </div>
+  </div>
+
+  <section class="wrap" id="fightpack">
+    <div class="fight">
+      <span class="fight-badge">Coming soon — $39 at launch</span>
+      <h2>Denied claim? Monster bill?<br>Meet the <span class="zap">FIGHT PACK.</span></h2>
+      <p class="fight-sub">Paste your denial letter or bill and get the complete fight kit back: an appeal letter written in proper medical-necessity language, an itemized-bill request, a phone script, and a deadline tracker. Built by a practicing physician who writes the documentation insurers approve every day. Can't wait? <a href="/appeal" style="color:var(--yellow);font-weight:800;text-decoration:none">Draft a free appeal letter right now →</a></p>
+      <form class="fight-form" id="leadform">
+        <input type="email" id="leademail" required placeholder="you@email.com" aria-label="Email address">
+        <select id="leadfighting" aria-label="What are you up against?">
+          <option value="">What are you up against?</option>
+          <option value="denied-claim">A denied claim</option>
+          <option value="big-bill">A big hospital bill</option>
+          <option value="confusing-eob">A confusing EOB</option>
+          <option value="other">Something else</option>
+        </select>
+        <button class="btn" type="submit" id="leadbtn">Reserve my spot →</button>
+      </form>
+      <p class="fight-fine">No charge today — reserving gets you first access and the $39 founding price at launch. Launch news only, no spam.</p>
+      <div class="fight-msg" id="leadmsg" role="status"></div>
+    </div>
+  </section>
+
+  <section class="wrap">
+    <h2 class="kicker">Three steps to <em>actually</em> understanding</h2>
+    <div class="steps">
+      <div class="step">
+        <span class="num">01</span>
+        <h3>Paste it</h3>
+        <p>Any note, result, summary, or bill — typed or copied straight from your patient portal.</p>
+      </div>
+      <div class="step">
+        <span class="num">02</span>
+        <h3>We decode it</h3>
+        <p>Every abbreviation expanded, every ten-dollar word translated, piece by piece, in order.</p>
+      </div>
+      <div class="step">
+        <span class="num">03</span>
+        <h3>Walk in prepared</h3>
+        <p>You get the key terms plus smart, specific questions to ask at your next visit.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap">
+    <h2 class="kicker">What this is <em>(and isn't)</em></h2>
+    <div class="is-isnt">
+      <div class="panel yes">
+        <h3>Dr Mumbo Jumbo IS…</h3>
+        <ul>
+          <li>A translator for the medical language in <em>your</em> documents</li>
+          <li>A decoder of abbreviations, lab-speak, and billing codes</li>
+          <li>A question-builder so visits with your real doctor go further</li>
+          <li>Free to use, no account needed</li>
+        </ul>
+      </div>
+      <div class="panel no">
+        <h3>…and ISN'T</h3>
+        <ul>
+          <li>A doctor, a diagnosis, or a second opinion</li>
+          <li>Treatment advice — it never tells you to start, stop, or change anything</li>
+          <li>A place for emergencies</li>
+        </ul>
+        <p class="fine">If something feels wrong right now, call your doctor — or 911 in an emergency.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap">
+    <div class="privacy">
+      <span class="lock">🔒</span>
+      <div>
+        <h3>Nothing you paste is saved</h3>
+        <p>Your text is sent securely to our AI engine once to generate the translation, then it's gone — <strong>no storage, no account, no tracking of what you pasted</strong>. Still, play it safe: leave out names, birthdates, and ID numbers.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="wrap">
+  <hr class="rule">
+  <div class="foot-mark">DR MUMBO JUMBO ?!</div>
+  <p class="credo">Created by a practicing physician. Translated by AI. Made for patients.</p>
+  <p class="legal"><strong>The serious bit:</strong> Dr Mumbo Jumbo is an educational tool. It does not provide medical advice, diagnosis, or treatment, and using it does not create a doctor-patient relationship. Translations are generated by AI and can contain mistakes — always confirm anything important with your own care team. In an emergency, call 911.</p>
+  <p class="copyright">© 2026 Dr Mumbo Jumbo · <a href="/codes/" style="color:var(--violet);text-decoration:none">Code library</a> · dr-mumbo-jumbo.com</p>
+</footer>
+
+<script>
+(function(){
+  var input = document.getElementById('input');
+  var count = document.getElementById('count');
+  var go = document.getElementById('go');
+  var example = document.getElementById('example');
+  var loading = document.getElementById('loading');
+  var loadmsg = document.getElementById('loadmsg');
+  var errbox = document.getElementById('error');
+  var result = document.getElementById('result');
+  var output = document.getElementById('output');
+  var copyBtn = document.getElementById('copy');
+  var rawText = '';
+  var mode = 'jargon';
+  var attachBtn = document.getElementById('attach');
+  var fileInput = document.getElementById('file');
+  var filechip = document.getElementById('filechip');
+  var filename = document.getElementById('filename');
+  var fileclear = document.getElementById('fileclear');
+  var attached = null;
+  var modeJargon = document.getElementById('mode-jargon');
+  var modeBill = document.getElementById('mode-bill');
+  var slotlabel = document.getElementById('slotlabel');
+  var phrases = [
+    'Decoding the hieroglyphics…',
+    'Expanding the abbreviations…',
+    'Translating the ten-dollar words…',
+    'Asking the jargon to speak up…',
+    'Almost there — polishing the plain English…'
+  ];
+  var phraseTimer = null;
+
+  var EXAMPLES = {
+    jargon: '67M presents with acute on chronic dyspnea. PMH: HFrEF (EF 35%), CKD stage 3b, T2DM. CXR with bilateral pleural effusions, BNP 1840, Cr 2.1 (baseline 1.4). Plan: IV furosemide 40mg BID, strict I/Os, daily BMP, TTE in AM, continue GDMT, hold lisinopril given AKI. Pt counseled on 2L fluid restriction and low Na diet.',
+    bill: 'EXAMPLE CLAIM SUMMARY — Provider: Example Medical Center. CPT 99284 Emergency dept visit: $1,842.00. CPT 71046 Chest X-ray 2 views: $412.00. CPT 85025 CBC: $98.00. Adjustment CO-45: -$1,214.00. CPT 71046 DENIED, reason CO-50: not medically necessary. Patient responsibility: $638.00. Appeals must be submitted within 180 days of this notice.'
+  };
+  var MODE_UI = {
+    jargon: {label: 'Paste the mumbo jumbo', ph: 'e.g. "Acute on chronic systolic heart failure, EF 35%, BNP 1840. Started IV diuresis, strict I/Os, holding ACE-I for AKI…"'},
+    bill: {label: 'Paste the bill, EOB, or denial letter', ph: 'e.g. "CPT 99284 ER visit $1,842 … CO-45 adjustment … DENIED CO-50: not medically necessary. Patient responsibility: $638. Appeal within 180 days."'}
+  };
+  function setMode(m){
+    mode = m;
+    modeJargon.classList.toggle('on', m === 'jargon');
+    modeBill.classList.toggle('on', m === 'bill');
+    slotlabel.textContent = MODE_UI[m].label;
+    input.placeholder = MODE_UI[m].ph;
+  }
+  modeJargon.addEventListener('click', function(){ setMode('jargon'); });
+  modeBill.addEventListener('click', function(){ setMode('bill'); });
+  try {
+    if (new URLSearchParams(location.search).get('mode') === 'bill') setMode('bill');
+  } catch(e){}
+
+  function updateCount(){
+    count.textContent = input.value.length.toLocaleString('en-US') + ' / 6,000';
+  }
+  input.addEventListener('input', updateCount);
+
+  function clearFile(){ attached = null; fileInput.value = ''; filechip.classList.remove('on'); }
+  fileclear.addEventListener('click', clearFile);
+  attachBtn.addEventListener('click', function(){ fileInput.click(); });
+  fileInput.addEventListener('change', function(){
+    var f = fileInput.files && fileInput.files[0];
+    if(!f) return;
+    errbox.classList.remove('on');
+    prepFile(f, function(res){
+      attached = res;
+      filename.textContent = '📎 ' + res.name;
+      filechip.classList.add('on');
+    }, function(msg){ clearFile(); showError(msg); });
+  });
+  function prepFile(f, ok, fail){
+    var MAX = 3 * 1024 * 1024;
+    if (f.type === 'application/pdf' || /\.pdf$/i.test(f.name)) {
+      if (f.size > MAX) { fail('That PDF is over 3 MB — export just the pages you need and try again.'); return; }
+      var r = new FileReader();
+      r.onload = function(){ ok({ kind:'pdf', media_type:'application/pdf', data: String(r.result).split(',')[1], name: f.name }); };
+      r.onerror = function(){ fail("Couldn't read that file — try again."); };
+      r.readAsDataURL(f);
+      return;
+    }
+    var url = URL.createObjectURL(f);
+    var img = new Image();
+    img.onload = function(){
+      var scale = Math.min(1, 1800 / Math.max(img.width, img.height));
+      var w = Math.round(img.width*scale), h = Math.round(img.height*scale);
+      var c = document.createElement('canvas'); c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(url);
+      var data = c.toDataURL('image/jpeg', 0.82).split(',')[1];
+      if (data.length > 4200000) { fail('That image is huge even after compression — try a tighter crop.'); return; }
+      ok({ kind:'image', media_type:'image/jpeg', data: data, name: f.name });
+    };
+    img.onerror = function(){
+      URL.revokeObjectURL(url);
+      fail("Couldn't read that image — JPG, PNG, or PDF work best. (iPhone HEIC photo? Take a screenshot of it and upload that.)");
+    };
+    img.src = url;
+  }
+
+  example.addEventListener('click', function(){
+    input.value = EXAMPLES[mode];
+    updateCount();
+    input.focus();
+  });
+
+  function escapeHtml(s){
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function inline(s){
+    return s.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
+  }
+  function render(md){
+    var lines = escapeHtml(md).split(/\r?\n/);
+    var html = '', list = null, para = [];
+    function flushPara(){
+      if(para.length){ html += '<p>' + inline(para.join(' ')) + '</p>'; para = []; }
+    }
+    function flushList(){
+      if(list){ html += list.tag === 'ul' ? '<ul>' : '<ol>'; html += list.items.map(function(i){return '<li>'+inline(i)+'</li>';}).join(''); html += list.tag === 'ul' ? '</ul>' : '</ol>'; list = null; }
+    }
+    lines.forEach(function(line){
+      var t = line.trim();
+      if(!t){ flushPara(); flushList(); return; }
+      var h = t.match(/^#{2,4}\s+(.*)$/);
+      if(h){ flushPara(); flushList(); html += '<h3>' + inline(h[1]) + '</h3>'; return; }
+      var b = t.match(/^[-•]\s+(.*)$/);
+      if(b){ flushPara(); if(!list || list.tag !== 'ul'){ flushList(); list = {tag:'ul', items:[]}; } list.items.push(b[1]); return; }
+      var n = t.match(/^\d+[.)]\s+(.*)$/);
+      if(n){ flushPara(); if(!list || list.tag !== 'ol'){ flushList(); list = {tag:'ol', items:[]}; } list.items.push(n[1]); return; }
+      flushList(); para.push(t);
+    });
+    flushPara(); flushList();
+    return html;
+  }
+
+  function setLoading(on){
+    loading.classList.toggle('on', on);
+    go.disabled = on;
+    go.textContent = on ? 'Translating…' : 'Translate it →';
+    if(on){
+      var i = 0;
+      loadmsg.textContent = phrases[0];
+      phraseTimer = setInterval(function(){ i = (i+1) % phrases.length; loadmsg.textContent = phrases[i]; }, 1800);
+    } else if(phraseTimer){
+      clearInterval(phraseTimer); phraseTimer = null;
+    }
+  }
+  function showError(msg){
+    errbox.textContent = msg;
+    errbox.classList.add('on');
+  }
+
+  go.addEventListener('click', function(){
+    var text = input.value.trim();
+    errbox.classList.remove('on');
+    if(!text && !attached){ showError('Paste some medical text — or tap ＋ and add a photo or PDF. That box up there is hungry.'); return; }
+    result.classList.remove('on');
+    setLoading(true);
+
+    var ctrl = new AbortController();
+    var timeout = setTimeout(function(){ ctrl.abort(); }, 90000);
+
+    fetch('/api/translate', {
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body: JSON.stringify({ text: text, mode: mode, file: attached ? { kind: attached.kind, media_type: attached.media_type, data: attached.data } : null }),
+      signal: ctrl.signal
+    })
+    .then(function(r){
+      return r.json().catch(function(){ return { message:'The translation engine hiccuped. Try again in a moment.' }; })
+        .then(function(data){ return { ok:r.ok, data:data }; });
+    })
+    .then(function(res){
+      clearTimeout(timeout);
+      setLoading(false);
+      if(!res.ok){
+        showError(res.data.message || 'Something went wrong. Try again in a moment.');
+        return;
+      }
+      rawText = res.data.translation || '';
+      output.innerHTML = render(rawText);
+      result.classList.add('on');
+      result.scrollIntoView({behavior:'smooth', block:'start'});
+    })
+    .catch(function(){
+      clearTimeout(timeout);
+      setLoading(false);
+      showError('That took too long or the connection dropped. Give it another go.');
+    });
+  });
+
+  copyBtn.addEventListener('click', function(){
+    if(!rawText) return;
+    function done(){ copyBtn.textContent = 'Copied!'; setTimeout(function(){ copyBtn.textContent = 'Copy'; }, 1600); }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(rawText).then(done).catch(function(){ fallback(); });
+    } else { fallback(); }
+    function fallback(){
+      var ta = document.createElement('textarea');
+      ta.value = rawText; document.body.appendChild(ta); ta.select();
+      try{ document.execCommand('copy'); done(); }catch(e){}
+      document.body.removeChild(ta);
+    }
+  });
+
+  var leadform = document.getElementById('leadform');
+  var leademail = document.getElementById('leademail');
+  var leadfighting = document.getElementById('leadfighting');
+  var leadbtn = document.getElementById('leadbtn');
+  var leadmsg = document.getElementById('leadmsg');
+  leadform.addEventListener('submit', function(ev){
+    ev.preventDefault();
+    leadmsg.className = 'fight-msg';
+    leadbtn.disabled = true;
+    leadbtn.textContent = 'Saving…';
+    function reset(){ leadbtn.disabled = false; leadbtn.textContent = 'Reserve my spot →'; }
+    fetch('/api/lead', {
+      method: 'POST',
+      headers: {'content-type': 'application/json'},
+      body: JSON.stringify({ email: leademail.value, fighting: leadfighting.value })
+    })
+    .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(d){ return { ok: r.ok, d: d }; }); })
+    .then(function(res){
+      reset();
+      if (res.ok) {
+        leadmsg.className = 'fight-msg ok';
+        leadmsg.textContent = (res.d && res.d.message) || "You're on the list.";
+        leadform.reset();
+      } else {
+        leadmsg.className = 'fight-msg err';
+        leadmsg.textContent = (res.d && res.d.message) || "Couldn't save your spot — try again in a minute.";
+      }
+    })
+    .catch(function(){
+      reset();
+      leadmsg.className = 'fight-msg err';
+      leadmsg.textContent = "Couldn't save your spot — try again in a minute.";
+    });
+  });
+})();
+</script>
+</body>
+</html>
