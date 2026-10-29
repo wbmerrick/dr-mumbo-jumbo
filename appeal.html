@@ -122,9 +122,9 @@
   <div class="bar">
     <a class="wordmark" href="/"><span class="glyph">?!</span> DR MUMBO JUMBO</a>
     <nav style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <a class="pill" href="/fightpack" style="background:var(--coral);color:#fff">Fight Pack · $39</a>
       <a class="pill" href="/denials">Denial playbook</a>
       <a class="pill" href="/codes/">Code library</a>
-      <a class="pill" href="/?mode=bill#translator">Decode a bill</a>
     </nav>
   </div>
 </header>
@@ -166,7 +166,7 @@
           <button class="copy-btn" id="copy" type="button">Copy</button>
         </div>
         <div class="result-body" id="output"></div>
-        <p class="result-note">This is a draft for YOU to finish and send — education, not legal advice. Fill every [bracket], check the deadline on your denial letter, and loop in your care team for a letter of medical necessity. Full strategy: <a href="/denials">the Denial Playbook</a>.</p>
+        <p class="result-note">This is a draft for YOU to finish and send — education, not legal advice. Fill every [bracket] and check the deadline on your denial letter. The strongest attachment is your doctor's letter of medical necessity — <a href="/fightpack">the Fight Pack writes it for them to sign</a>, plus the scripts, records request, and deadlines. Full strategy: <a href="/denials">the Denial Playbook</a>.</p>
       </div>
     </div>
   </div>
@@ -194,15 +194,11 @@
 
   <section class="wrap" id="fightpack">
     <div class="fight">
-      <span class="fight-badge">Coming soon — $39 at launch</span>
-      <h2>Want the whole arsenal?<br>That's the <span class="zap">FIGHT PACK.</span></h2>
-      <p class="fight-sub">The free draft above is round one. The Fight Pack is the complete kit: a polished appeal letter, the itemized-bill request, a word-for-word phone script, a deadline tracker, and the external-review escalation path — built by a practicing physician who writes the documentation insurers approve every day.</p>
-      <form class="fight-form" id="leadform">
-        <input type="email" id="leademail" required placeholder="you@email.com" aria-label="Email address">
-        <button class="btn" type="submit" id="leadbtn">Reserve the founding price →</button>
-      </form>
-      <p class="fight-fine">No charge today — reserving gets you first access and the $39 founding price at launch. Launch news only, no spam.</p>
-      <div class="fight-msg" id="leadmsg" role="status"></div>
+      <span class="fight-badge">$39 · the complete kit</span>
+      <h2>The appeal that wins comes with<br><span class="zap">your doctor's letter.</span></h2>
+      <p class="fight-sub">The free draft above is round one. The Fight Pack adds the document that usually decides it — a <strong style="color:#fff">letter of medical necessity written for your doctor to sign</strong> — plus word-for-word phone scripts, the records and itemized-bill request, the round-two external-review filing, and every deadline on your calendar. Built by a practicing physician who writes the documentation insurers approve every day.</p>
+      <div class="fight-form"><a class="btn" href="/fightpack">Get the Fight Pack — $39 →</a></div>
+      <p class="fight-fine">One-time. Nothing you paste is stored. Rebuild it as often as you need for 3 days.</p>
     </div>
   </section>
 </main>
@@ -397,39 +393,6 @@
     } else { fallback(); }
   });
 
-  var leadform = document.getElementById('leadform');
-  var leademail = document.getElementById('leademail');
-  var leadbtn = document.getElementById('leadbtn');
-  var leadmsg = document.getElementById('leadmsg');
-  leadform.addEventListener('submit', function(ev){
-    ev.preventDefault();
-    leadmsg.className = 'fight-msg';
-    leadbtn.disabled = true;
-    leadbtn.textContent = 'Saving…';
-    function reset(){ leadbtn.disabled = false; leadbtn.textContent = 'Reserve the founding price →'; }
-    fetch('/api/lead', {
-      method: 'POST',
-      headers: {'content-type': 'application/json'},
-      body: JSON.stringify({ email: leademail.value, fighting: 'denied-claim' })
-    })
-    .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(d){ return { ok: r.ok, d: d }; }); })
-    .then(function(res){
-      reset();
-      if (res.ok) {
-        leadmsg.className = 'fight-msg ok';
-        leadmsg.textContent = (res.d && res.d.message) || "You're on the list.";
-        leadform.reset();
-      } else {
-        leadmsg.className = 'fight-msg err';
-        leadmsg.textContent = (res.d && res.d.message) || "Couldn't save your spot — try again in a minute.";
-      }
-    })
-    .catch(function(){
-      reset();
-      leadmsg.className = 'fight-msg err';
-      leadmsg.textContent = "Couldn't save your spot — try again in a minute.";
-    });
-  });
 })();
 </script>
 </body>
