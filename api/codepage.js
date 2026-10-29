@@ -54,6 +54,7 @@ function page(entry) {
   const title = `${entry.code} in plain English — ${entry.name}`;
   const desc = `${entry.code} explained in plain English: ${entry.what}`.slice(0, 155);
   const isCpt = entry.system === 'CPT';
+  const isDenial = entry.system === 'Denial code';
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -88,14 +89,21 @@ function page(entry) {
   <div class="card"><h2>Where you'll see it</h2><p>${esc(entry.seen)}</p></div>
   <div class="card watch"><h2>Worth checking</h2><p>${esc(entry.watch)}</p></div>
 
-  <div class="cta">
+  ${isDenial ? `<div class="cta">
+    <h2>Fighting a ${esc(entry.code)} denial?</h2>
+    <p>Fewer than 1 in 100 denials ever get appealed — and appeals often win. Paste your denial letter and get a ready-to-edit appeal letter back, free.</p>
+    <div class="btnrow">
+      <a class="btn primary" href="/appeal">Draft my appeal letter free →</a>
+      <a class="btn ghost" href="/denials">The Denial Playbook</a>
+    </div>
+  </div>` : `<div class="cta">
     <h2>Got a bill or EOB with ${esc(entry.code)} on it?</h2>
     <p>Paste the whole thing into the free decoder and get it back in plain English — charges, codes, and what's worth questioning.</p>
     <div class="btnrow">
       <a class="btn primary" href="/?mode=bill#translator">Decode my bill free →</a>
       <a class="btn ghost" href="/#fightpack">Fight Pack — $39 at launch</a>
     </div>
-  </div>
+  </div>`}
 
   ${related.length ? `<div class="rel"><h2>Related codes</h2><div class="relgrid">${related.map((r) => `<a href="/codes/${esc(r.slug)}">${esc(r.code)} · ${esc(r.name.length > 42 ? r.name.slice(0, 40) + '…' : r.name)}</a>`).join('')}</div></div>` : ''}
 </main>

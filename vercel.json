@@ -1,9 +1,12 @@
 {
   "functions": {
     "api/translate.js": { "maxDuration": 60 },
+    "api/appeal.js": { "maxDuration": 60 },
     "api/lead.js": { "maxDuration": 30 }
   },
   "rewrites": [
+    { "source": "/appeal", "destination": "/appeal.html" },
+    { "source": "/denials", "destination": "/denials.html" },
     { "source": "/codes", "destination": "/api/codelibrary" },
     { "source": "/codes/", "destination": "/api/codelibrary" },
     { "source": "/codes/:slug", "destination": "/api/codepage?slug=:slug" },

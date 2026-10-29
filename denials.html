@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Denial Playbook — how to overturn an insurance denial, step by step | Dr Mumbo Jumbo</title>
+<meta name="description" content="Insurance denied your claim? Most denials are never appealed — and many appeals win. The step-by-step playbook: decode the reason, make the right calls, file the internal appeal, escalate to external review.">
+<link rel="canonical" href="https://dr-mumbo-jumbo.com/denials">
+<meta property="og:title" content="The Denial Playbook — overturn it, step by step">
+<meta property="og:description" content="Decode the denial, file the appeal, escalate to external review. Free playbook by a practicing physician.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://dr-mumbo-jumbo.com/denials">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Crect%20width='100'%20height='100'%20rx='22'%20fill='%236C3BFF'/%3E%3Ctext%20x='50'%20y='70'%20font-size='54'%20text-anchor='middle'%20font-family='Arial,Helvetica,sans-serif'%20font-weight='900'%20fill='%23FAF3E7'%3E%3F!%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FAF3E7;--ink:#1D1033;--ink-soft:#4A3D66;--violet:#6C3BFF;--coral:#FF5A3C;--teal:#0FB5AE;--yellow:#FFC838;--card:#FFFDF7;
+    --border:3px solid var(--ink);--shadow:7px 7px 0 var(--ink);--shadow-sm:4px 4px 0 var(--ink);--radius:18px;
+    --display:"Bricolage Grotesque",system-ui,sans-serif;--body:"Inter",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:var(--body);background:var(--paper);color:var(--ink);line-height:1.6;-webkit-font-smoothing:antialiased;background-image:radial-gradient(rgba(29,16,51,.055) 1.2px,transparent 1.2px);background-size:26px 26px}
+  .wrap{max-width:860px;margin:0 auto;padding:0 20px}
+  header{padding:22px 0}
+  .bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .wordmark{font-family:var(--display);font-weight:800;font-size:1.25rem;display:inline-flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink)}
+  .wordmark .glyph{width:38px;height:38px;border-radius:11px;background:var(--violet);color:var(--paper);display:inline-flex;align-items:center;justify-content:center;font-size:1rem;font-weight:800;border:var(--border);box-shadow:var(--shadow-sm)}
+  .pill{font-size:.78rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border:var(--border);border-radius:999px;padding:6px 14px;box-shadow:var(--shadow-sm);text-decoration:none;color:var(--ink);background:var(--card)}
+  .pill.hot{background:var(--coral);color:#fff}
+  .hero{padding:38px 0 6px}
+  .eyebrow{display:inline-block;background:var(--yellow);border:var(--border);border-radius:999px;padding:7px 16px;font-size:.8rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;transform:rotate(-1.5deg);box-shadow:var(--shadow-sm);margin-bottom:24px}
+  h1{font-family:var(--display);font-weight:800;font-size:clamp(2.2rem,6vw,3.6rem);line-height:1.04;letter-spacing:-.015em}
+  h1 em{font-style:normal;color:var(--coral)}
+  .sub{max-width:680px;margin:20px 0 0;font-size:clamp(1rem,2.1vw,1.15rem);color:var(--ink-soft);font-weight:500}
+  .sub strong{color:var(--ink)}
+  .playbook{padding:34px 0 10px}
+  .move{background:var(--card);border:var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:26px;margin-bottom:22px}
+  .move .tag{font-family:var(--display);font-weight:800;font-size:.8rem;letter-spacing:.09em;text-transform:uppercase;display:inline-block;border:2px solid var(--ink);border-radius:999px;padding:4px 12px;margin-bottom:12px}
+  .move:nth-child(1) .tag{background:var(--yellow)}
+  .move:nth-child(2) .tag{background:var(--teal);color:#fff}
+  .move:nth-child(3) .tag{background:var(--violet);color:#fff}
+  .move:nth-child(4) .tag{background:var(--coral);color:#fff}
+  .move:nth-child(5) .tag{background:var(--ink);color:var(--paper)}
+  .move:nth-child(6) .tag{background:var(--yellow)}
+  .move h2{font-family:var(--display);font-weight:800;font-size:1.45rem;margin-bottom:10px}
+  .move p{color:#2A1E4A;margin:10px 0}
+  .move ul{margin:10px 0 10px 22px}
+  .move li{margin:7px 0;color:#2A1E4A}
+  .move a{color:var(--violet);font-weight:700}
+  .script{background:var(--paper);border:2px dashed var(--ink);border-radius:14px;padding:16px 18px;font-size:.95rem;margin:14px 0}
+  .script .who{font-family:var(--display);font-weight:800;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--violet)}
+  .deadlines{background:var(--ink);color:var(--paper);border:var(--border);border-radius:var(--radius);box-shadow:7px 7px 0 var(--violet);padding:28px;margin:30px 0}
+  .deadlines h2{font-family:var(--display);font-weight:800;font-size:1.4rem;color:var(--yellow);margin-bottom:6px}
+  .deadlines p{color:#C9BEE0;font-size:.85rem;margin-bottom:16px}
+  table{width:100%;border-collapse:collapse;font-size:.92rem}
+  th{font-family:var(--display);font-weight:800;text-align:left;font-size:.78rem;letter-spacing:.07em;text-transform:uppercase;color:var(--yellow);padding:10px 12px;border-bottom:2px solid rgba(250,243,231,.35)}
+  td{padding:12px;border-bottom:1px solid rgba(250,243,231,.18);color:#EDE6F6;vertical-align:top}
+  td b{color:#fff}
+  .cta{background:var(--coral);color:#fff;border:var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:30px;margin:36px 0;text-align:center}
+  .cta h2{font-family:var(--display);font-weight:800;font-size:clamp(1.5rem,3.8vw,2.1rem);margin-bottom:8px}
+  .cta p{color:#FFE4DD;max-width:560px;margin:0 auto 20px}
+  .btn{font-family:var(--display);font-weight:800;font-size:1.05rem;border:3px solid var(--ink);border-radius:14px;padding:14px 26px;cursor:pointer;box-shadow:var(--shadow-sm);text-decoration:none;display:inline-block;background:var(--yellow);color:var(--ink);transition:transform .12s ease,box-shadow .12s ease}
+  .btn:hover{transform:translate(-2px,-2px);box-shadow:6px 6px 0 var(--ink)}
+  footer{padding:30px 0 60px}
+  .rule{border:none;border-top:3px solid var(--ink);margin-bottom:24px}
+  .legal{font-size:.78rem;color:var(--ink-soft);line-height:1.7;max-width:720px}
+  .legal strong{color:var(--ink)}
+  .legal a{color:var(--violet);font-weight:700;text-decoration:none}
+  @media (max-width:640px){.move{padding:20px}.deadlines{padding:20px}th,td{padding:8px}}
+</style>
+</head>
+<body>
+
+<header class="wrap">
+  <div class="bar">
+    <a class="wordmark" href="/"><span class="glyph">?!</span> DR MUMBO JUMBO</a>
+    <nav style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <a class="pill hot" href="/appeal">Draft my appeal →</a>
+      <a class="pill" href="/codes/">Code library</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="hero">
+    <span class="eyebrow">The Denial Playbook</span>
+    <h1>They said no.<br>Here's how to make them <em>look again.</em></h1>
+    <p class="sub">Roughly <strong>1 in 5 in-network claims gets denied</strong>, and fewer than 1 in 100 denials is ever appealed — which means insurers almost never have to defend the "no." When people do push back, a big share of denials get reversed. This is the playbook, move by move.</p>
+  </div>
+
+  <div class="playbook">
+    <div class="move">
+      <span class="tag">Move 1</span>
+      <h2>Don't pay. Don't panic. Decode.</h2>
+      <p>A denial is the opening position, not the verdict — and the bill attached to it isn't due the day it arrives. Your first job is to understand exactly WHY they said no, in their own paperwork:</p>
+      <ul>
+        <li>Find the <strong>denial reason code</strong> on the EOB or letter (CO-50, CO-197, PR-204…) and look it up in the <a href="/codes/">code library</a> — each one has a different winning counter.</li>
+        <li>Or paste the whole letter into the <a href="/?mode=bill#translator">free decoder</a> and get it back in plain English.</li>
+        <li>Note the magic words: "not medically necessary," "no prior authorization," "out of network," "not a covered benefit." The appeal you write depends on which one they used.</li>
+      </ul>
+    </div>
+
+    <div class="move">
+      <span class="tag">Move 2</span>
+      <h2>Make one phone call — on the record</h2>
+      <p>Some denials are coding slips or missing-paperwork problems that die on a single call. Call the member number on your card:</p>
+      <div class="script">
+        <span class="who">You, to the insurer</span><br>
+        "I'm calling about claim [number], denied on [date] with reason [code]. Can you tell me exactly what was missing or why it didn't meet criteria? What specific clinical criteria did the reviewer use? And can you send me the documents the decision relied on? If this just needs a corrected code or records from my doctor, what exactly should they send?"
+      </div>
+      <ul>
+        <li>Write down the date, the rep's name, and a reference number for the call. Every time.</li>
+        <li>Ask whether the provider can simply <strong>resubmit with a corrected claim</strong> — many "denials" are really clerical rejections.</li>
+      </ul>
+    </div>
+
+    <div class="move">
+      <span class="tag">Move 3</span>
+      <h2>Collect your ammunition</h2>
+      <ul>
+        <li><strong>The itemized bill</strong> from the provider (not the summary — the line-by-line version with codes).</li>
+        <li><strong>Your medical records</strong> for the service — visit notes, test results, orders. You're entitled to copies.</li>
+        <li><strong>The insurer's criteria</strong> — the clinical policy or guideline they used to deny. Ask for it by name; plans generally must share the basis for a denial on request.</li>
+        <li><strong>A letter of medical necessity</strong> from the ordering clinician — short, specific, and the single strongest thing in most appeal files. Your doctor's office writes these all the time; ask.</li>
+      </ul>
+    </div>
+
+    <div class="move">
+      <span class="tag">Move 4</span>
+      <h2>File the internal appeal — in writing</h2>
+      <p>This is the formal "look again," decided by the plan itself, and it's where most reversals happen. Your letter should answer the denial reason point by point, cite your records, and request the reviewer's criteria and credentials.</p>
+      <p><a href="/appeal"><strong>Paste your denial into the free generator</strong></a> and it drafts the letter for you — argument matched to the reason code, records request included, brackets where your details go.</p>
+      <ul>
+        <li>File well before the deadline on your letter (often 180 days from the denial — but YOUR letter controls).</li>
+        <li>Send via the member portal or certified mail; keep copies of everything.</li>
+        <li>If care is urgent, say so — <strong>expedited appeals</strong> exist for situations that can't wait, with decisions typically required in about 72 hours.</li>
+      </ul>
+    </div>
+
+    <div class="move">
+      <span class="tag">Move 5</span>
+      <h2>Lost round one? Go external.</h2>
+      <p>After a <strong>final internal denial</strong>, most plans must offer <strong>external review</strong>: an independent reviewer — not the insurer — decides, and the decision generally binds the plan. This is the step almost nobody takes, and it exists precisely because insurers grading their own homework needed a referee.</p>
+      <ul>
+        <li>Your final denial letter must explain how to request it and the deadline (commonly around four months under the federal process; state processes vary).</li>
+        <li>Medical-necessity denials are exactly what external review is built for.</li>
+        <li>Medicare, Medicaid, and employer self-funded plans each have their own versions of this ladder — the denial letter names yours.</li>
+      </ul>
+    </div>
+
+    <div class="move">
+      <span class="tag">Move 6</span>
+      <h2>Escalate sideways while you wait</h2>
+      <ul>
+        <li><strong>State insurance department:</strong> a complaint is free, gets a case number, and insurers answer to these regulators. Search "[your state] department of insurance complaint."</li>
+        <li><strong>Hospital financial assistance:</strong> for the bill itself, nonprofit hospitals must have charity-care policies — ask for the application in writing, whatever your income.</li>
+        <li><strong>Surprise out-of-network bills:</strong> emergency care, or out-of-network providers at an in-network facility, are exactly what the No Surprises Act protects against — say those words to the billing office.</li>
+        <li><strong>Your HR benefits team</strong> (employer plans): they chose the insurer, and a nudge from the client moves faster than a nudge from a member.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="deadlines">
+    <h2>The clock, at a glance</h2>
+    <p>Typical timelines for many plans — your denial letter and plan documents state YOUR exact deadlines, and they control.</p>
+    <table>
+      <tr><th>Step</th><th>Who's on the clock</th><th>Typical time</th></tr>
+      <tr><td><b>File internal appeal</b></td><td>You</td><td>Often 180 days from the denial notice</td></tr>
+      <tr><td><b>Decide internal appeal</b></td><td>Insurer</td><td>~30 days before care · ~60 days after care</td></tr>
+      <tr><td><b>Expedited appeal</b> (urgent care)</td><td>Insurer</td><td>~72 hours</td></tr>
+      <tr><td><b>Request external review</b></td><td>You</td><td>Commonly ~4 months after final denial</td></tr>
+      <tr><td><b>Decide external review</b></td><td>Independent reviewer</td><td>~45 days · ~72 hours expedited</td></tr>
+    </table>
+  </div>
+
+  <div class="cta">
+    <h2>Ready for Move 4?</h2>
+    <p>Paste your denial letter and walk away with the appeal drafted — argument, records request, deadlines flagged. Free.</p>
+    <a class="btn" href="/appeal">Draft my appeal letter →</a>
+  </div>
+</main>
+
+<footer class="wrap">
+  <hr class="rule">
+  <p class="legal"><strong>The serious bit:</strong> This playbook is general self-advocacy education from Dr Mumbo Jumbo — not legal, medical, or financial advice, and not a prediction about your claim. Appeal rights, steps, and deadlines vary by plan type and state; your denial letter and plan documents are the source of truth. Letters drafted here are templates for you to review, complete, and send yourself. In an emergency, call 911. © 2026 Dr Mumbo Jumbo · <a href="/">Home</a> · <a href="/appeal">Appeal generator</a> · <a href="/codes/">Code library</a></p>
+</footer>
+</body>
+</html>

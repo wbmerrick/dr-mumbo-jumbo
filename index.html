@@ -118,6 +118,9 @@
   .btn-primary{background:var(--violet);color:#fff}
   .btn-primary:disabled{background:#9d85e0;cursor:wait;transform:none;box-shadow:var(--shadow-sm)}
   .btn-ghost{background:var(--card);color:var(--ink);font-size:.95rem;padding:13px 20px}
+  .filechip{display:none;margin-top:14px;align-items:center;gap:10px;font-weight:700;font-size:.85rem;background:var(--paper);border:2px solid var(--ink);border-radius:999px;padding:8px 14px;width:max-content;max-width:100%;box-shadow:3px 3px 0 var(--ink)}
+  .filechip.on{display:inline-flex}
+  .filechip .x{cursor:pointer;border:none;background:var(--ink);color:var(--paper);border-radius:50%;width:20px;height:20px;line-height:1;font-weight:800;font-size:.72rem;flex:none}
   .whisper{font-size:.82rem;color:var(--ink-soft);margin-top:14px}
 
   /* loading */
@@ -259,7 +262,7 @@
 <header class="wrap">
   <div class="bar">
     <a class="wordmark" href="/"><span class="glyph">?!</span> DR MUMBO JUMBO</a>
-    <nav style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><a class="pill pill-link" href="/codes/">Code library</a><span class="pill">Plain-English Medicine</span></nav>
+    <nav style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><a class="pill pill-link" href="/appeal" style="background:var(--coral);color:#fff">Fight a denial →</a><a class="pill pill-link" href="/codes/">Code library</a></nav>
   </div>
 </header>
 
@@ -283,9 +286,12 @@
       <textarea id="input" maxlength="6000" spellcheck="false" aria-label="Paste medical text to translate" placeholder="e.g. &quot;Acute on chronic systolic heart failure, EF 35%, BNP 1840. Started IV diuresis, strict I/Os, holding ACE-I for AKI…&quot;"></textarea>
       <div class="controls">
         <button class="btn btn-primary" id="go">Translate it →</button>
+        <button class="btn btn-ghost" id="attach" type="button">＋ Photo / PDF</button>
         <button class="btn btn-ghost" id="example" type="button">Try an example</button>
       </div>
-      <p class="whisper">Tip: leave out names, birthdates, and ID numbers — the translation doesn't need them.</p>
+      <input type="file" id="file" accept="image/*,application/pdf,.pdf" hidden>
+      <div class="filechip" id="filechip"><span id="filename"></span><button class="x" id="fileclear" type="button" aria-label="Remove file">✕</button></div>
+      <p class="whisper">Tip: snap a photo or upload the PDF with ＋ — or paste the text. Leave out names, birthdates, and ID numbers; nothing you paste or upload is stored.</p>
       <div class="loading" id="loading" role="status"><span class="spinner"></span><span id="loadmsg">Decoding the hieroglyphics…</span></div>
       <div class="error" id="error" role="alert"></div>
     </div>
@@ -297,7 +303,7 @@
           <button class="copy-btn" id="copy" type="button">Copy</button>
         </div>
         <div class="result-body" id="output"></div>
-        <p class="result-note">This is education, not medical advice — your care team makes the calls. Spot something urgent-sounding? Call them today. Fighting a denial or a big bill? <a href="#fightpack">The Fight Pack</a> is coming.</p>
+        <p class="result-note">This is education, not medical advice — your care team makes the calls. Spot something urgent-sounding? Call them today. Fighting a denial? <a href="/appeal">Draft your appeal letter free →</a> Full strategy: <a href="/denials">the Denial Playbook</a>.</p>
       </div>
     </div>
   </div>
@@ -306,7 +312,7 @@
     <div class="fight">
       <span class="fight-badge">Coming soon — $39 at launch</span>
       <h2>Denied claim? Monster bill?<br>Meet the <span class="zap">FIGHT PACK.</span></h2>
-      <p class="fight-sub">Paste your denial letter or bill and get the complete fight kit back: an appeal letter written in proper medical-necessity language, an itemized-bill request, a phone script, and a deadline tracker. Built by a practicing physician who writes the documentation insurers approve every day.</p>
+      <p class="fight-sub">Paste your denial letter or bill and get the complete fight kit back: an appeal letter written in proper medical-necessity language, an itemized-bill request, a phone script, and a deadline tracker. Built by a practicing physician who writes the documentation insurers approve every day. Can't wait? <a href="/appeal" style="color:var(--yellow);font-weight:800;text-decoration:none">Draft a free appeal letter right now →</a></p>
       <form class="fight-form" id="leadform">
         <input type="email" id="leademail" required placeholder="you@email.com" aria-label="Email address">
         <select id="leadfighting" aria-label="What are you up against?">
@@ -401,6 +407,12 @@
   var copyBtn = document.getElementById('copy');
   var rawText = '';
   var mode = 'jargon';
+  var attachBtn = document.getElementById('attach');
+  var fileInput = document.getElementById('file');
+  var filechip = document.getElementById('filechip');
+  var filename = document.getElementById('filename');
+  var fileclear = document.getElementById('fileclear');
+  var attached = null;
   var modeJargon = document.getElementById('mode-jargon');
   var modeBill = document.getElementById('mode-bill');
   var slotlabel = document.getElementById('slotlabel');
@@ -438,6 +450,48 @@
     count.textContent = input.value.length.toLocaleString('en-US') + ' / 6,000';
   }
   input.addEventListener('input', updateCount);
+
+  function clearFile(){ attached = null; fileInput.value = ''; filechip.classList.remove('on'); }
+  fileclear.addEventListener('click', clearFile);
+  attachBtn.addEventListener('click', function(){ fileInput.click(); });
+  fileInput.addEventListener('change', function(){
+    var f = fileInput.files && fileInput.files[0];
+    if(!f) return;
+    errbox.classList.remove('on');
+    prepFile(f, function(res){
+      attached = res;
+      filename.textContent = '📎 ' + res.name;
+      filechip.classList.add('on');
+    }, function(msg){ clearFile(); showError(msg); });
+  });
+  function prepFile(f, ok, fail){
+    var MAX = 3 * 1024 * 1024;
+    if (f.type === 'application/pdf' || /\.pdf$/i.test(f.name)) {
+      if (f.size > MAX) { fail('That PDF is over 3 MB — export just the pages you need and try again.'); return; }
+      var r = new FileReader();
+      r.onload = function(){ ok({ kind:'pdf', media_type:'application/pdf', data: String(r.result).split(',')[1], name: f.name }); };
+      r.onerror = function(){ fail("Couldn't read that file — try again."); };
+      r.readAsDataURL(f);
+      return;
+    }
+    var url = URL.createObjectURL(f);
+    var img = new Image();
+    img.onload = function(){
+      var scale = Math.min(1, 1800 / Math.max(img.width, img.height));
+      var w = Math.round(img.width*scale), h = Math.round(img.height*scale);
+      var c = document.createElement('canvas'); c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(url);
+      var data = c.toDataURL('image/jpeg', 0.82).split(',')[1];
+      if (data.length > 4200000) { fail('That image is huge even after compression — try a tighter crop.'); return; }
+      ok({ kind:'image', media_type:'image/jpeg', data: data, name: f.name });
+    };
+    img.onerror = function(){
+      URL.revokeObjectURL(url);
+      fail("Couldn't read that image — JPG, PNG, or PDF work best. (iPhone HEIC photo? Take a screenshot of it and upload that.)");
+    };
+    img.src = url;
+  }
 
   example.addEventListener('click', function(){
     input.value = EXAMPLES[mode];
@@ -495,7 +549,7 @@
   go.addEventListener('click', function(){
     var text = input.value.trim();
     errbox.classList.remove('on');
-    if(!text){ showError('Paste some medical text first — that box up there is hungry.'); return; }
+    if(!text && !attached){ showError('Paste some medical text — or tap ＋ and add a photo or PDF. That box up there is hungry.'); return; }
     result.classList.remove('on');
     setLoading(true);
 
@@ -505,7 +559,7 @@
     fetch('/api/translate', {
       method:'POST',
       headers:{'content-type':'application/json'},
-      body: JSON.stringify({ text: text, mode: mode }),
+      body: JSON.stringify({ text: text, mode: mode, file: attached ? { kind: attached.kind, media_type: attached.media_type, data: attached.data } : null }),
       signal: ctrl.signal
     })
     .then(function(r){
