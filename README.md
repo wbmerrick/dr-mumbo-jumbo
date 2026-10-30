@@ -45,16 +45,16 @@ Waitlist storage: run `supabase/waitlist.sql` once in the Supabase SQL Editor. `
 
 While `FIGHTPACK_FREE` is unset, anyone can build a kit: the page asks `/api/unlock` for a free token and builds. Each kit costs about $0.16–0.24 in model usage (Sonnet 4.5: ~16K input, ~6.6K output and ~35K cached tokens per kit, measured over the ten test cases of run 21). Attachments cost more: of the first two kits built through the free path in production, case G (text) cost $0.18 and case J (a PDF letter plus records) $0.24. So 1,000 kits ≈ $165–240.
 
-Free use is limited per visitor so nobody can run up the bill: 3 free tokens an hour and 10 a day per IP address, and each token covers 24 model calls over its whole life (a kit is 6, plus retries — about four kits) before the page quietly asks for a new one. So one visitor tops out around a dozen kits an hour and forty a day. The counts live in each server instance's memory, so they are a speed bump, not a hard cap. The hard caps:
+Free use is limited per visitor so nobody can run up the bill: 3 free tokens an hour and 10 a day per IP address, and each token covers 24 model calls over its whole life (a kit is 6, plus retries — about four kits) before the page quietly asks for a new one. So one visitor tops out around a dozen kits an hour and forty a day. The free translator and appeal letter use the same account, so they have a per-visitor allowance too: 30 translations an hour and 100 a day, 10 letters an hour and 30 a day (`FREE_USE` in `lib/unlock.js`; a request turned away before the model, such as an empty one, does not count). The counts live in each server instance's memory, so they are a speed bump, not a hard cap. The hard caps:
 
-1. **Claude Console → Billing → Spend limits → Set limit** (platform.claude.com/settings/billing): a monthly cap for the organization. At the cap the model API refuses requests instead of billing more. The Fight Pack then tells visitors plainly that the free kit "has reached its limit for now" (it does not ask them to retry); the appeal letter and translator share the key and show their usual "try again" message.
-2. **Optional — Vercel → Project → Firewall → Rules:** a rate limit on `/api/fightpack` (for example 40 requests per 10 minutes per IP).
+1. **Claude Console → Billing → Spend limits → Set limit** (platform.claude.com/settings/billing): a monthly cap for the organization. At the cap the model API refuses requests instead of billing more. The Fight Pack then tells visitors plainly that the free kit "has reached its limit for now" (it does not ask them to retry); the appeal letter and the translator share the key and say the same plainly.
+2. **Optional — Vercel → Project → Firewall → Rules:** a rate limit on `/api/` (for example 60 requests per 10 minutes per IP), which holds across server instances.
 
 ### Switching on Fight Pack payments (later)
 
 1. In Stripe: Products → Add product → "Dr Mumbo Jumbo Fight Pack", one-time, at the chosen price. Copy the price ID (`price_…`).
 2. Developers → API keys → copy the secret key. Start with test mode (`sk_test_…`) and Stripe's test card 4242 4242 4242 4242.
-3. Vercel → Project → Settings → Environment Variables: add `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID` and `FIGHTPACK_FREE=0` (Production), then Redeploy. The page switches its button back to checkout by itself; the price wording in `fightpack.html`, `index.html`, `appeal.html` and `api/codepage.js` says "free" and needs the new price.
+3. Vercel → Project → Settings → Environment Variables: add `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID` and `FIGHTPACK_FREE=0` (Production), then Redeploy. The page switches its button back to checkout by itself; the price wording in `fightpack.html`, `index.html`, `appeal.html`, `denials.html` and `api/codepage.js` says "free" and needs the new price.
 4. Buy a kit on the live site with the test card; confirm it unlocks and generates. Then swap in the live key and the live price ID and redeploy.
 5. In Stripe → Settings → Public details, set the support email/phone that appears on receipts.
 

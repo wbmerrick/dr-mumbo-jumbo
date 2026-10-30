@@ -2,6 +2,8 @@
 // Pasted text is sent once to the AI model to generate a translation.
 // It is never stored, logged, or used for anything else.
 
+const { freeUse } = require('../lib/unlock.js');
+
 const MAX_CHARS = 6000;
 const MAX_FILE_B64 = 4300000; // ~3.2 MB raw
 const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
@@ -84,6 +86,15 @@ Hard rules:
 - If names, birthdates, or ID numbers appear, don't repeat them back.
 - If the text isn't a bill, EOB, or denial letter, say so kindly and point them to the regular jargon decoder instead.`;
 
+// The account's spend limit or credit balance is not a passing fault, so the page says so instead of
+// "try again" (the same test as api/fightpack.js upstreamTrouble).
+function isBudget(status, detail) {
+  const e = (detail && detail.error) || {};
+  const msg = String(e.message || '');
+  const code = String((e.details && e.details.error_code) || '');
+  return status === 402 || /spend_limit|billing/i.test(code) || /usage limits|credit balance|spend limit|billing/i.test(msg);
+}
+
 module.exports = async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
 
@@ -130,6 +141,17 @@ module.exports = async (req, res) => {
     return;
   }
 
+  const full = freeUse(req, 'translate');
+  if (full) {
+    res.status(429).json({
+      error: 'busy',
+      message: full === 'day'
+        ? "You've reached the free translator's limit for today. Please come back tomorrow."
+        : "You've translated a lot in the last hour. Please try again in a little while."
+    });
+    return;
+  }
+
   try {
     const upstream = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -159,6 +181,12 @@ module.exports = async (req, res) => {
     });
 
     if (!upstream.ok) {
+      let detail = null;
+      try { detail = await upstream.json(); } catch { detail = null; }
+      if (isBudget(upstream.status, detail)) {
+        res.status(503).json({ error: 'budget', message: 'The free translator has reached its limit for now. Please try again later.' });
+        return;
+      }
       const status = upstream.status === 429 ? 429 : 502;
       res.status(status).json({
         error: 'upstream',

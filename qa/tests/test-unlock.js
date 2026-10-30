@@ -58,6 +58,22 @@ function mockRes(){ const r = { code: 0, body: null, headers: {} }; r.setHeader 
   for (let h = 0; h < 5; h++) for (let k = 0; k < u.FREE_TOKENS_PER_HOUR; k++) if (u.mintFree(ipC, t0 + h * 2 * H + k).token) got++;
   assert.strictEqual(got, u.FREE_TOKENS_PER_DAY, 'per-visitor daily limit');
   assert(u.mintFree(ipC, t0 + 33 * H).token, 'the next day starts fresh');
+  // the free translator and letter writer: a generous allowance per visitor, an hour and a day
+  const ipD = { headers: { 'x-real-ip': '192.0.2.55' } }, ipE = { headers: { 'x-forwarded-for': '192.0.2.66, 10.0.0.1' } };
+  const [tHour, tDay] = u.FREE_USE.translate;
+  let used = 0; while (u.freeUse(ipD, 'translate', t0 + used) === null) used++;
+  assert.strictEqual(used, tHour, 'translator: the hourly allowance');
+  assert.strictEqual(u.freeUse(ipD, 'translate', t0 + used), 'hour', 'the full window is named');
+  assert.strictEqual(u.freeUse(ipE, 'translate', t0), null, 'another visitor is not affected');
+  assert.strictEqual(u.freeUse(ipD, 'appeal', t0), null, 'each tool has its own allowance');
+  const ipF = { headers: { 'x-real-ip': '192.0.2.77' } };
+  let allowed = 0, last = null;
+  for (let h = 0; h < 24; h++) for (let k = 0; k < tHour + 2; k++) { const r = u.freeUse(ipF, 'translate', t0 + h * H + k); if (r === null) allowed++; else last = r; }
+  assert.strictEqual(allowed, tDay, 'translator: the daily allowance');
+  assert.strictEqual(last, 'day', 'then the day is named');
+  assert.strictEqual(u.freeUse(ipF, 'translate', t0 + 49 * H), null, 'and it refills');
+  const [aHour, aDay] = u.FREE_USE.appeal;
+  assert(aHour <= 10 && aDay <= 30 && tHour <= 30 && tDay <= 100, 'allowances stay modest (each call is a few cents at most)');
   assert(u.verify(tok) && u.verify(tok) && u.verify(tok), 'preview and paid tokens are never throttled');
   res = mockRes(); await fp({ method:'POST', body:{ token: ft, denial:'x' } }, res); assert.strictEqual(res.code, 401, 'spent free token → 401 (the page then asks for a new one)');
   process.env.FIGHTPACK_FREE = 'off';
