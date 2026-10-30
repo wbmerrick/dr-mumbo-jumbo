@@ -10,7 +10,7 @@ WARN:
 - ⚠️ §10 long — 414 words (target 260)
 
 ## I-original-medicare-ambulance — Held-out (round 2): Original Medicare MSN — emergency ambulance denied, daughter filing
-**105 pass · 2 fail · 2 warn** · 3574 words · 46 placeholders · wall 55s · deadline {"truth":"2027-02-11","served":["2027-02-11"]}
+**106 pass · 2 fail · 2 warn** · 3574 words · 46 placeholders · wall 55s · deadline {"truth":"2027-02-11","served":["2027-02-11"]}
 
 FAIL:
 - ❌ never: (audit2) the family was told only "very slow": severity words come from the chart, in brackets — marked bradycardi
@@ -36,5 +36,5 @@ WARN:
 - ⚠️ §9 long — 487 words (target 400)
 - ⚠️ §10 long — 354 words (target 260)
 
-**TOTAL: 313 pass · 5 fail across 3 cases** (development set 105 pass · 0 fail; held-out 208 pass · 5 fail)
+**TOTAL: 314 pass · 5 fail across 3 cases** (development set 105 pass · 0 fail; held-out 209 pass · 5 fail)
 

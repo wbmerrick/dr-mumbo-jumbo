@@ -67,5 +67,22 @@ const decodeI = ['## 1. Your denial, decoded — and how strong your case is', '
   reply = '## 3. Letter of medical necessity — for your doctor to sign\n' + cite + '\n## 4. Note for your doctor\'s office\n- Please sign.';
   r = await call({ part: 3, denial: iSource, decode: decodeI });
   ok(!/NCD\) 20\.4/.test(r.body.text) && /National Coverage Determination \(NCD\) or the Local/.test(r.body.text), 'an invented policy number is dropped in the doctor\'s letter');
-  console.log(`v9.10 facts tests passed (${n} assertions)`);
+  // v9.11: where the records go, on Original Medicare — the decode reads the program from the notice itself
+  reply = decodeI;
+  r = await call({ part: 1, denial: iSource });
+  ok(/WHERE THE RECORDS GO/.test(lastAsk) && /AMBULANCE ON ORIGINAL MEDICARE/.test(lastAsk), 'part 1 of an Original Medicare notice gets the records route and the ambulance rule');
+  r = await call({ part: 1, denial: [Fcase.denial, Fcase.extra].join('\n') });
+  ok(!/WHERE THE RECORDS GO/.test(lastAsk), 'not for a Medicare Advantage notice');
+  ok(!F.originalNotice('Your Medicare Advantage plan denied this. If you had Original Medicare, rules differ.'), 'a Medicare Advantage notice that mentions Original Medicare is not one');
+  ok(F.originalNotice('My father has Original Medicare and got this bill.'), "the patient's own words count");
+  reply = '## 2. Your appeal letter\nI am appealing.';
+  r = await call({ part: 2, denial: 'Medicare Summary Notice. MRI lumbar spine (CPT 72148) denied.', decode: decodeI.replace(run21, '**What you may actually owe:** $500.') });
+  ok(/WHERE THE RECORDS GO/.test(lastAsk) && !/AMBULANCE ON ORIGINAL MEDICARE/.test(lastAsk), 'parts 2-6 of any Original Medicare claim get the records route');
+  // records attached: every part is told that a dated record keeps its own words
+  reply = decodeI;
+  r = await call({ part: 1, denial: 'Denied: inpatient rehab.', records: { kind: 'pdf', media_type: 'application/pdf', data: 'JVBERi0x' } });
+  ok(/DATED RECORDS/.test(lastAsk), 'records attached: the dated-records rule');
+  r = await call({ part: 1, denial: 'Denied: inpatient rehab.' });
+  ok(!/DATED RECORDS/.test(lastAsk), 'no records: no dated-records rule');
+  console.log(`v9.10-v9.11 facts tests passed (${n} assertions)`);
 })().catch((e) => { console.error('TEST FAIL', e); process.exit(1); });

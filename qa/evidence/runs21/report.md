@@ -85,13 +85,14 @@ WARN:
 - ⚠️ §10 long — 271 words (target 260)
 
 ## I-original-medicare-ambulance — Held-out (round 2): Original Medicare MSN — emergency ambulance denied, daughter filing
-**103 pass · 4 fail · 3 warn** · 3791 words · 52 placeholders · wall 54s · deadline {"truth":"2027-02-11","served":["2027-02-11"]}
+**103 pass · 5 fail · 3 warn** · 3791 words · 52 placeholders · wall 54s · deadline {"truth":"2027-02-11","served":["2027-02-11"]}
 
 FAIL:
 - ❌ every coverage-policy number (NCD, LCD) is from the source — National Coverage Determination (NCD) 20.4
 - ❌ §7 asks for an itemized statement and an account hold
 - ❌ never: (audit2, re-audit I-1) an ambulance claim is always paid on assignment: what he owes never depends on participation, and if Medicare pays he owes only the deductible and 20% coinsurance — non-participating or does not accept assignment, the amount could be higher
 - ❌ never: (audit2) the family was told only "very slow": severity words come from the chart, in brackets — unstable
+- ❌ never: (re-audit I-4) the records go to the family and in with the appeal: never sent to Medicare separately, as additional documentation, or as a corrected claim — ask Tri-County Emergency Medical Services and Westbrook Regional Medical Center to send their records to the Medicare
 
 WARN:
 - ⚠️ §1 long — 777 words (target 560)
@@ -110,5 +111,5 @@ WARN:
 - ⚠️ §6 long — 622 words (target 450)
 - ⚠️ §10 long — 354 words (target 260)
 
-**TOTAL: 1001 pass · 12 fail across 10 cases** (development set 595 pass · 7 fail; held-out 406 pass · 5 fail)
+**TOTAL: 1001 pass · 13 fail across 10 cases** (development set 595 pass · 7 fail; held-out 406 pass · 6 fail)
 

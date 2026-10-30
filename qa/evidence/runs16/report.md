@@ -1,7 +1,7 @@
 # Fight Pack automated checks — run "runs16" (today=2026-10-30)
 
 ## I-original-medicare-ambulance — Held-out (round 2): Original Medicare MSN — emergency ambulance denied, daughter filing
-**100 pass · 7 fail · 1 warn** · 3731 words · 52 placeholders · wall 68s · deadline {"truth":"2027-02-11","served":["2027-02-11"]}
+**101 pass · 7 fail · 1 warn** · 3731 words · 52 placeholders · wall 68s · deadline {"truth":"2027-02-11","served":["2027-02-11"]}
 
 FAIL:
 - ❌ every dollar amount is from the source or an exact sum of source amounts — $200
@@ -38,5 +38,5 @@ WARN:
 - ⚠️ §7 long — 406 words (target 400)
 - ⚠️ §10 long — 365 words (target 260)
 
-**TOTAL: 196 pass · 17 fail across 2 cases** (development set 0 pass · 0 fail; held-out 196 pass · 17 fail)
+**TOTAL: 197 pass · 17 fail across 2 cases** (development set 0 pass · 0 fail; held-out 197 pass · 17 fail)
 

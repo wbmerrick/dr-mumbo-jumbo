@@ -4,7 +4,7 @@ The Fight Pack is the kit on dr-mumbo-jumbo.com that helps a patient overturn on
 
 - how the kit is built;
 - how its correctness is measured;
-- what twenty measured runs of the engine showed (runs 3–21 and 23), and the first kits built through the free path in production;
+- what twenty-one measured runs of the engine showed (runs 3–21, 23 and 24), and the first kits built through the free path in production;
 - what was changed in response, and the evidence for each change;
 - what is still unproven.
 
@@ -13,16 +13,16 @@ Everything here can be re-run from this repository (section 8).
 ## Bottom line
 
 - **Deadlines, decision clocks, urgency, plan type, identifiers and the safety instruction are decided in code, not by the model.**
-  - The computed appeal deadline matched the hand-derived deadline in every kit of every run: 148 of 148 kits in runs 3–23, and both kits built through the free path in production.
-  - Every member and claim identifier was copied exactly: 543 of 543 in runs 3–23, and 8 of 8 in the production kits.
+  - The computed appeal deadline matched the hand-derived deadline in every kit of every run: 158 of 158 kits in runs 3–24, and both kits built through the free path in production.
+  - Every member and claim identifier was copied exactly: 580 of 580 in runs 3–24, and 8 of 8 in the production kits.
 - **Defects fell at least six-fold.** All runs were re-scored with the same final checker, about 100 checks per kit.
-  - On the development cases, run 3 averaged 12.8 defects per kit. The latest engines average 0.3 to 2.0 (runs 19–23).
-  - Across all ten cases, the latest engine (v9.10, run 23) produced 9 defects: 0.3 per development kit and 1.8 per held-out kit.
+  - On the development cases, run 3 averaged 12.8 defects per kit. The latest engines average 0.3 to 2.0 (runs 19–24).
+  - Across all ten cases, the last two engines produced 10 defects (v9.10, run 23) and 11 (v9.11, run 24): 0.3 and 1.2 per development kit, 2.0 and 1.0 per held-out kit.
   - Run-to-run noise is several defects (section 4). Compare repeated runs, not one total.
 - **Every Critical defect the audits found was fixed. The stubborn ones were fixed by code.**
   - The run-6 audit's Critical: a patient with possible cauda equina syndrome was told to call her doctor's office first. It survived three engine versions and two prompt revisions aimed at it. Since v9, code writes the emergency instruction. It has been the first instruction in every run of that case since (runs 8–15 and 19–21) and in the production kit.
   - The round-2 audit (run 16) found two Criticals in a new held-out case. The kit dropped the concurrent expedited external review that the denial letter offered. And the doctor's letter made its signer the author of another physician's consult note. Code now adds the concurrent request and turns a first-person clinical act into "[I / Dr. ___]". The run-21 re-audit found no Critical, and the Majors fell from 9 to 4.
-- **Code alone removes about a third of the old defects.** Replaying today's deterministic layer (v9.10) on the stored outputs of runs 5–20 cuts 240 failures to 163 and adds none. Nothing the model wrote was regenerated.
+- **Code alone removes about a third of the old defects.** Replaying today's deterministic layer on the stored outputs of runs 5–20 cuts 241 failures to 164 and adds none. Nothing the model wrote was regenerated.
 - **Held-out cases found the failures that tuning hid.** Four cases were written after tuning. G and H were written after run 5. I and J were written after run 15, with their truth and checks fixed before they were first run. Each round exposed failures the development cases never showed, including both round-2 Criticals.
 - **Code has bugs too, and the checker found them.** Three bugs in the code that reads the model's prose surfaced in runs 11–14 (section 6). Each was fixed and checked against every stored output.
 - **What remains is mostly prose fidelity.** Typical slips are a lay description relabeled in clinical words, a record described that nobody has seen, or a rule from one plan type applied to another. Code brackets the recurring ones for the clinician. The run-21 re-audit judged both doctor-signed letters signable after a few edits. A clinician must still read the letter before signing it.
@@ -104,7 +104,7 @@ G and H were written after run 5; they informed fixes only after runs 7 and 9. I
   Each guard is tested on the real lines the model wrote in earlier runs. Before a guard shipped it was also run against every stored output, to catch false positives;
 - the unlock flow, free and paid: free tokens per visitor per hour and per day, a token's lifetime budget, and that preview and paid tokens are never throttled;
 - what the reader is told when the model API refuses a request: a spend limit or credit balance, an unreadable or oversized file, a rate limit, and a passing fault, each in both modes;
-- the v9.10 facts, on the real lines the model wrote and through the handler (20 assertions).
+- the v9.10–v9.11 facts and rules, on the real lines the model wrote and through the handler (27 assertions).
 
 **Automated checker** (`qa/fp-check.js` with `qa/manifest.js`, about 100 checks per kit). The checks cover:
 
@@ -171,24 +171,33 @@ All runs were scored with the same final checker. "Dev" is the six development c
 | 16 | v9.6 | I, J (first run) | 17 | — | 8.5 | 2/2 | 8/8 |
 | 17 | v9.7 | C, I, J | 13 | 4.0 | 4.5 | 3/3 | 13/13 |
 | 18 | v9.7.1 | C, I, J | 5 | 0.0 | 2.5 | 3/3 | 13/13 |
-| 19 | v9.8 | A–J | 21 | 2.0 | 2.3 | 10/10 | 37/37 |
+| 19 | v9.8 | A–J | 22 | 2.0 | 2.5 | 10/10 | 37/37 |
 | 20 | v9.8.1 | A–J | 12 | 1.5 | 0.8 | 10/10 | 37/37 |
-| 21 | v9.8.3 | A–J | 12 | 1.2 | 1.3 | 10/10 | 37/37 |
+| 21 | v9.8.3 | A–J | 13 | 1.2 | 1.5 | 10/10 | 37/37 |
 | Production, free path | v9.8.3 | G, J | 1 | — | 0.5 | 2/2 | 8/8 |
-| 23 | v9.10 | A–J | 9 | 0.3 | 1.8 | 10/10 | 37/37 |
+| 23 | v9.10 | A–J | 10 | 0.3 | 2.0 | 10/10 | 37/37 |
+| 24 | v9.11 | A–J | 11 | 1.2 | 1.0 | 10/10 | 37/37 |
 
-The counts for runs 3–15 are up to one higher than in earlier versions of this document, because some checks added in round 2 also apply to the earlier cases. Two checks added after the run-21 re-audit raise run 17 by one and run 21 by two: what the family owes for an ambulance never depends on whether the company participates, and a coverage-policy number must be in the documents.
+The counts for runs 3–15 are up to one higher than in earlier versions of this document, because some checks added in round 2 also apply to the earlier cases. Three checks added after the run-21 re-audit raise run 17 by one, run 19 by one, run 21 by three and run 23 by one: what the family owes for an ambulance never depends on whether the company participates; a coverage-policy number must be in the documents; and the records go to the family and in with the appeal, never to Medicare on their own.
 
-Run 21 by case: A 2, B 2, C 0, D 0, E 0, F 3, G 0, H 1, I 4, J 0. Run 23 by case: A 0, B 0, C 0, D 2, E 0, F 0, G 1, H 4, I 1, J 1. H went from 1 to 4 with no change to the code it exercises; that is the noise described below. The production kits were built on 30 October 2026 the way a visitor builds one (a free token from `/api/unlock`, then the six parts). G passed all 104 checks. J passed 104 and missed one depth check: in its decode the doctors "should call the expedited appeal line to support your request", but the kit never says the doctor can request the expedited appeal directly. They cost $0.18 and $0.24 in model usage; J carries a PDF and records. Run 23's ten kits cost $1.70 in all, $0.17 per kit.
+By case:
 
-Replaying the final deterministic layer (v9.10) on stored outputs, with no prompt change, shows what code alone fixes. The defect counts went:
+| Run | A | B | C | D | E | F | G | H | I | J |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 21 (v9.8.3) | 2 | 2 | 0 | 0 | 0 | 3 | 0 | 1 | 5 | 0 |
+| 23 (v9.10) | 0 | 0 | 0 | 2 | 0 | 0 | 1 | 4 | 2 | 1 |
+| 24 (v9.11) | 0 | 0 | 1 | 0 | 2 | 4 | 0 | 1 | 3 | 0 |
+
+H went 1, 4, 1 and F 3, 0, 4 with no change to the code those cases exercise; that is the noise described below. I fell from 5 to 3 as its routing and billing faults were fixed. The production kits were built on 30 October 2026 the way a visitor builds one (a free token from `/api/unlock`, then the six parts). G passed all 104 checks. J passed 104 and missed one depth check: in its decode the doctors "should call the expedited appeal line to support your request", but the kit never says the doctor can request the expedited appeal directly. They cost $0.18 and $0.24 in model usage; J carries a PDF and records. Runs 23 and 24 cost $1.70 and $1.64 for ten kits, about $0.17 per kit.
+
+Replaying the final deterministic layer (v9.10; v9.11 changed only what the writers are told) on stored outputs, with no prompt change, shows what code alone fixes. The defect counts went:
 
 | Run | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | All |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| As run | 21 | 25 | 14 | 17 | 10 | 9 | 16 | 16 | 14 | 18 | 12 | 17 | 13 | 5 | 21 | 12 | 240 |
-| Replayed | 15 | 14 | 9 | 12 | 6 | 5 | 12 | 11 | 11 | 14 | 9 | 9 | 9 | 2 | 16 | 9 | 163 |
+| As run | 21 | 25 | 14 | 17 | 10 | 9 | 16 | 16 | 14 | 18 | 12 | 17 | 13 | 5 | 22 | 12 | 241 |
+| Replayed | 15 | 14 | 9 | 12 | 6 | 5 | 12 | 11 | 11 | 14 | 9 | 9 | 9 | 2 | 17 | 9 | 164 |
 
-No check that passed as run fails in the replay. Run 21 goes from 12 to 10.
+No check that passed as run fails in the replay. Run 21 goes from 13 to 11.
 
 ### Must-pass safety checks
 
@@ -201,7 +210,7 @@ No check that passed as run fails in the replay. Run 21 goes from 12 to 10.
 | 9–15 | pass | pass | pass | pass | pass | — | — |
 | 16 | — | — | — | — | — | pass | pass |
 | 17–18 | — | pass | — | — | — | pass | pass |
-| 19–21, 23 | pass | pass | pass | pass | pass | pass | pass |
+| 19–21, 23, 24 | pass | pass | pass | pass | pass | pass | pass |
 | Production | — | — | pass | pass | pass | — | pass |
 
 **G, runs 5–7.** Each engine before v9 routed the G patient through her doctor's office, in its own words:
@@ -232,8 +241,9 @@ The count is case × term × section cells with one of the guard's nine labels l
 | 21 | v9.8.3 | 2 | 11 |
 | Production | v9.8.3 (G, J) | 1 | 5 |
 | 23 | v9.10 | 0 | 3 |
+| 24 | v9.11 | 2 | 3 |
 
-Every unbracketed cell in the documents sent to the insurer in runs 19–21 and in production is a risk or a possible consequence, which the guard leaves alone on purpose: "placing me at risk for complications, malnutrition", "risks recurrent incontinence", "risks permanent paralysis and incontinence". The cells elsewhere are mostly G's decode and phone scripts, which the guard does not cover (section 7).
+Every unbracketed cell in the documents sent to the insurer in runs 19–24 and in production is a risk or a possible consequence, which the guard leaves alone on purpose: "placing me at risk for complications, malnutrition", "risks recurrent incontinence", "risks permanent paralysis and incontinence". The cells elsewhere are mostly G's decode and phone scripts, which the guard does not cover (section 7).
 
 ### Reading the numbers
 
@@ -297,6 +307,7 @@ v9.7 to v9.8.3 answered the run-16 audit, mostly with code (section 5), and v9.1
 | v9.8.2 | Code rewrites "not validated for" a setting or vehicle ("not appropriate for"; for a vehicle, "contraindicated for"), and brackets the hours or visits a setting is said to give when the source never gives them | Run-16 audit, J-5 (Major) and I-6: J's kits said "a skilled nursing facility offers 1–2 hours of therapy per day and is not validated for …" in every run from 16 to 20, through two prompt fixes |
 | v9.8.3 | Code removes the choice and notice arguments in emergency and ancillary surprise-billing cases, while keeping the rule itself | Against the prompt, D argued "I did not choose" in every run that included it (13 of 13, runs 5–20) and H argued "no notice or consent" in 9 of 13. Every changed line in runs 5–20 was read before it shipped. Run 21: neither |
 | v9.10 | Code writes the decode's "What you may actually owe" line for an Original Medicare ambulance claim and tells parts 2–6 that an ambulance claim is always paid on assignment; drops a coverage-policy number the documents do not contain; adds that the doctor can request the expedited appeal when "Do this first" already leads with it | Re-audit I-1 (Major): every I kit in runs 16–21 made the bill depend on whether the company participates, through the prompt rule against stating billing rules from memory. Run 21's "NCD 20.4". The production J kit never said the doctor can request the expedited appeal. The diff gate over all 876 stored parts changed 6 owed lines, 1 policy number and 5 "Do this first" lines, and nothing else. In run 23, I's kit has no participation question anywhere, and J's says the doctor can request it |
+| v9.11 | The decode of an Original Medicare notice is told where the records go: to the family, and in with the redetermination request, never to Medicare on their own, "as additional documentation" or as a corrected claim. Parts 2–6 get the same rule from the decode. With records attached, every part is told that a dated record keeps its own words. Rules like these now live in `api/_lib/fightpack-facts.js`, so the next one needs no change to the handler | Re-audit I-4 (Major): the rule that everything goes together reached only parts 2–6, and the decode, which every writer follows, routed records to Medicare in runs 21 and 23. Re-audit J-6 (Major): run 21 moved one day's "fatigued" to the next day. In run 24 I's decode routes everything through the family, and J quotes each day's note in its own words. One residue: I's billing script still offers the company the choice to "submit additional documentation" |
 | v9.9 (handler only) | The free path: free tokens per visitor, with a lifetime call budget per token. The reader is told plainly when the account's spend limit is reached or a file cannot be read, instead of "try again". The prompts, plan rules and guards moved to `api/_lib/`, which the site does not serve | The site went free on 30 October 2026. Until then `/lib/fightpack-preamble.js` and the other engine files were downloadable from the live site |
 
 ## 6. What generalizes
@@ -338,10 +349,11 @@ v9.7 to v9.8.3 answered the run-16 audit, mostly with code (section 5), and v9.1
 - **No case is fully held out any more.** G and H informed the fixes after runs 7 and 9, and I and J the fixes after run 16. New held-out cases are needed for the next round.
 - **The auditor is an AI with a physician rubric, not a licensed reviewer.** A physician should review a sample of real kits before scaling.
 - **Federal rules only.** State rules beyond what the notice prints are not verified, including state external review, state step-therapy laws and California's IMR.
-- **Open audit findings (run 21).** Two of the four remaining Majors are open.
-  - I sends the ambulance and hospital records to the Medicare contractor apart from the appeal (I-4). The prompt already says everything goes together; the phrasing varies too much for a safe pattern guard so far.
-  - J misstates the 10/25 therapy note ("fatigued" for "participating fully") in four sections, including the doctor's letter, and the note for the office still offers the physiatrist's letter to the attending (J-6, J-2).
-  - Fixed in code since, and confirmed in run 23 but not yet re-audited: the ambulance bill (I-1) and the invented "NCD 20.4". Only NCD and LCD numbers are checked; other citations are not.
+- **The run-21 re-audit's four Majors are answered but not yet re-audited.**
+  - I-1 (the ambulance bill) and the invented "NCD 20.4" are fixed in code (v9.10). Only NCD and LCD numbers are checked; other citations are not.
+  - I-4 (where the records go) and J-6 (a dated note's own words) are answered by rules the writers are told (v9.11), not by code, so they can still slip; run 24 got both right, and its billing script still offered the ambulance company the choice to "submit additional documentation".
+  - J-2 (two signers): since v9.8 the signer is a bracket, "[I / Dr. ___]", and runs 23 and 24 bracketed the specialty too ("I am the treating [specialty]"), as the auditor proposed.
+  - A third audit of I and J, on a v9.11 run, is the next check.
 - **Clinician letters still need a clinician's read.**
   - The label guard covers nine recurring relabels. Others, and invented level-of-care rules, are not caught.
   - The relabel usually starts in the decode, which every writer follows. The guard covers the documents sent to the insurer, not the decode, the phone scripts or the notes to the doctor's office. In runs 20 and 21, 10 and 11 cells outside those documents kept a label, mostly in G.
@@ -361,17 +373,17 @@ Two run-15 guard misfires are fixed: "causing foot drop and falls" now brackets 
 for t in qa/tests/*.js; do node "$t" || break; done
 
 # live run of all ten cases against the deployed site (the preview code is never throttled)
-cd qa && FP_CODE=<preview code> FP_RUN=runs24 FP_CONC=3 node fp-run.js
+cd qa && FP_CODE=<preview code> FP_RUN=runs25 FP_CONC=3 node fp-run.js
 # one case the way a visitor builds it, through the free path
-FP_FREE=1 FP_RUN=runs24-free node fp-run.js G-medicaid-mri-redflags
+FP_FREE=1 FP_RUN=runs25-free node fp-run.js G-medicaid-mri-redflags
 
 # score it (FP_TODAY pins "today" for the date checks; list the cases a partial run ran)
-FP_TODAY=2026-10-30 node fp-check.js runs24
+FP_TODAY=2026-10-30 node fp-check.js runs25
 
 # the must-pass safety table and the per-run summary
-node safety-table.js runs24 && node run-stats.js runs24
+node safety-table.js runs25 && node run-stats.js runs25
 
-# re-score every stored run on the cases it ran (runs 9–23 reproduce the table in section 4)
+# re-score every stored run on the cases it ran (runs 9–24 reproduce the table in section 4)
 for t in evidence/raw-runs*.tar.gz; do tar xzf "$t"; done && ./rescore-all.sh rescore
 
 # replay the current deterministic layer on a stored run, then score the replay
@@ -386,8 +398,8 @@ node relabel-map.js runs21
 
 The evidence is in:
 
-- `qa/evidence/` — the kits and reports from runs 4–21 and 23, and the two production kits (`runs22-free`);
-- `qa/evidence/raw-runs9-15.tar.gz` and `qa/evidence/raw-runs16-23.tar.gz` — the raw part files for runs 9–23, which can be re-scored or replayed (runs 3–8 survive as kits and reports only);
+- `qa/evidence/` — the kits and reports from runs 4–21, 23 and 24, and the two production kits (`runs22-free`);
+- `qa/evidence/raw-runs9-15.tar.gz` and `qa/evidence/raw-runs16-24.tar.gz` — the raw part files for runs 9–24, which can be re-scored or replayed (runs 3–8 survive as kits and reports only);
 - `docs/qa-evidence/` — the six audits.
 
 ## 9. Sources checked by the audits

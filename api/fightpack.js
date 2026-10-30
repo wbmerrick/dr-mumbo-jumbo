@@ -501,12 +501,12 @@ module.exports = async (req, res) => {
     if (plan === 'medicaid') ask += MEDICAID_RULES + '\n\n';
     if (urgent === true && plan === 'commercial') ask += URGENT_EXTERNAL + '\n\n';
     if (original) ask += ORIGINAL_MEDICARE + '\n\n';
-    if (original && F.isAmbulance([denial, extra, decode].join('\n'))) ask += F.AMBULANCE_ASSIGNED + '\n\n';
     if (funding === 'insured') ask += FUNDING_INSURED + '\n\n';
     if (funding === 'self-funded') ask += FUNDING_SELF + '\n\n';
     if (p2p && !original) ask += `${P2P_HEAD}: ${p2p.phone}${p2p.window ? ', ' + p2p.window : ''}${p2p.date ? ` — by ${fmtLong(p2p.date)}` : ''}. ${P2P_TAIL}\n\n`;
     if (clock) ask += `DECISION CLOCK (from the claims rules for this plan and care status — use exactly, never another number): ${clock}.\n\n`;
   }
+  ask += F.extraRules({ part, denial, extra, decode, original, records: !!recordsFile, files: !!(denialFile || recordsFile), plan, care, urgent }); // v9.11: rules that live in api/_lib/fightpack-facts.js
   const one = P.headings.length === 1;
   ask += `${KIT_MAP} You are writing part ${part} of 6: ONLY ${one ? 'the section' : `the ${P.headings.length} sections`} below${part === 6 ? ', then the fenced json block' : ''} — no title, no preface, no other section. Start ${one ? 'it' : 'each'} with its exact "## " heading line, write ${one ? 'it' : 'every one of them'} in full, then stop.\n\n${P.spec}${part === 3 || part === 4 ? '\n\n' + CLINICIAN_CHECK : ''}`;
   content.push({ type: 'text', text: ask });
