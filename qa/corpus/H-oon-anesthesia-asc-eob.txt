@@ -1,0 +1,23 @@
+KEYSTONE BENEFIT PLAN
+Administered by Allied Benefit Administrators — this is a self-funded group health plan
+EXPLANATION OF BENEFITS — THIS IS NOT A BILL
+
+Statement date: 09/08/2026
+Member: THEODORE R. OKAFOR          Member ID: KBP-207733415
+Group: Delmar Precision Tool Co. — Group 55120
+Claim number: AB-26-0817-3391
+Provider: Summit Anesthesia Partners (NON-PARTICIPATING)
+Place of service: Lakeview Surgery Center, Ambulatory Surgical Center (PARTICIPATING)
+Date of service: 08/17/2026
+
+Line  Service                                              Billed      Allowed    Plan paid   Your responsibility   Remarks
+1     01400  Anesthesia, open or arthroscopic knee procedure  $2,640.00   $780.00    $0.00       $780.00               N130, PR-1
+      Out-of-network deductible applied: $780.00
+
+Remark codes:
+N130 — Benefits for this service were processed at the out-of-network level because the provider does not participate in your plan's network. Non-participating providers may bill you for charges above the allowed amount.
+PR-1 — Deductible amount (out-of-network).
+
+Total billed: $2,640.00   Total allowed: $780.00   Plan paid: $0.00   Your responsibility: $780.00
+
+APPEAL RIGHTS: If you disagree with how this claim was processed, you or your authorized representative may file a written appeal within 180 days of the date of this statement. Send appeals to: Allied Benefit Administrators, Appeals Unit, P.O. Box 3310, Harrisburg, PA 17105, or fax 1-866-555-0128. Questions: Member Services 1-866-555-0127. The plan will decide your appeal within the time required by federal law. If your appeal is denied, you may have the right to request an independent external review.

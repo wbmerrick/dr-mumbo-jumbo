@@ -1,0 +1,20 @@
+COBALT ADMINISTRATORS — Third-Party Administrator for the Tidewater Shipbuilding Employee Health Plan
+EXPLANATION OF BENEFITS — Statement date 09/30/2026
+Member: ANGELA M. DUBOIS-REYES    Member ID: TSB-0552-8831    Patient: same    Claim #: C0926-4410875
+Provider: Chesapeake Orthopaedic Associates (in-network)    Date of service: 08/21/2026
+Diagnosis: M17.11 Primary osteoarthritis, right knee
+
+Line  Code         Description                                      Billed     Allowed    Paid      Patient resp.   Reason
+1     20610        Arthrocentesis/injection, major joint            $285.00    $112.40    $89.92    $22.48
+2     J3301 x4     Triamcinolone acetonide 10 mg (x4 units)         $96.00     $0.00      $0.00     $96.00          CO-97
+3     99214-25     Office visit, established patient, moderate      $240.00    $0.00      $0.00     $240.00         CO-4
+4     76942        Ultrasound guidance for needle placement         $310.00    $0.00      $0.00     $310.00         CO-97 / M15
+
+Reason codes
+CO-97: The benefit for this service is included in the payment/allowance for another service/procedure that has already been adjudicated.
+CO-4: The procedure code is inconsistent with the modifier used, or a required modifier is missing.
+M15: Separately billed services/tests have been bundled as they are considered components of the same procedure.
+
+Patient responsibility this claim: $668.48
+
+This plan is self-funded and is governed by ERISA. Claim disputes and appeals must be submitted within 180 days of this statement to Cobalt Administrators, Appeals Department, P.O. Box 7700, Norfolk, VA 23510, or fax 1-877-555-0144. You may request the plan provisions and claim-edit rules used, free of charge.

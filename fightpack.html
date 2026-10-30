@@ -105,6 +105,9 @@
   .kit-top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
   .kit-top h2{font-family:var(--display);font-weight:800;font-size:clamp(1.5rem,3.6vw,2.1rem);line-height:1.1}
   .kit-top h2 em{font-style:normal;color:var(--violet)}
+  .strength{display:inline-block;font-family:var(--body);font-size:.72rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;border:2px solid var(--ink);border-radius:999px;padding:4px 10px;margin-left:10px;vertical-align:middle;background:var(--yellow)}
+  .strength.strong{background:var(--teal);color:#fff}
+  .strength.needs{background:var(--coral);color:#fff}
   .kit-actions{display:flex;gap:10px;flex-wrap:wrap}
   .doc{background:var(--card);border:var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:24px 26px;margin-top:16px}
   .doc.star{box-shadow:6px 6px 0 var(--coral)}
@@ -121,6 +124,13 @@
   .doc-body strong{color:var(--ink)}
   .doc-body .ph{background:#FFF1C2;border-radius:4px;padding:0 3px}
   .pending{color:var(--ink-soft);font-style:italic}
+  .progress-note{font-size:.82rem;color:#C9BEE0;margin-top:10px}
+  .checkline{background:#FFF7DD;border:2px solid var(--ink);border-radius:12px;padding:10px 14px;font-size:.9rem;margin:0 0 6px}
+  .fixform{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin:10px 0 4px;padding:12px 14px;border:2px dashed rgba(29,16,51,.35);border-radius:12px;background:var(--card)}
+  .fixform[hidden]{display:none}
+  .fixform label{font-size:.82rem;font-weight:700}
+  .fixform input{font-family:var(--body);font-size:.92rem;padding:8px 10px;border:2px solid var(--ink);border-radius:10px;background:var(--paper);color:var(--ink);min-width:150px;flex:1}
+  .fixmsg{font-size:.85rem;font-weight:700;color:var(--violet-deep)}
   /* deadlines */
   .dl-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:12px 0}
   .dl-grid label{font-size:.78rem;font-weight:700;display:block;margin-bottom:4px}
@@ -148,7 +158,7 @@
   @media (max-width:560px){.kit{grid-template-columns:1fr}.machine{padding:20px}.doc{padding:18px}.dl-grid{grid-template-columns:1fr}}
   @media print{
     body{background:#fff;color:#000}
-    header,.hero,.tool .machine,.progress,.kit-actions,section,footer,.copy-btn,.dl-grid,.dl-note,.kitactions{display:none !important}
+    header,.hero,.tool .machine,.progress,.kit-actions,section,footer,.copy-btn,.dl-grid,.dl-note,.kitactions,.checkline,.fixform{display:none !important}
     .kitout{display:block !important;margin:0}
     .doc{box-shadow:none;border:1px solid #000;border-radius:0;page-break-inside:avoid;page-break-after:always;margin:0 0 12px}
     .doc-body .ph{background:#eee}
@@ -176,10 +186,10 @@
 
     <div class="kit">
       <div class="item star"><span class="n">01 · THE DIFFERENCE-MAKER</span><h3>Letter of medical necessity</h3><p>Written in your doctor's voice, answering the insurer's exact reason. They review, edit, sign. Five minutes.</p></div>
-      <div class="item"><span class="n">02</span><h3>Your appeal letter</h3><p>Formal internal appeal that quotes the denial back and demands the criteria, the reviewer's credentials, and a written decision.</p></div>
-      <div class="item"><span class="n">03</span><h3>Phone scripts</h3><p>Word-for-word scripts for the insurer and the billing office, with the eight things you must get before you hang up.</p></div>
-      <div class="item"><span class="n">04</span><h3>Records + itemized-bill request</h3><p>The letter that gets your chart and a coded, line-by-line bill — the ammunition for the appeal.</p></div>
-      <div class="item"><span class="n">05</span><h3>Round two: external review</h3><p>If they uphold the denial, the independent-review request is already written and waiting.</p></div>
+      <div class="item"><span class="n">02</span><h3>Your denial, decoded</h3><p>What type of denial it is, what the insurer has to show, how strong your case is, and the exact documents that would make it decisive.</p></div>
+      <div class="item"><span class="n">03</span><h3>Your appeal letter</h3><p>Formal internal appeal that answers the insurer's criteria point by point and demands the policy, the reviewer's credentials, and a written decision.</p></div>
+      <div class="item"><span class="n">04</span><h3>Peer-to-peer brief + phone scripts</h3><p>Talking points for your doctor's call with the medical director, plus word-for-word scripts for the insurer and the billing office.</p></div>
+      <div class="item"><span class="n">05</span><h3>Records request + round two</h3><p>The letter that gets your chart and a coded bill, and the external-review request already written for when they say no again.</p></div>
       <div class="item"><span class="n">06</span><h3>Every deadline, on your calendar</h3><p>Filing dates, decision-due dates, the external-review window — computed from your letter, downloadable to your calendar.</p></div>
     </div>
   </div>
@@ -220,35 +230,47 @@
     <div class="progress" id="progress" aria-live="polite">
       <h3>Building your Fight Pack</h3>
       <ul class="steps">
-        <li id="st1"><span class="ic">1</span>Drafting your appeal and your doctor's letter of medical necessity</li>
-        <li id="st2"><span class="ic">2</span>Writing the phone scripts and the records request</li>
-        <li id="st3"><span class="ic">3</span>Preparing round two and mapping your deadlines</li>
+        <li id="st1"><span class="ic">1</span>Decoding the denial and sizing up your case</li>
+        <li id="st2"><span class="ic">2</span>Drafting your appeal letter and your doctor's letter</li>
+        <li id="st3"><span class="ic">3</span>Writing the peer-to-peer brief, phone scripts, and records request</li>
+        <li id="st4"><span class="ic">4</span>Preparing round two and mapping your deadlines</li>
       </ul>
+      <p class="progress-note">The decode comes first; the other sections are written in parallel from it, so the whole kit usually lands in about a minute.</p>
     </div>
 
     <div class="kitout" id="kitout">
       <div class="kit-top">
-        <h2>Your <em>Fight Pack</em></h2>
+        <h2>Your <em>Fight Pack</em> <span id="strength" class="strength" style="display:none"></span></h2>
         <div class="kit-actions">
           <button class="btn btn-small" id="copyall" type="button">Copy everything</button>
           <button class="btn btn-small" id="printbtn" type="button">Download PDF / Print</button>
           <button class="btn btn-small" id="regen" type="button">Rebuild with edits</button>
+          <button class="btn btn-small" id="fixbtn" type="button" aria-expanded="false" aria-controls="fixform">Fix a detail everywhere</button>
         </div>
       </div>
+      <p class="checkline">Before you send anything, check every number under <strong>“Read from your letter”</strong> against your actual letter — especially if you uploaded a photo. If one is off, fix it once with <strong>Fix a detail everywhere</strong>.</p>
+      <form class="fixform" id="fixform" hidden>
+        <label for="fixfrom">Replace</label><input id="fixfrom" type="text" autocomplete="off" spellcheck="false" placeholder="e.g. GPH471820">
+        <label for="fixto">with</label><input id="fixto" type="text" autocomplete="off" spellcheck="false" placeholder="e.g. GPH4471820">
+        <button class="btn btn-small" type="submit">Replace in every section</button>
+        <span class="fixmsg" id="fixmsg" role="status"></span>
+      </form>
       <div id="docs"></div>
 
       <div class="doc" id="deadlines">
         <div class="doc-top"><h3>Your deadline tracker</h3><button class="copy-btn" id="icsbtn" type="button">Add to calendar (.ics)</button></div>
         <div class="doc-body">
-          <p>Dates below are computed from your letter and the general rules for employer and marketplace plans. <strong>The deadline printed on your denial letter always wins.</strong> Adjust the inputs if they're off.</p>
+          <p>Dates below are computed from what your letter says (the notice date and the number of days it gives you) and, where the letter is silent, from the general rules. <strong>The deadline printed on your denial letter always wins.</strong> Adjust the inputs if they're off.</p>
           <div class="dl-grid">
             <div><label for="dlDenial">Denial notice date</label><input type="date" id="dlDenial"></div>
-            <div><label for="dlStated">Deadline printed on letter</label><input type="date" id="dlStated"></div>
+            <div><label for="dlDays">Days to appeal (on letter)</label><input type="number" id="dlDays" min="1" max="730" placeholder="e.g. 180"></div>
+            <div><label for="dlStated">Deadline printed as a date</label><input type="date" id="dlStated"></div>
             <div><label for="dlFiled">Date you'll file</label><input type="date" id="dlFiled"></div>
             <div><label for="dlType">Service</label><select id="dlType"><option value="post-service">Already received</option><option value="pre-service">Not yet received</option><option value="urgent">Urgent — expedited</option></select></div>
+            <div><label for="dlPlan">Plan</label><select id="dlPlan"><option value="commercial">Employer / marketplace</option><option value="medicare">Medicare Advantage</option><option value="medicaid">Medicaid</option><option value="other">Other / not sure</option></select></div>
           </div>
           <ul class="dl-list" id="dlList"></ul>
-          <p class="dl-note">Medicare, Medicare Advantage, Medicaid, TRICARE, and some self-funded plans use different clocks — if your letter says one of those, use the dates it prints.</p>
+          <p class="dl-note">General rules for employer and marketplace plans come from the federal claims-procedure regulations (29 CFR 2560.503-1: at least 180 days to appeal; decisions within 72 hours urgent, 30 days pre-service, 60 days post-service; 45 CFR 147.136: external review within 4 months, decided within 45 days). Medicare Advantage notices give 65 days to appeal; decisions are due in 30 days (pre-service), 60 days (payment) or 72 hours (expedited), and an upheld denial goes automatically to Medicare's independent reviewer. Original Medicare, Medicaid, TRICARE, and some self-funded plans use other clocks — if your letter says one of those, use the dates it prints.</p>
         </div>
       </div>
       <p class="whisper" style="margin-top:18px">Your kit is saved in this browser for 3 days so you can come back to it. <a id="forget" style="color:var(--violet);font-weight:700;cursor:pointer">Clear it from this browser</a>.</p>
@@ -260,7 +282,7 @@
     <div class="faq">
       <div class="q"><h3>Will my doctor actually sign it?</h3><p>Usually, yes — the hard part was never willingness, it was the 45 minutes nobody has. You hand over a letter that already answers the insurer's reason in their language; the office corrects what's wrong, adds specifics in the brackets, and signs. The kit includes a half-page note for the office explaining exactly that.</p></div>
       <div class="q"><h3>Why not just the free letter?</h3><p>The free appeal letter is a good round one. The Fight Pack adds the document that carries the most weight (the doctor's letter), the scripts that get you the insurer's own criteria, the records request, the round-two external-review filing, and the deadlines — the parts people skip and then lose on.</p></div>
-      <div class="q"><h3>Does it work for any denial?</h3><p>It's built for medical-necessity, prior-authorization, out-of-network, and "not covered" denials from commercial, employer, and marketplace plans. Medicare and Medicaid appeals use different timelines; the kit flags that and defers to the deadline on your letter.</p></div>
+      <div class="q"><h3>Does it work for any denial?</h3><p>It reads the denial first and fights it on its own terms: medical-necessity and prior-authorization denials get the doctor's letter of medical necessity; an out-of-network emergency bill gets a clinician's emergency attestation and the surprise-billing argument; a coding or bundling denial gets a corrected-claim request for the billing office, because that is who actually fixes it. Medicare Advantage and Medicaid use different clocks; the kit flags that and uses the deadline on your letter.</p></div>
       <div class="q"><h3>What do you keep?</h3><p>Nothing. Your documents go to the AI model once to write the kit and are not stored. Stripe handles payment and your receipt. The finished kit stays in your browser only — print it or copy it somewhere safe.</p></div>
     </div>
   </section>
@@ -272,346 +294,6 @@
   <p class="copyright">© 2026 Dr Mumbo Jumbo · <a href="/">Home</a> · <a href="/appeal">Free appeal letter</a> · <a href="/denials">Denial Playbook</a> · <a href="/codes/">Code library</a></p>
 </footer>
 
-<script>
-(function(){
-  var $ = function(id){ return document.getElementById(id); };
-  var denial = $('denial'), extra = $('extra'), buy = $('buy'), example = $('example');
-  var errbox = $('error'), notice = $('notice'), wait = $('wait');
-  var attachBtn = $('attach'), fileInput = $('file'), filechip = $('filechip'), filename = $('filename'), fileclear = $('fileclear');
-  var attachRec = $('attachrec'), recInput = $('recfile'), recchip = $('recchip'), recname = $('recname'), recclear = $('recclear');
-  var progress = $('progress'), kitout = $('kitout'), docsEl = $('docs');
-  var attached = null, records = null, token = null, parts = {}, meta = null;
-  var configured = null;
-
-  var EXAMPLE_DENIAL = 'EXAMPLE NOTICE OF ADVERSE BENEFIT DETERMINATION — Reference 00000000. Date of notice: 10/02/2026. Member: [name]. Provider: Example Imaging Center. Date of service: 09/14/2026. Service: MRI lumbar spine without contrast (CPT 72148), billed $1,650.00. DETERMINATION: DENIED. Reason CO-50: not deemed a medical necessity by the payer. Per policy IMG-204, advanced imaging of the lumbar spine requires documentation of at least six weeks of conservative therapy unless red-flag findings are present. Member responsibility pending appeal: $1,650.00. You or your authorized representative may file an internal appeal within 180 days of this notice.';
-  var EXAMPLE_EXTRA = 'Eight weeks of physical therapy and naproxen before the MRI; new left-leg weakness and numbness started in late August; my orthopedist ordered the MRI to decide about surgery.';
-
-  // ---------- storage helpers ----------
-  function save(key, val){ try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){} }
-  function load(key){ try{ var v = localStorage.getItem(key); return v ? JSON.parse(v) : null; }catch(e){ return null; } }
-  function drop(key){ try{ localStorage.removeItem(key); }catch(e){} }
-  function stashInputs(){
-    var text = { denial: denial.value, extra: extra.value, fileName: attached ? attached.name : null, recName: records ? records.name : null };
-    try{ sessionStorage.setItem('dmj_fp_text', JSON.stringify(text)); }catch(e){}
-    try{ sessionStorage.setItem('dmj_fp_files', JSON.stringify({ file: attached, records: records })); }catch(e){ try{ sessionStorage.removeItem('dmj_fp_files'); }catch(e2){} }
-  }
-  function restoreInputs(){
-    try{
-      var t = JSON.parse(sessionStorage.getItem('dmj_fp_text') || 'null');
-      if(t){ denial.value = t.denial || ''; extra.value = t.extra || ''; }
-      var f = JSON.parse(sessionStorage.getItem('dmj_fp_files') || 'null');
-      if(f){
-        if(f.file){ attached = f.file; filename.textContent = '📎 ' + attached.name; filechip.classList.add('on'); }
-        if(f.records){ records = f.records; recname.textContent = '📎 ' + records.name; recchip.classList.add('on'); }
-      } else if(t && (t.fileName || t.recName)){
-        showNotice('Your text is back. Browser storage couldn\'t hold the attachment across checkout — please add the ' + (t.fileName ? 'photo/PDF of the denial' : 'records file') + ' again, then click Rebuild.');
-      }
-    }catch(e){}
-  }
-  function clearStash(){ try{ sessionStorage.removeItem('dmj_fp_text'); sessionStorage.removeItem('dmj_fp_files'); }catch(e){} }
-
-  // ---------- files ----------
-  function prepFile(f, ok, fail){
-    var MAX = 3 * 1024 * 1024;
-    if (f.type === 'application/pdf' || /\.pdf$/i.test(f.name)) {
-      if (f.size > MAX) { fail('That PDF is over 3 MB — export just the pages that matter and try again.'); return; }
-      var r = new FileReader();
-      r.onload = function(){ ok({ kind:'pdf', media_type:'application/pdf', data: String(r.result).split(',')[1], name: f.name }); };
-      r.onerror = function(){ fail("Couldn't read that file — try again."); };
-      r.readAsDataURL(f);
-      return;
-    }
-    var url = URL.createObjectURL(f);
-    var img = new Image();
-    img.onload = function(){
-      var scale = Math.min(1, 1600 / Math.max(img.width, img.height));
-      var w = Math.round(img.width*scale), h = Math.round(img.height*scale);
-      var c = document.createElement('canvas'); c.width = w; c.height = h;
-      c.getContext('2d').drawImage(img, 0, 0, w, h);
-      URL.revokeObjectURL(url);
-      var data = c.toDataURL('image/jpeg', 0.8).split(',')[1];
-      if (data.length > 2000000) { fail('That image is huge even after compression — try a tighter crop.'); return; }
-      ok({ kind:'image', media_type:'image/jpeg', data: data, name: f.name });
-    };
-    img.onerror = function(){ URL.revokeObjectURL(url); fail("Couldn't read that image — JPG, PNG, or PDF work best. (iPhone HEIC photo? Take a screenshot of it and upload that.)"); };
-    img.src = url;
-  }
-  function hookFile(btn, input, chip, nameEl, clearBtn, setter){
-    btn.addEventListener('click', function(){ input.click(); });
-    clearBtn.addEventListener('click', function(){ setter(null); input.value = ''; chip.classList.remove('on'); });
-    input.addEventListener('change', function(){
-      var f = input.files && input.files[0];
-      if(!f) return;
-      hideError();
-      prepFile(f, function(res){ setter(res); nameEl.textContent = '📎 ' + res.name; chip.classList.add('on'); }, function(msg){ setter(null); input.value=''; chip.classList.remove('on'); showError(msg); });
-    });
-  }
-  hookFile(attachBtn, fileInput, filechip, filename, fileclear, function(v){ attached = v; });
-  hookFile(attachRec, recInput, recchip, recname, recclear, function(v){ records = v; });
-
-  example.addEventListener('click', function(){ denial.value = EXAMPLE_DENIAL; extra.value = EXAMPLE_EXTRA; denial.focus(); });
-
-  // ---------- ui helpers ----------
-  function showError(msg){ errbox.textContent = msg; errbox.classList.add('on'); }
-  function hideError(){ errbox.classList.remove('on'); }
-  function showNotice(msg){ notice.textContent = msg; notice.classList.add('on'); }
-  function hideNotice(){ notice.classList.remove('on'); }
-  function setStep(n, state){ var el = $('st'+n); el.className = state; el.querySelector('.ic').textContent = state==='done' ? '✓' : state==='doing' ? '' : String(n); }
-  function resetSteps(){ for(var i=1;i<=3;i++){ var el=$('st'+i); el.className=''; el.querySelector('.ic').textContent = String(i); } }
-
-  // ---------- markdown-lite ----------
-  function escapeHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-  function inline(s){
-    return s.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>').replace(/\[([^\[\]]{1,160})\]/g, function(m, inner){ return '<span class="ph">[' + inner + ']</span>'; });
-  }
-  function renderBody(md){
-    var lines = escapeHtml(md).split(/\r?\n/);
-    var html = '', list = null, para = [];
-    function flushPara(){ if(para.length){ html += '<p>' + inline(para.join('<br>')) + '</p>'; para = []; } }
-    function flushList(){ if(list){ html += (list.tag==='ul'?'<ul>':'<ol>') + list.items.map(function(i){return '<li>'+inline(i)+'</li>';}).join('') + (list.tag==='ul'?'</ul>':'</ol>'); list = null; } }
-    lines.forEach(function(line){
-      var t = line.replace(/\s+$/,'');
-      var tt = t.trim();
-      if(!tt){ flushPara(); flushList(); return; }
-      if(/^-{3,}$/.test(tt)){ flushPara(); flushList(); return; }
-      var h = tt.match(/^#{3,4}\s+(.*)$/);
-      if(h){ flushPara(); flushList(); html += '<h4>' + inline(h[1]) + '</h4>'; return; }
-      var b = tt.match(/^[-•*]\s+(.*)$/);
-      if(b){ flushPara(); if(!list || list.tag !== 'ul'){ flushList(); list = {tag:'ul', items:[]}; } list.items.push(b[1]); return; }
-      var n = tt.match(/^\d+[.)]\s+(.*)$/);
-      if(n){ flushPara(); if(!list || list.tag !== 'ol'){ flushList(); list = {tag:'ol', items:[]}; } list.items.push(n[1]); return; }
-      flushList(); para.push(tt);
-    });
-    flushPara(); flushList();
-    return html;
-  }
-  function splitSections(md){
-    var out = [], cur = null;
-    md.split(/\r?\n/).forEach(function(line){
-      var h = line.match(/^##\s+(.*)$/);
-      if(h){ if(cur) out.push(cur); cur = { title: h[1].trim(), lines: [] }; return; }
-      if(cur) cur.lines.push(line); else { cur = { title: '', lines: [line] }; }
-    });
-    if(cur) out.push(cur);
-    return out.filter(function(s){ return s.title || s.lines.join('').trim(); }).map(function(s){ return { title: s.title, body: s.lines.join('\n').trim() }; });
-  }
-  function extractJson(md){
-    var m = md.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/i);
-    if(!m) return { text: md, json: null };
-    var json = null; try{ json = JSON.parse(m[1]); }catch(e){}
-    return { text: md.replace(m[0], '').trim(), json: json };
-  }
-  function plain(md){ return md.replace(/\*\*/g,'').replace(/^#{2,4}\s+/gm,'').trim(); }
-
-  // ---------- rendering the kit ----------
-  var sectionOrder = [];
-  function renderKit(){
-    docsEl.innerHTML = '';
-    sectionOrder = [];
-    [1,2,3].forEach(function(p){
-      if(!parts[p]) return;
-      splitSections(parts[p]).forEach(function(sec){
-        var isStar = /medical necessity/i.test(sec.title);
-        var card = document.createElement('div');
-        card.className = 'doc' + (isStar ? ' star' : '');
-        var h = '<div class="doc-top"><h3>' + escapeHtml(sec.title) + (isStar ? '<span class="tag">For your doctor</span>' : '') + '</h3><button class="copy-btn" type="button">Copy</button></div><div class="doc-body">' + renderBody(sec.body) + '</div>';
-        card.innerHTML = h;
-        var btn = card.querySelector('.copy-btn');
-        btn.addEventListener('click', function(){ copyText(plain(sec.title + '\n\n' + sec.body), btn); });
-        docsEl.appendChild(card);
-        sectionOrder.push(sec);
-      });
-    });
-    [1,2,3].forEach(function(p){
-      if(parts[p]) return;
-      var ph = document.createElement('div'); ph.className = 'doc'; ph.innerHTML = '<p class="pending">' + (p===2 ? 'Phone scripts and records request — on their way…' : 'Round two and your deadlines — on their way…') + '</p>'; docsEl.appendChild(ph);
-    });
-    kitout.classList.add('on');
-  }
-  function copyText(text, btn){
-    function done(){ if(btn){ var old = btn.textContent; btn.textContent = 'Copied!'; setTimeout(function(){ btn.textContent = old; }, 1600); } }
-    function fallback(){ var ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); done(); }catch(e){} document.body.removeChild(ta); }
-    if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(done).catch(fallback); } else { fallback(); }
-  }
-  $('copyall').addEventListener('click', function(){
-    var all = sectionOrder.map(function(s){ return plain(s.title + '\n\n' + s.body); }).join('\n\n\n');
-    copyText(all + '\n\n\n' + deadlinesText(), $('copyall'));
-  });
-  $('printbtn').addEventListener('click', function(){ window.print(); });
-  $('forget').addEventListener('click', function(){ drop('dmj_fp_kit'); drop('dmj_fp_token'); parts = {}; meta = null; kitout.classList.remove('on'); showNotice('Cleared from this browser.'); });
-
-  // ---------- deadlines ----------
-  var dlDenial = $('dlDenial'), dlStated = $('dlStated'), dlFiled = $('dlFiled'), dlType = $('dlType'), dlList = $('dlList');
-  function addDays(iso, n){ var d = new Date(iso + 'T12:00:00'); if(isNaN(d)) return null; d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); }
-  function addMonths(iso, n){ var d = new Date(iso + 'T12:00:00'); if(isNaN(d)) return null; d.setMonth(d.getMonth()+n); return d.toISOString().slice(0,10); }
-  function fmt(iso){ if(!iso) return '—'; var d = new Date(iso + 'T12:00:00'); return isNaN(d) ? '—' : d.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric', year:'numeric' }); }
-  var dlRows = [];
-  function computeDeadlines(){
-    var today = new Date().toISOString().slice(0,10);
-    var den = dlDenial.value, stated = dlStated.value, filed = dlFiled.value || today, type = dlType.value;
-    dlRows = [];
-    var appealDue = stated || (den ? addDays(den, 180) : null);
-    dlRows.push({ title: 'File your internal appeal by', date: appealDue, note: stated ? 'The deadline printed on your letter.' : (den ? 'General rule: 180 days from the notice date. Your letter controls.' : 'Enter the notice date or the printed deadline above.') });
-    if(appealDue){ dlRows.push({ title: 'Safe target: have it sent by', date: addDays(appealDue, -14), note: 'Two weeks early leaves room for the doctor\'s letter and certified mail.' }); }
-    var decisionDays = type === 'urgent' ? 3 : type === 'pre-service' ? 30 : 60;
-    dlRows.push({ title: 'Insurer\'s written decision due', date: addDays(filed, decisionDays), note: type === 'urgent' ? 'Expedited appeals: generally 72 hours.' : (type === 'pre-service' ? 'Generally 30 days for care not yet received.' : 'Generally 60 days for care already received.') });
-    dlRows.push({ title: 'If they uphold the denial: request external review within', date: addMonths(addDays(filed, decisionDays), 4), note: 'Generally about 4 months after the FINAL denial — check that letter for the exact date and where to file.' });
-    dlList.innerHTML = dlRows.map(function(r){ return '<li><div><b>' + escapeHtml(r.title) + '</b><small>' + escapeHtml(r.note) + '</small></div><span class="d">' + fmt(r.date) + '</span></li>'; }).join('');
-  }
-  function deadlinesText(){ return 'YOUR DEADLINES\n' + dlRows.map(function(r){ return '- ' + r.title + ': ' + fmt(r.date) + ' (' + r.note + ')'; }).join('\n'); }
-  [dlDenial, dlStated, dlFiled, dlType].forEach(function(el){ el.addEventListener('change', computeDeadlines); el.addEventListener('input', computeDeadlines); });
-  function applyMeta(){
-    var today = new Date().toISOString().slice(0,10);
-    if(meta){
-      if(meta.denial_date && /^\d{4}-\d{2}-\d{2}$/.test(meta.denial_date)) dlDenial.value = meta.denial_date;
-      if(meta.stated_appeal_deadline && /^\d{4}-\d{2}-\d{2}$/.test(meta.stated_appeal_deadline)) dlStated.value = meta.stated_appeal_deadline;
-      if(meta.urgent) dlType.value = 'urgent'; else if(meta.service_type === 'pre-service') dlType.value = 'pre-service'; else dlType.value = 'post-service';
-    }
-    if(!dlFiled.value) dlFiled.value = today;
-    computeDeadlines();
-  }
-  $('icsbtn').addEventListener('click', function(){
-    var stamp = new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d+/,'');
-    var ev = dlRows.filter(function(r){ return r.date; }).map(function(r, i){
-      var d = r.date.replace(/-/g,'');
-      return ['BEGIN:VEVENT','UID:dmj-' + stamp + '-' + i + '@dr-mumbo-jumbo.com','DTSTAMP:' + stamp,'DTSTART;VALUE=DATE:' + d,'DTEND;VALUE=DATE:' + (addDays(r.date,1)||r.date).replace(/-/g,''),'SUMMARY:Insurance appeal — ' + r.title.replace(/,/g,'\\,'),'DESCRIPTION:' + (r.note + ' Kit: dr-mumbo-jumbo.com/fightpack').replace(/,/g,'\\,'),'BEGIN:VALARM','TRIGGER:-P3D','ACTION:DISPLAY','DESCRIPTION:Appeal deadline in 3 days','END:VALARM','END:VEVENT'].join('\r\n');
-    });
-    var ics = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Dr Mumbo Jumbo//Fight Pack//EN','CALSCALE:GREGORIAN'].concat(ev).concat(['END:VCALENDAR']).join('\r\n');
-    var blob = new Blob([ics], { type: 'text/calendar' });
-    var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'appeal-deadlines.ics'; document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  });
-
-  // ---------- generation ----------
-  var building = false;
-  function postJSON(url, body, ms){
-    var ctrl = new AbortController();
-    var t = setTimeout(function(){ ctrl.abort(); }, ms || 120000);
-    return fetch(url, { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify(body), signal: ctrl.signal })
-      .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(d){ clearTimeout(t); return { ok: r.ok, status: r.status, data: d }; }); })
-      .catch(function(e){ clearTimeout(t); return { ok:false, status:0, data:{ message: e && e.name === 'AbortError' ? 'That took too long — try again.' : 'Connection dropped — try again.' } }; });
-  }
-  function inputs(){ return { denial: denial.value.trim(), extra: extra.value.trim(), file: attached ? { kind: attached.kind, media_type: attached.media_type, data: attached.data } : null, records: records ? { kind: records.kind, media_type: records.media_type, data: records.data } : null }; }
-  function build(tok){
-    if(building) return;
-    var inp = inputs();
-    if(!inp.denial && !inp.file){ showError('Paste the denial letter — or add a photo or PDF of it — then rebuild.'); return; }
-    building = true; hideError(); hideNotice();
-    parts = {}; meta = null;
-    resetSteps(); progress.classList.add('on'); kitout.classList.remove('on');
-    progress.scrollIntoView({ behavior:'smooth', block:'start' });
-    buy.disabled = true;
-    var seq = Promise.resolve();
-    [1,2,3].forEach(function(p){
-      seq = seq.then(function(){
-        setStep(p, 'doing');
-        return postJSON('/api/fightpack', Object.assign({ token: tok, part: p }, inp)).then(function(res){
-          if(!res.ok){ throw new Error(res.data.message || 'Something went wrong building part ' + p + '.'); }
-          var text = res.data.text || '';
-          if(p === 3){ var ex = extractJson(text); text = ex.text; meta = ex.json; }
-          parts[p] = text;
-          setStep(p, 'done');
-          renderKit();
-          if(p === 3){ applyMeta(); }
-        });
-      });
-    });
-    seq.then(function(){
-      building = false; buy.disabled = false;
-      progress.classList.remove('on');
-      save('dmj_fp_kit', { parts: parts, meta: meta, ts: Date.now() });
-      clearStash();
-      kitout.scrollIntoView({ behavior:'smooth', block:'start' });
-    }).catch(function(e){
-      building = false; buy.disabled = false;
-      progress.classList.remove('on');
-      showError((e && e.message ? e.message : 'Something went wrong.') + ' Your unlock is still valid — click "Rebuild with edits" or try again.');
-      if(parts[1]) kitout.classList.add('on');
-      $('tool').scrollIntoView({ behavior:'smooth', block:'start' });
-    });
-  }
-  function haveToken(){
-    var t = load('dmj_fp_token');
-    if(t && t.token && t.exp && t.exp > Date.now()) { token = t.token; return true; }
-    return false;
-  }
-  function keepToken(tok){ token = tok; save('dmj_fp_token', { token: tok, exp: Date.now() + 71*3600*1000 }); refreshBuyLabel(); }
-  function refreshBuyLabel(){ if(haveToken()){ buy.textContent = 'Build my Fight Pack →'; $('pricenote').textContent = 'Unlocked — rebuild as often as you need for 3 days.'; } }
-
-  $('regen').addEventListener('click', function(){
-    if(!haveToken()){ showError('Your 3-day unlock has ended. Get a new Fight Pack for a new denial.'); $('tool').scrollIntoView({behavior:'smooth'}); return; }
-    build(token);
-  });
-
-  // ---------- unlock paths ----------
-  function unlockWith(body){
-    hideError();
-    return postJSON('/api/unlock', body, 30000).then(function(res){
-      if(!res.ok){ throw new Error(res.data.message || 'Could not unlock.'); }
-      keepToken(res.data.token);
-      return res.data.token;
-    });
-  }
-  $('havecode').addEventListener('click', function(){
-    if(haveToken()){ build(token); return; }
-    var code = window.prompt('Enter your code:');
-    if(!code) return;
-    unlockWith({ code: code.trim() }).then(function(tok){ build(tok); }).catch(function(e){ showError(e.message); });
-  });
-
-  buy.addEventListener('click', function(){
-    hideError();
-    var inp = inputs();
-    if(!inp.denial && !inp.file){ showError('Paste the denial letter — or add a photo or PDF of it — first, so your kit is ready the moment you\'re back from checkout.'); denial.focus(); return; }
-    if(haveToken()){ build(token); return; }
-    if(configured === false){ wait.classList.add('on'); wait.scrollIntoView({behavior:'smooth', block:'center'}); return; }
-    buy.disabled = true; buy.textContent = 'Opening secure checkout…';
-    stashInputs();
-    postJSON('/api/checkout', {}, 30000).then(function(res){
-      if(res.ok && res.data.url){ location.href = res.data.url; return; }
-      buy.disabled = false; buy.textContent = 'Get my Fight Pack — $39 →';
-      if(res.status === 503){ configured = false; wait.classList.add('on'); wait.scrollIntoView({behavior:'smooth', block:'center'}); return; }
-      showError(res.data.message || "Couldn't start checkout. Try again in a moment.");
-    });
-  });
-
-  // waitlist (fallback)
-  var leadform = $('leadform'), leademail = $('leademail'), leadbtn = $('leadbtn'), leadmsg = $('leadmsg');
-  leadform.addEventListener('submit', function(ev){
-    ev.preventDefault();
-    leadmsg.className = 'wait-msg'; leadbtn.disabled = true; leadbtn.textContent = 'Saving…';
-    postJSON('/api/lead', { email: leademail.value, fighting: 'denied-claim' }, 20000).then(function(res){
-      leadbtn.disabled = false; leadbtn.textContent = 'Reserve the founding price →';
-      leadmsg.className = 'wait-msg ' + (res.ok ? 'ok' : 'err');
-      leadmsg.textContent = (res.data && res.data.message) || (res.ok ? "You're on the list." : "Couldn't save your spot — try again in a minute.");
-      if(res.ok) leadform.reset();
-    });
-  });
-
-  // ---------- boot ----------
-  (function boot(){
-    var q; try{ q = new URLSearchParams(location.search); }catch(e){ q = null; }
-    var sid = q && q.get('session_id');
-    var canceled = q && q.get('canceled');
-    if(sid || canceled){ restoreInputs(); try{ history.replaceState(null, '', '/fightpack'); }catch(e){} }
-    if(canceled){ showNotice('No charge was made. Your text is still here whenever you\'re ready.'); }
-
-    refreshBuyLabel();
-    fetch('/api/checkout', { method:'GET' }).then(function(r){ return r.json(); }).then(function(d){ configured = !!d.configured; if(!configured && !sid && !haveToken()){ $('pricenote').textContent = 'Launching shortly — reserve the founding price below.'; } }).catch(function(){ configured = null; });
-
-    if(sid){
-      showNotice('Payment received — unlocking your kit…');
-      unlockWith({ session_id: sid }).then(function(tok){ hideNotice(); build(tok); }).catch(function(e){
-        showError('Payment went through but the unlock didn\'t: ' + e.message + ' Reload this page to try again; if it keeps failing, your Stripe receipt has the seller\'s contact details.');
-      });
-      return;
-    }
-    var saved = load('dmj_fp_kit');
-    if(saved && saved.parts && saved.ts && Date.now() - saved.ts < 72*3600*1000){
-      parts = saved.parts; meta = saved.meta || null; renderKit(); applyMeta();
-      showNotice('Here\'s the Fight Pack you built ' + new Date(saved.ts).toLocaleDateString('en-US', {month:'short', day:'numeric'}) + '. Edit your text and click "Rebuild with edits" to regenerate.');
-    }
-  })();
-})();
-</script>
+<script src="fightpack.js"></script>
 </body>
 </html>

@@ -1,0 +1,17 @@
+EVERGREEN MUTUAL HEALTH — EXPLANATION OF BENEFITS (THIS IS NOT A BILL)
+Statement date: 10/06/2026
+Member: JORDAN A. KELLERMANN    Member ID: EMH00928371    Plan: Evergreen Choice HMO
+Patient: Jordan A. Kellermann    Claim #: 2026278004511
+Provider: Cascade Emergency Physicians, PLLC (NON-PARTICIPATING)
+Place of service: Mercy Lakeside Hospital — Emergency Department (PARTICIPATING)    Date of service: 09/12/2026
+
+Service                                   Billed       Allowed     Plan paid    Your responsibility    Remark
+99285 Emergency department visit,         $2,340.00    $0.00       $0.00        $2,340.00              N-OON / PR-242
+  high complexity
+TOTALS                                    $2,340.00    $0.00       $0.00        $2,340.00
+
+Remark codes
+N-OON: Provider is not in your plan's network. Services from non-participating providers are not covered under the Evergreen Choice HMO except for emergency services as defined in your Evidence of Coverage. Claim processed as NON-EMERGENCY.
+PR-242: Services not provided by network/primary care providers.
+
+You may be billed by the provider for the amount shown as your responsibility. If you believe this claim was processed incorrectly, you may file an appeal within 180 days of this statement date. Appeals: Evergreen Mutual Appeals, P.O. Box 3310, Seattle, WA 98111; fax 1-866-555-0128; or through the member portal. Member Services: 1-866-555-0120.

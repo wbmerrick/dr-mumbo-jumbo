@@ -62,10 +62,15 @@ The site is plain static HTML plus Node serverless functions — no build step, 
 ```
 index.html          translator (home)
 appeal.html         free appeal-letter generator
-fightpack.html      the paid Fight Pack (checkout, unlock, three-pass kit builder, deadline tracker)
+fightpack.html      the paid Fight Pack (checkout, unlock, six-pass kit builder, deadline tracker)
+fightpack.js        the Fight Pack page's client code (passes, retries, kit renderer, tracker)
 denials.html        the Denial Playbook
 api/                serverless functions (translate, appeal, fightpack, checkout, unlock, lead, codelibrary, codepage, sitemap)
 lib/                code-library data (CPT in three modules, ICD-10, denial reasons); unlock.js (tokens); files.js (attachments)
+                    fightpack-preamble.js / -sections.js / -rules.js — the kit writer's rules, as prose
+                    fightpack-guards.js — the deterministic text guards and the safety renderer
+qa/                 the Fight Pack test corpus, live runner, checker, replay, unit tests and evidence
+docs/               fightpack-qa.md — how the Fight Pack is tested, the results, and what is unproven
 scripts/            build-codes.js — validates the data files (legacy static generator)
 supabase/           waitlist.sql — one-time table setup
 vercel.json         routes, headers, function timeouts

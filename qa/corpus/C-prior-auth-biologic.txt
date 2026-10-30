@@ -1,0 +1,21 @@
+HARBORLINE HEALTH  |  Pharmacy Prior Authorization Department
+P.O. Box 9100, Portland, OR 97207  |  Prescriber line 1-855-555-0188
+
+October 20, 2026
+
+RE: PRIOR AUTHORIZATION REQUEST — NOT APPROVED
+
+Member: PRIYA S. RAMANATHAN        Member ID: HL-7730-5518-02        Plan: Harborline Select PPO (employer group 44817)
+Prescriber: Elena Vasquez-Moreno, MD, Gastroenterology — Bayview Digestive Health, NPI 1427690053
+Request #: PA-2026-1183907        Date received: 10/17/2026
+Drug requested: HUMIRA (adalimumab) 40 mg/0.4 mL pen — 160 mg induction, 80 mg at week 2, then 40 mg every other week
+Diagnosis: K50.10 Crohn's disease of large intestine without complications
+
+DECISION: NOT APPROVED.
+
+Reason for decision: Harborline's Step Therapy policy for TNF inhibitors (Policy RX-ST-114) requires documentation of an inadequate response, intolerance, or contraindication to at least ONE conventional immunomodulator (azathioprine, 6-mercaptopurine, or methotrexate) for a minimum of 12 weeks before a biologic can be approved for moderate to severe Crohn's disease. The documentation submitted indicates treatment with mesalamine and two courses of oral corticosteroids, but does not document a trial of a conventional immunomodulator. In addition, the request did not include a recent colonoscopy or imaging report documenting current disease activity.
+
+Covered alternatives: azathioprine, 6-mercaptopurine, methotrexate. Once step therapy criteria are met, the biosimilar adalimumab products Hadlima and Hyrimoz are preferred over Humira on your formulary.
+
+YOUR APPEAL RIGHTS
+You, your prescriber, or an authorized representative may request a standard appeal within 180 days of the date of this letter. Standard pre-service appeals are decided within 30 days. If your prescriber believes that waiting for a standard decision could seriously jeopardize your health or your ability to regain maximum function, request an EXPEDITED appeal by calling 1-855-555-0190; expedited decisions are made within 72 hours. Written appeals: Harborline Appeals Unit, P.O. Box 9120, Portland, OR 97207, or fax 1-855-555-0191. You may request a copy of Policy RX-ST-114, the clinical rationale, and the credentials of the reviewing clinician at no cost. If our final decision upholds this denial, you may request an independent external review.
