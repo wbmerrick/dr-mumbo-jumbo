@@ -101,7 +101,7 @@ function page(entry) {
     <p>Paste the whole thing into the free decoder and get it back in plain English — charges, codes, and what's worth questioning.</p>
     <div class="btnrow">
       <a class="btn primary" href="/?mode=bill#translator">Decode my bill free →</a>
-      <a class="btn ghost" href="/#fightpack">Fight Pack — $39 at launch</a>
+      <a class="btn ghost" href="/fightpack">Fight Pack — free</a>
     </div>
   </div>`}
 

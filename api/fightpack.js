@@ -1,4 +1,4 @@
-// /api/fightpack — the paid denial-fighting kit.
+// /api/fightpack — the denial-fighting kit (free unless FIGHTPACK_FREE=0; see lib/unlock.js).
 // The kit is ten sections built in six short passes so no single call runs long:
 //   part 1: §1  the denial decoded + case strength + who fixes it   (runs first — it is the plan)
 //   part 2: §2  the patient's appeal letter                          ┐
@@ -9,17 +9,17 @@
 // Every part's output is normalized in code before it is returned: only that part's own
 // sections survive, under their exact headings, so a writer that wanders into another
 // part's territory can never put a duplicate or half-written document in front of a patient.
-// Needs ANTHROPIC_API_KEY plus an unlock token from /api/unlock (Stripe session or preview code).
-const { verify } = require('../lib/unlock.js');
+// Needs ANTHROPIC_API_KEY plus an unlock token from /api/unlock (free token, Stripe session or preview code).
+const { verify, isFree } = require('../lib/unlock.js');
 const { sanitizeFile, fileBlock, MAX_FILE_B64 } = require('../lib/files.js');
 
 const MAX_CHARS = 6000;
 const MAX_EXTRA = 1500;
-const MAX_DECODE = 6000;
+const MAX_DECODE = 8000; // v9.8: run 17's 6000-character cap cut held-out J's decode before its printed numbers
 
-const { PREAMBLE, DECODE_RULE, SEC } = require('../lib/fightpack-prompts.js');
-const G = require('../lib/fightpack-guards.js');
-const { SAFETY_LABEL_RULE, SAFETY_EMERGENCY, SAFETY_TODAY, MA_PHYSICIAN, MEDICAID_RULES, PHONE_ROLES_HEAD, CLINICIAN_CHECK } = require('../lib/fightpack-rules.js');
+const { PREAMBLE, DECODE_RULE, SEC } = require('./_lib/fightpack-prompts.js');
+const G = require('./_lib/fightpack-guards.js');
+const { SAFETY_LABEL_RULE, SAFETY_EMERGENCY, SAFETY_TODAY, MA_PHYSICIAN, MEDICAID_RULES, URGENT_EXTERNAL, ORIGINAL_MEDICARE, FUNDING_INSURED, FUNDING_SELF, P2P_HEAD, P2P_TAIL, PHONE_ROLES_HEAD, CLINICIAN_CHECK } = require('./_lib/fightpack-rules.js');
 const { fieldOf, safetyOf, phoneRoles, postProcess } = G;
 
 // ---------- deterministic facts from the decode ----------
@@ -71,9 +71,10 @@ function computeDeadline(decode) {
   return null;
 }
 // The decode's "- **Urgent:** Yes — …" / "No — …" line. null when the decode does not say.
+const URGENT_LINE = /^[ \t]*(?:[-*•][ \t]+)?\**[ \t]*urgent[ \t]*\??[ \t]*(?:\*\*)?[ \t]*:?[ \t]*(?:\*\*)?[ \t]*(.+)$/im;
 function urgencyOf(decode) {
   if (!decode) return null;
-  const m = decode.match(/^[ \t]*(?:[-*•][ \t]+)?\**[ \t]*urgent[ \t]*\??[ \t]*(?:\*\*)?[ \t]*:?[ \t]*(?:\*\*)?[ \t]*(.+)$/im);
+  const m = decode.match(URGENT_LINE);
   if (!m) return null;
   const v = m[1].replace(/[*"“”]/g, '').trim();
   if (/^yes\b/i.test(v)) return true;
@@ -87,13 +88,56 @@ function urgencyOf(decode) {
 // decode of an employer HMO with exactly that wording became "medicare".
 const PLAN_TERMS = 'original medicare|medicare advantage|medicare|medicaid|medi-cal|self-funded|self funded|fully insured|insured|erisa';
 const NEGATED_PLAN = new RegExp(`\\b(?:no|not|never|without|nor|rather than|instead of|unlike|other than)\\b[^.;()\\n]{0,60}?\\b(?:${PLAN_TERMS})\\b(?:\\s*(?:,\\s*(?:or|and)?|or|and|\\/)\\s*(?:${PLAN_TERMS})\\b)*`, 'gi');
-function planTypeOf(decode) {
-  if (!decode) return null;
-  const m = decode.match(/^[ \t]*(?:[-*•][ \t]+)?\**[ \t]*plan(?:[ \t]+type)?[ \t]*(?:\*\*)?[ \t]*:[ \t]*(?:\*\*)?[ \t]*(.+)$/im);
+const PLAN_LINE = /^[ \t]*(?:[-*•][ \t]+)?\**[ \t]*plan(?:[ \t]+type)?[ \t]*(?:\*\*)?[ \t]*:[ \t]*(?:\*\*)?[ \t]*(.+)$/im;
+function planParts(decode) {
+  const m = decode ? decode.match(PLAN_LINE) : null;
   if (!m) return null;
   const v = m[1].toLowerCase().replace(/[*_"“”]/g, '');
-  const head = v.split(/\s[—–-]\s|\(|;|:|\.(?:\s|$)/)[0];
-  return classifyPlan(head.replace(NEGATED_PLAN, ' ')) || classifyPlan(v.replace(NEGATED_PLAN, ' '));
+  return { v: v.replace(NEGATED_PLAN, ' '), head: v.split(/\s[—–-]\s|\(|;|:|\.(?:\s|$)/)[0].replace(NEGATED_PLAN, ' ') };
+}
+function planTypeOf(decode) {
+  const p = planParts(decode);
+  return p ? classifyPlan(p.head) || classifyPlan(p.v) : null;
+}
+// Original Medicare (not Medicare Advantage): its own appeal levels and contractor clock.
+function originalMedicare(decode) {
+  const p = planParts(decode);
+  return !!p && /original medicare/.test(classifyPlan(p.head) ? p.head : p.v) && planTypeOf(decode) === 'other';
+}
+// Fully insured or self-funded — only when the Plan line says one and not the other, and never when it
+// says the documents leave it open ("unknown whether self-funded or fully insured"). When the letter came
+// as text, the text itself must carry the words (run 4's decodes called two plans "fully insured" on a guess).
+const FUNDING_WORDS = { insured: /\binsured by\b|underwritten by|fully insured|regulated by (?:your|the) state(?:'s|’s)? (?:department of )?insurance/i, 'self-funded': /self[- ]funded|self[- ]insured|administered by|third[- ]party administrator/i };
+function fundingOf(decode, sourceText) {
+  const f = fundingOfPlanLine(decode);
+  return f && sourceText && String(sourceText).trim() && !FUNDING_WORDS[f].test(sourceText) ? null : f;
+}
+function fundingOfPlanLine(decode) {
+  if (planTypeOf(decode) !== 'commercial') return null;
+  const p = planParts(decode);
+  const v = p ? p.v : '';
+  if (/unknown|unclear|not stated|not say|doesn't say|does not say|whether|not sure|ask (?:your )?hr|appears|apparently|likely|probably|may be|might be|seems|presum|assum|if it is|if the plan is/.test(v)) return null; // a guess is not the documents saying so
+  const self = /self[- ]funded|self[- ]insured|administered by|third[- ]party administrator|\btpa\b/.test(v);
+  const insured = /fully insured|(?<!self[- ])insured by|underwritten by|(?<!self[- ])\binsured (?:employer |group )?plan\b/.test(v);
+  return self && !insured ? 'self-funded' : insured && !self ? 'insured' : null;
+}
+// The decode's "Peer-to-peer line": the number the doctor calls, its window as printed, and — for a
+// calendar-day window counted from the notice — the last day, computed here like the appeal deadline.
+const PHONE_ANY = /(?:\+?1[-.\s]?)?\(?\b\d{3}\)?[-.\s]?\d{3}[-.\s]\d{4}\b/;
+function p2pOf(decode) {
+  const v = decode ? factOf(decode, 'peer-to-peer line') : '';
+  if (!v || /\bnone\b|not (?:on|in) the (?:letter|notice)/i.test(v)) return null;
+  const phone = (v.match(PHONE_ANY) || [])[0];
+  if (!phone) return null;
+  const w = v.match(/\bwithin\s+(\d{1,3})\s+(calendar\s+|business\s+|working\s+)?days?\b[^;)\n]*/i);
+  const window = w ? w[0].replace(/[\s.,]+$/, '') : null;
+  let date = null;
+  const notice = parseDate(factOf(decode, 'notice date'));
+  if (w && !w[2] && notice && /notice|letter|decision|denial/i.test(w[0]) && !/receipt|receiv/i.test(w[0])) {
+    date = new Date(notice.getTime());
+    date.setUTCDate(date.getUTCDate() + Number(w[1]));
+  }
+  return { phone: phone.trim(), window, date };
 }
 function classifyPlan(v) {
   if (/original medicare/.test(v)) return 'other';
@@ -119,7 +163,8 @@ function effectiveUrgency(decode) {
 }
 // The longest a plan may take to decide the appeal, from plan type and care status (29 CFR
 // 2560.503-1(i); 42 CFR 422.590). Medicaid and other programs: the notice states its own clock.
-function decisionClock(care, plan) {
+function decisionClock(care, plan, original) {
+  if (original) return 'the Medicare contractor generally decides a redetermination within 60 days of receiving the request';
   if (care !== 'pre' && care !== 'post') return null;
   if (plan === 'medicaid' || plan === 'other') return null;
   if (plan === 'medicare') {
@@ -132,6 +177,60 @@ function decisionClock(care, plan) {
     ? `${who} must decide an appeal for care not yet received within 30 days of receiving it (15 days per level if it has two appeal levels), or within 72 hours if expedited`
     : `${who} must decide an appeal for care already received within 60 days of receiving it (30 days per level if it has two appeal levels); care already received is never expedited`;
 }
+// Urgent care not yet received on an employer or marketplace plan: code adds one line under the decode's
+// Urgent line, so the patient and every writer (the decode is the plan for parts 2–6) know the expedited
+// external review can go at the same time as the expedited appeal (api/_lib/fightpack-rules.js URGENT_EXTERNAL).
+const TWO_REQUESTS = "**Two requests at once:** because this is urgent, you or the doctor can generally ask for an expedited external review at the same time as the expedited appeal, so you do not have to wait for the plan's answer. The notice or the plan's appeals line can tell you how.";
+function twoRequests(decode) {
+  if (effectiveUrgency(decode) !== true || planTypeOf(decode) !== 'commercial' || /two requests at once/i.test(decode)) return decode;
+  const m = decode.match(URGENT_LINE);
+  if (!m) return decode;
+  const lead = m[0].match(/^[ \t]*(?:[-*•][ \t]+)?/)[0];
+  const at = m.index + m[0].length;
+  return decode.slice(0, at) + '\n' + lead + TWO_REQUESTS + decode.slice(at);
+}
+// Urgent care not yet received: the first step is the expedited request itself. The run-16 audit found held-out
+// J's decode leading with a billing-office call (Major), and runs 16-19 led it with a billing-office call, a
+// representative form or a letter instead. When the decode's "Do this first" line does not start with the
+// expedited request, code puts it first and keeps the writer's step after it.
+const DO_FIRST_LINE = /^([ \t]*(?:[-*•][ \t]+)?\*\*Do this first:?\*\*:?[ \t]*)(.+)$/im;
+function expeditedFirst(decode, level) {
+  if (!decode || level === 'emergency' || effectiveUrgency(decode) !== true || careStatusOf(decode) === 'post') return decode;
+  const m = decode.match(DO_FIRST_LINE);
+  if (!m) return decode;
+  // with a "contact the doctor today" safety line, that contact stays first and the expedited request follows it
+  const today = level === 'today';
+  if (/expedit|fast appeal|urgent appeal/i.test(today ? m[2] : m[2].split(/[.;:]\s/)[0])) return decode;
+  const phone = (factOf(decode, 'expedited appeal line').match(PHONE_ANY) || [])[0];
+  const call = phone ? `call ${phone.trim()}` : 'call the expedited-appeal number on your letter';
+  const why = "the doctor can request it directly, and when the doctor says waiting could seriously harm the patient's health, the plan must treat it as urgent";
+  const line = today
+    ? `${m[2].trim()}${/[.!?]$/.test(m[2].trim()) ? '' : '.'} Then ask for an expedited appeal: ${call} (${why}).`
+    : `Ask for an expedited appeal now: ${call} (${why}). Then: ${m[2]}`;
+  return decode.replace(m[0], m[1] + line);
+}
+// When the documents say how an employer plan is funded, only that complaint route is given. Run 19's kit
+// for held-out J named the state insurance department and then added "if your plan turns out to be
+// self-funded …, complaints go to the U.S. Department of Labor's EBSA", against the FULLY INSURED rule.
+const ROUTE_LEAD = '(?:^|(?<=[-*•]\\s)|[;,]\\s*|\\s+[—–]\\s+|(?<=[.!?])\\s+)(?:but\\s+|and\\s+|or\\s+)?\\(?';
+// a full stop inside "U.S." or "naic.org" does not end the sentence
+const ROUTE_TEXT = '(?:\\bU\\.S\\.|[^.;\\n]|\\.(?=\\S))';
+const OTHER_ROUTE = {
+  insured: new RegExp(`${ROUTE_LEAD}(?:if|when|should)\\b[^.;()\\n]*?\\bself[- ](?:funded|insured)\\b${ROUTE_TEXT}*?\\b(?:EBSA|Department of Labor)\\b${ROUTE_TEXT}*(?:[.;]|$)`, 'gim'),
+  'self-funded': new RegExp(`${ROUTE_LEAD}(?:if|when|should)\\b[^.;()\\n]*?\\b(?:fully\\s+)?insured\\b${ROUTE_TEXT}*?\\bstate insurance department\\b${ROUTE_TEXT}*(?:[.;]|$)`, 'gim')
+};
+const NOT_SURE_BOTH = /\s*\b(?:if you(?:'re|’re| are) (?:not sure|unsure)|if (?:it is|it's|that is) unclear)\b[^.\n]*\bboth\b[^.\n]*\./gi;
+function oneRoute(text, funding) {
+  const re = OTHER_ROUTE[funding];
+  if (!re) return text;
+  return String(text).split(/(```[\s\S]*?```)/).map((seg, i) => {
+    if (i % 2) return seg;
+    return seg
+      .replace(re, (m) => (/^\s*[;,]/.test(m) || /^\s*[—–]/.test(m) ? '.' : ''))
+      .replace(NOT_SURE_BOTH, '')
+      .replace(/^([ \t]*[-*•][ \t])[ \t]+/gm, '$1');
+  }).join('');
+}
 // Facts the tracker json must carry exactly as the decode states them.
 function decodeFacts(decode) {
   const f = {};
@@ -142,7 +241,7 @@ function decodeFacts(decode) {
   if (care === 'pre') f.service_type = 'pre-service';
   if (care === 'post') f.service_type = 'post-service';
   const plan = planTypeOf(decode);
-  if (plan) f.plan_type = plan;
+  if (plan) f.plan_type = originalMedicare(decode) ? 'original-medicare' : plan; // the tracker's own row for it (v9.8)
   const notice = parseDate(factOf(decode, 'notice date'));
   if (notice) f.denial_date = isoOf(notice);
   const printed = factOf(decode, 'appeal deadline as printed');
@@ -156,10 +255,38 @@ function decodeFacts(decode) {
   if (claim && !/not on the letter|^\[/i.test(claim)) f.claim_number = claim;
   return f;
 }
-function fixMeta(text, facts) {
+// When code writes the whole block (fixMeta, below), the rest of it is read from the decode too, so the
+// block has every key: replaying v9.7.1 on run 17's case C gave a block with the code facts only.
+const DENIAL_TYPES = [
+  [/prior[- ]auth|step[- ]therapy|authori[sz]ation|pre-?cert/i, 'prior-authorization'],
+  [/out[- ]of[- ]network|non-?emergency|\bnetwork\b/i, 'out-of-network'],
+  [/coding|bundl|modifier|duplicate/i, 'coding'],
+  [/eligib|timely filing|coordination of benefits/i, 'eligibility'],
+  [/not covered|investigational|experimental|exclu/i, 'not-covered'],
+  [/medical(?:ly)? necess|level of care|not medically/i, 'medical-necessity']
+];
+function fallbackFacts(decode) {
+  const f = { denial_date: null, stated_appeal_deadline: null, appeal_window_days: null, service_type: 'unknown', urgent: false, claim_number: null, service: null, denial_reason: null, denial_type: 'unknown', case_strength: null, plan_type: 'unknown' };
+  if (!decode) return f;
+  const type = fieldOf(decode, 'type of denial');
+  const cs = (decode.match(/case strength:?\*{0,2}\s*\*{0,2}\s*"?(strong|good|needs)/i) || [])[1];
+  f.service = factOf(decode, 'service denied').replace(/\*/g, '').trim() || null;
+  f.denial_reason = (type.match(/["“]([^"”]{3,200})["”]/) || [])[1] || null;
+  f.denial_type = (DENIAL_TYPES.find(([re]) => re.test(type)) || [])[1] || 'unknown';
+  if (cs) f.case_strength = { strong: 'strong', good: 'good', needs: 'needs-evidence' }[cs.toLowerCase()];
+  return Object.assign(f, decodeFacts(decode));
+}
+// The tracker json closes part 6, so a writer that runs out of room loses it, and the page loses the
+// deadline tracker (run 17, case C). The facts it needs come from the decode, so code writes them
+// itself when the block is missing, after dropping any half-written block.
+function fixMeta(text, facts, whole) {
   if (!facts || !Object.keys(facts).length) return text;
   const m = text.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/i);
-  if (!m) return text;
+  if (!m) {
+    const fences = text.split('```').length - 1;
+    const body = fences % 2 ? text.slice(0, text.lastIndexOf('```')).trimEnd() : text;
+    return body + '\n\n```json\n' + JSON.stringify(whole || facts, null, 2) + '\n```';
+  }
   let j;
   try { j = JSON.parse(m[1]); } catch (e) { return text; }
   Object.assign(j, facts);
@@ -181,12 +308,12 @@ const CANON = { 1: [H1], 2: [H2], 3: H3, 4: H4, 5: [H5], 6: [H6], 7: [H7], 8: [H
 // headings: what the writer is told; slots: alternatives accepted when checking completeness;
 // own: the section numbers this part may return; stopAt: the next part's first section.
 const PARTS = {
-  1: { spec: SEC[1], max: 1600, headings: [H1], slots: [[H1]], own: [1], stopAt: 2 },
+  1: { spec: SEC[1], max: 2000, headings: [H1], slots: [[H1]], own: [1], stopAt: 2 }, // v9.8.1: run 19's longer decode (two more lines) hit 1600 in case B
   2: { spec: SEC[2], max: 1800, headings: [H2], slots: [[H2]], own: [2], stopAt: 3 },
   3: { spec: SEC[3], max: 2600, headings: [H3[0] + ' (or the type-specific variant)', H4[0] + ' (or the matching variant)'], slots: [H3, H4], own: [3, 4], stopAt: 5 },
   4: { spec: SEC[4], max: 2600, headings: [H5, H6], slots: [[H5], [H6]], own: [5, 6], stopAt: 7 },
   5: { spec: SEC[5], max: 2000, headings: [H7, H8], slots: [[H7], [H8]], own: [7, 8], stopAt: 9 },
-  6: { spec: SEC[6], max: 2200, headings: [H9[0] + ' (or the Medicare Advantage / Medicaid variant)', H10], slots: [H9, [H10]], own: [9, 10], stopAt: null }
+  6: { spec: SEC[6], max: 2800, headings: [H9[0] + ' (or the Medicare Advantage / Medicaid variant)', H10], slots: [H9, [H10]], own: [9, 10], stopAt: null }
 };
 const KIT_MAP = "The kit has ten sections, written in six parts at the same time by separate writers: 1 the decode · 2 the patient's appeal letter · 3 the letter for the doctor (or billing office, or HR) · 4 the note for that office · 5 the peer-to-peer brief · 6 the insurer phone script · 7 the billing-office phone script · 8 the records request · 9 the external review request · 10 the deadlines.";
 
@@ -204,7 +331,7 @@ function canonicalHeading(n, title) {
     if (/coverage|\bhr\b|benefits|eligibility/.test(t)) return alts[3];
     return alts[0];
   }
-  if (n === 9) return /next level|medicare|medicaid|fair hearing|automatic|independent review entity/.test(t) ? alts[1] : alts[0];
+  if (n === 9) return /next level|medicare|medicaid|fair hearing|state hearing|automatic|independent review entity|reconsideration|redetermination|qualified independent/.test(t) ? alts[1] : alts[0];
   if (/billing/.test(t)) return alts[1];
   if (/\bhr\b|benefits/.test(t)) return alts[2];
   return alts[0];
@@ -242,6 +369,29 @@ function normalizeSections(raw, part) {
   return { text: out.join('\n').trim(), trimmed };
 }
 
+// ---------- what a refusal from the model API means for the reader ----------
+// The account's spend limit or credit balance is not a passing fault, so it is said plainly (trying again
+// will not help); an attachment the model cannot read, or too much to read at once, asks for a clearer or
+// shorter copy; a rate limit asks for a minute; anything else is a hiccup worth one more try.
+function upstreamTrouble(status, detail) {
+  const e = (detail && detail.error) || {};
+  const msg = String(e.message || '');
+  const code = String((e.details && e.details.error_code) || '');
+  if (status === 402 || /spend_limit|billing/i.test(code) || /usage limits|credit balance|spend limit|billing/i.test(msg)) {
+    return { status: 503, error: 'budget', message: isFree()
+      ? 'The free Fight Pack has reached its limit for now. Please try again later, and keep an eye on the appeal deadline printed on your denial letter.'
+      : 'The Fight Pack is paused on our side for now. Your unlock stays valid for 3 days, so please try again later.' };
+  }
+  if (status === 413 || (status === 400 && /prompt is too long|too many (?:pages|tokens)|maximum of \d+ pdf pages/i.test(msg))) {
+    return { status: 400, error: 'too_long', message: "That's more than the kit can read at once. Upload just the pages of the letter that matter, and a shorter excerpt of the records." };
+  }
+  if (status === 400 && /\b(?:image|pdf|document|media_type|base64)\b/i.test(msg)) {
+    return { status: 400, error: 'file_unreadable', message: "We couldn't read the attached file. Try a clear photo or screenshot of the letter, or a PDF of just the pages that matter." };
+  }
+  if (status === 429) return { status: 429, error: 'upstream', message: 'A lot of people are fighting denials right now — give it a minute and try again.' };
+  return { status: 502, error: 'upstream', message: 'The kit engine hiccuped. Try again in a moment.' };
+}
+
 module.exports = async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
   if (req.method !== 'POST') {
@@ -272,7 +422,9 @@ module.exports = async (req, res) => {
 
   const auth = verify(body.token);
   if (!auth) {
-    res.status(401).json({ error: 'locked', message: 'This kit needs an unlocked session. Complete checkout (or enter your code) and try again.' });
+    res.status(401).json({ error: 'locked', message: isFree()
+      ? 'Your free session has ended. Click "Rebuild with edits" to start a new one.'
+      : 'This kit needs an unlocked session. Complete checkout (or enter your code) and try again.' });
     return;
   }
 
@@ -313,10 +465,14 @@ module.exports = async (req, res) => {
   const urgent = part > 1 ? effectiveUrgency(decode) : null;
   const care = part > 1 ? careStatusOf(decode) : null;
   const plan = part > 1 ? planTypeOf(decode) : null;
-  const clock = part > 1 ? decisionClock(care, plan) : null;
+  const original = part > 1 && originalMedicare(decode);
+  const clock = part > 1 ? decisionClock(care, plan, original) : null;
+  const funding = part > 1 ? fundingOf(decode, denial) : null;
+  const p2p = part > 1 ? p2pOf(decode) : null;
   const safety = part > 1 ? safetyOf(decode) : null;
   if (part === 1) ask += SAFETY_LABEL_RULE + '\n\n';
-  const roles = phoneRoles([denial, extra].join('\n'));
+  // a letter sent as a file has no text here, so the decode's own list of printed numbers stands in (v9.8)
+  const roles = phoneRoles([denial, extra, part > 1 && denialFile ? fieldOf(decode, 'phone and fax numbers') : ''].join('\n'));
   if (roles.length) ask += `${PHONE_ROLES_HEAD}\n${roles.map((r) => '- ' + r).join('\n')}\n\n`;
   if (decode) ask += `${DECODE_RULE}\n\n<kit_decode>\n${decode}\n</kit_decode>\n\n`;
   if (part > 1) {
@@ -329,6 +485,11 @@ module.exports = async (req, res) => {
     else if (safety === 'today') ask += SAFETY_TODAY + '\n\n';
     if (plan === 'medicare' && care === 'pre') ask += MA_PHYSICIAN + '\n\n';
     if (plan === 'medicaid') ask += MEDICAID_RULES + '\n\n';
+    if (urgent === true && plan === 'commercial') ask += URGENT_EXTERNAL + '\n\n';
+    if (original) ask += ORIGINAL_MEDICARE + '\n\n';
+    if (funding === 'insured') ask += FUNDING_INSURED + '\n\n';
+    if (funding === 'self-funded') ask += FUNDING_SELF + '\n\n';
+    if (p2p && !original) ask += `${P2P_HEAD}: ${p2p.phone}${p2p.window ? ', ' + p2p.window : ''}${p2p.date ? ` — by ${fmtLong(p2p.date)}` : ''}. ${P2P_TAIL}\n\n`;
     if (clock) ask += `DECISION CLOCK (from the claims rules for this plan and care status — use exactly, never another number): ${clock}.\n\n`;
   }
   const one = P.headings.length === 1;
@@ -360,13 +521,10 @@ module.exports = async (req, res) => {
     clearTimeout(timer);
 
     if (!upstream.ok) {
-      const status = upstream.status === 429 ? 429 : 502;
-      res.status(status).json({
-        error: 'upstream',
-        message: status === 429
-          ? 'A lot of people are fighting denials right now — give it a minute and try again.'
-          : 'The kit engine hiccuped. Try again in a moment.'
-      });
+      let detail = null;
+      try { detail = await upstream.json(); } catch { detail = null; }
+      const t = upstreamTrouble(upstream.status, detail);
+      res.status(t.status).json({ error: t.error, message: t.message });
       return;
     }
 
@@ -382,10 +540,11 @@ module.exports = async (req, res) => {
     }
     const norm = normalizeSections(raw, part);
     const post = postProcess(norm.text, { part, safety, known: [denial, extra, decode].join('\n'), attachments: !!(denialFile || recordsFile), records: !!recordsFile });
-    const text = part === 6 ? fixMeta(post.text, decodeFacts(decode)) : post.text;
+    const routed = part > 1 ? oneRoute(post.text, funding) : post.text;
+    const text = part === 6 ? fixMeta(routed, decodeFacts(decode), fallbackFacts(decode)) : part === 1 ? expeditedFirst(twoRequests(post.text), post.level) : routed;
     const missing = P.slots.filter((alts) => !alts.some((h) => text.includes(h))).map((alts) => alts[0]);
     const usage = data.usage ? { in: data.usage.input_tokens, out: data.usage.output_tokens, cache_read: data.usage.cache_read_input_tokens || 0, cache_write: data.usage.cache_creation_input_tokens || 0 } : null;
-    res.status(200).json({ part, text, sid: auth.sid === 'preview' ? 'preview' : 'paid', stop: data.stop_reason || null, missing, trimmed: norm.trimmed, safety: post.level, ...post.counts, usage, deadline: deadline ? isoOf(deadline.date) : null, urgent, clock });
+    res.status(200).json({ part, text, sid: auth.sid === 'preview' || auth.sid === 'free' ? auth.sid : 'paid', stop: data.stop_reason || null, missing, trimmed: norm.trimmed, safety: post.level, ...post.counts, usage, deadline: deadline ? isoOf(deadline.date) : null, urgent, clock });
   } catch (e) {
     clearTimeout(timer);
     res.status(e && e.name === 'AbortError' ? 504 : 500).json({ error: 'server', message: 'That took too long. Try again — the kit builds in short passes.' });
@@ -393,4 +552,4 @@ module.exports = async (req, res) => {
 };
 
 // exposed for unit tests
-module.exports._test = Object.assign({ computeDeadline, parseDate, factOf, urgencyOf, planTypeOf, careStatusOf, effectiveUrgency, decisionClock, decodeFacts, fixMeta, normalizeSections, canonicalHeading }, G);
+module.exports._test = Object.assign({ computeDeadline, parseDate, factOf, urgencyOf, planTypeOf, originalMedicare, fundingOf, p2pOf, careStatusOf, effectiveUrgency, decisionClock, decodeFacts, fallbackFacts, fixMeta, twoRequests, expeditedFirst, oneRoute, normalizeSections, canonicalHeading }, G);

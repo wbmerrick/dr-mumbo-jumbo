@@ -1,4 +1,4 @@
-# Fight Pack automated checks — run "rescore/runs4-final" (today=2026-10-30)
+# Fight Pack automated checks — run "runs4" (today=2026-10-30)
 
 ## A-sleep-paraphrase — Rawest input: patient paraphrase of a sleep-study denial, no identifiers
 **87 pass · 5 fail · 3 warn** · 4070 words · 112 placeholders · wall 62s · deadline {"truth":null,"served":[null]}
@@ -31,9 +31,10 @@ WARN:
 - ⚠️ §5 long — 565 words (target 420)
 
 ## C-prior-auth-biologic — Pre-service prior-auth denial of a biologic (step therapy), steroid-dependent flare
-**98 pass · 5 fail · 3 warn** · 4022 words · 43 placeholders · wall 61s · deadline {"truth":"2027-04-18","served":["2027-04-18"]}
+**98 pass · 6 fail · 3 warn** · 4022 words · 43 placeholders · wall 61s · deadline {"truth":"2027-04-18","served":["2027-04-18"]}
 
 FAIL:
+- ❌ urgent: expedited external review can be requested at the same time
 - ❌ server decision clock: 30 days / 72 hours for care not yet received — []
 - ❌ §1 does not call the plan insured or self-funded unless the documents say so — ** Employer fully insured plan (Harborline Select PPO, employer group 44817). You are fili
 - ❌ no pending step written as already done — office is submitting
@@ -101,4 +102,5 @@ WARN:
 - ⚠️ §5 long — 572 words (target 420)
 - ⚠️ §10 long — 301 words (target 260)
 
-**TOTAL: 558 pass · 39 fail across 6 cases**
+**TOTAL: 558 pass · 40 fail across 6 cases**
+

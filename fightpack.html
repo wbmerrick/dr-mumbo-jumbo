@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>The Fight Pack — the appeal kit that comes with your doctor's letter | Dr Mumbo Jumbo</title>
-<meta name="description" content="Paste your insurance denial. Get the complete kit to overturn it: your appeal letter, a Letter of Medical Necessity your doctor can sign in five minutes, phone scripts, the records request, external review, and every deadline. $39, built by a physician.">
+<meta name="description" content="Paste your insurance denial. Get the complete kit to overturn it: your appeal letter, a Letter of Medical Necessity your doctor can sign in five minutes, phone scripts, the records request, external review, and every deadline. Free, built by a physician.">
 <link rel="canonical" href="https://dr-mumbo-jumbo.com/fightpack">
 <meta property="og:title" content="The Fight Pack — the appeal kit that comes with your doctor's letter">
-<meta property="og:description" content="Your appeal, your doctor's letter of medical necessity, phone scripts, records request, external review, deadlines. $39. Built by a practicing physician.">
+<meta property="og:description" content="Your appeal, your doctor's letter of medical necessity, phone scripts, records request, external review, deadlines. Free. Built by a practicing physician.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://dr-mumbo-jumbo.com/fightpack">
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Crect%20width='100'%20height='100'%20rx='22'%20fill='%236C3BFF'/%3E%3Ctext%20x='50'%20y='70'%20font-size='54'%20text-anchor='middle'%20font-family='Arial,Helvetica,sans-serif'%20font-weight='900'%20fill='%23FAF3E7'%3E%3F!%3C/text%3E%3C/svg%3E">
@@ -180,7 +180,7 @@
 
 <main>
   <div class="hero wrap">
-    <span class="eyebrow">$39 · one denial · built by a practicing physician</span>
+    <span class="eyebrow" id="eyebrow">Free · built by a practicing physician</span>
     <h1>The appeal kit that comes with <span class="zing">your doctor's letter.</span></h1>
     <p class="sub">Most appeals are won or lost on one document: the treating doctor's <strong>letter of medical necessity</strong>. Doctors rarely have time to write it. So the Fight Pack writes it for them — in the language insurers approve — alongside everything else you need to overturn the denial.</p>
 
@@ -211,17 +211,17 @@
       <label class="extra-label" for="extra">What should the insurer know? <span>(optional — symptoms, how long, what was tried first, why your doctor ordered it, whether waiting is dangerous)</span></label>
       <input class="extra" id="extra" maxlength="1500" spellcheck="false" placeholder='e.g. "8 weeks of physical therapy and anti-inflammatories first; new weakness in my left leg; my orthopedist ordered the MRI"'>
       <div class="controls">
-        <button class="btn btn-primary" id="buy">Get my Fight Pack — $39 →</button>
+        <button class="btn btn-primary" id="buy">Build my Fight Pack — free →</button>
         <button class="btn btn-ghost" id="example" type="button">Try an example</button>
-        <span class="price" id="pricenote">One-time. Use it for this denial as often as you need for 3 days.</span>
+        <span class="price" id="pricenote">Free. Rebuild it as often as you need.</span>
       </div>
-      <p class="codelink">Already paid, or have a code? <a id="havecode">Unlock here</a></p>
+      <p class="codelink" id="codelink" hidden>Already paid, or have a code? <a id="havecode">Unlock here</a></p>
       <p class="whisper">The more your documents say, the fewer [brackets] you fill in — a photo of the denial and your doctor's note give the best kit. Nothing you paste or upload is stored on our side; your kit lives only in this browser.</p>
       <div class="error" id="error" role="alert"></div>
       <div class="notice" id="notice" role="status"></div>
       <div class="wait" id="wait">
         <h3>Checkout opens shortly</h3>
-        <p>Payments aren't switched on yet. Leave your email and you'll get first access at the $39 founding price — launch news only.</p>
+        <p>Payments aren't switched on yet. Leave your email and you'll get first access at the founding price — launch news only.</p>
         <form id="leadform"><input type="email" id="leademail" required placeholder="you@email.com" aria-label="Email address"><button class="btn" type="submit" id="leadbtn">Reserve the founding price →</button></form>
         <div class="wait-msg" id="leadmsg" role="status"></div>
       </div>
@@ -267,10 +267,10 @@
             <div><label for="dlStated">Deadline printed as a date</label><input type="date" id="dlStated"></div>
             <div><label for="dlFiled">Date you'll file</label><input type="date" id="dlFiled"></div>
             <div><label for="dlType">Service</label><select id="dlType"><option value="post-service">Already received</option><option value="pre-service">Not yet received</option><option value="urgent">Urgent — expedited</option></select></div>
-            <div><label for="dlPlan">Plan</label><select id="dlPlan"><option value="commercial">Employer / marketplace</option><option value="medicare">Medicare Advantage</option><option value="medicaid">Medicaid</option><option value="other">Other / not sure</option></select></div>
+            <div><label for="dlPlan">Plan</label><select id="dlPlan"><option value="commercial">Employer / marketplace</option><option value="medicare">Medicare Advantage</option><option value="medicaid">Medicaid</option><option value="original-medicare">Original Medicare</option><option value="other">Other / not sure</option></select></div>
           </div>
           <ul class="dl-list" id="dlList"></ul>
-          <p class="dl-note">General rules for employer and marketplace plans come from the federal claims-procedure regulations (29 CFR 2560.503-1: at least 180 days to appeal; decisions within 72 hours urgent, 30 days pre-service, 60 days post-service; 45 CFR 147.136: external review within 4 months, decided within 45 days). Medicare Advantage notices give 65 days to appeal; decisions are due in 30 days (pre-service), 60 days (payment) or 72 hours (expedited), and an upheld denial goes automatically to Medicare's independent reviewer. Original Medicare, Medicaid, TRICARE, and some self-funded plans use other clocks — if your letter says one of those, use the dates it prints.</p>
+          <p class="dl-note">General rules for employer and marketplace plans come from the federal claims-procedure regulations (29 CFR 2560.503-1: at least 180 days to appeal; decisions within 72 hours urgent, 30 days pre-service, 60 days post-service; 45 CFR 147.136: external review within 4 months, decided within 45 days). Medicare Advantage notices give 65 days to appeal; decisions are due in 30 days (pre-service), 60 days (payment) or 72 hours (expedited), and an upheld denial goes automatically to Medicare's independent reviewer. Original Medicare gives 120 days to ask for a redetermination, generally decided within 60 days; a reconsideration can then be requested within 180 days. Medicaid, TRICARE, and some self-funded plans use other clocks — if your letter says one of those, use the dates it prints. The next level's deadline counts from the date on the decision letter, so the tracker leaves it undated.</p>
         </div>
       </div>
       <p class="whisper" style="margin-top:18px">Your kit is saved in this browser for 3 days so you can come back to it. <a id="forget" style="color:var(--violet);font-weight:700;cursor:pointer">Clear it from this browser</a>.</p>
@@ -281,9 +281,9 @@
     <h2 class="kicker">Straight <em>answers</em></h2>
     <div class="faq">
       <div class="q"><h3>Will my doctor actually sign it?</h3><p>Usually, yes — the hard part was never willingness, it was the 45 minutes nobody has. You hand over a letter that already answers the insurer's reason in their language; the office corrects what's wrong, adds specifics in the brackets, and signs. The kit includes a half-page note for the office explaining exactly that.</p></div>
-      <div class="q"><h3>Why not just the free letter?</h3><p>The free appeal letter is a good round one. The Fight Pack adds the document that carries the most weight (the doctor's letter), the scripts that get you the insurer's own criteria, the records request, the round-two external-review filing, and the deadlines — the parts people skip and then lose on.</p></div>
+      <div class="q"><h3>Why not just the one-page appeal letter?</h3><p>The one-page appeal letter is a good round one. The Fight Pack adds the document that carries the most weight (the doctor's letter), the scripts that get you the insurer's own criteria, the records request, the round-two external-review filing, and the deadlines — the parts people skip and then lose on.</p></div>
       <div class="q"><h3>Does it work for any denial?</h3><p>It reads the denial first and fights it on its own terms: medical-necessity and prior-authorization denials get the doctor's letter of medical necessity; an out-of-network emergency bill gets a clinician's emergency attestation and the surprise-billing argument; a coding or bundling denial gets a corrected-claim request for the billing office, because that is who actually fixes it. Medicare Advantage and Medicaid use different clocks; the kit flags that and uses the deadline on your letter.</p></div>
-      <div class="q"><h3>What do you keep?</h3><p>Nothing. Your documents go to the AI model once to write the kit and are not stored. Stripe handles payment and your receipt. The finished kit stays in your browser only — print it or copy it somewhere safe.</p></div>
+      <div class="q"><h3>What do you keep?</h3><p>Nothing. Your documents go to the AI model once to write the kit and are not stored. The finished kit stays in your browser only — print it or copy it somewhere safe.</p></div>
     </div>
   </section>
 </main>

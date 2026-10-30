@@ -37,7 +37,33 @@ function mockRes(){ const r = { code: 0, body: null, headers: {} }; r.setHeader 
   res = mockRes(); await fp({ method:'POST', body:{ token: tok, denial:'Denied CO-50', part: 2 } }, res); assert.strictEqual(res.code, 503, 'no api key → 503');
   res = mockRes(); await fp({ method:'POST', body:{ token: tok, denial:'x', file:{ kind:'image', media_type:'image/jpeg', data:'a'.repeat(4300001) } } }, res); assert.strictEqual(res.code, 400); assert.strictEqual(res.body.error, 'file_too_big');
   const checkout = require('../../api/checkout.js');
-  res = mockRes(); await checkout({ method:'GET', headers:{} }, res); assert.deepStrictEqual(res.body, { configured:false, preview:true });
+  res = mockRes(); await checkout({ method:'GET', headers:{} }, res); assert.deepStrictEqual(res.body, { configured:false, preview:true, free:true });
+  // free mode (the default): any visitor gets a token, a few an hour; each token covers a few kits
+  const ipA = { 'x-forwarded-for': '203.0.113.7, 10.0.0.1' }, ipB = { 'x-real-ip': '198.51.100.2' };
+  const free = [];
+  for (let i = 0; i < u.FREE_TOKENS_PER_HOUR; i++) { res = mockRes(); await unlock({ method:'POST', headers: ipA, body:{ free:true } }, res); assert.strictEqual(res.code, 200, 'free token ' + i); free.push(res.body.token); }
+  assert.strictEqual(new Set(free).size, free.length, 'every free token is distinct');
+  res = mockRes(); await unlock({ method:'POST', headers: ipA, body:{ free:true } }, res); assert.strictEqual(res.code, 429, 'per-visitor hourly limit'); assert.strictEqual(res.body.error, 'busy');
+  res = mockRes(); await unlock({ method:'POST', headers: ipB, body:{ free:true } }, res); assert.strictEqual(res.code, 200, 'another visitor is not affected');
+  const ft = res.body.token;
+  assert.strictEqual(u.verify(ft).sid, 'free');
+  for (let i = 1; i < u.FREE_CALLS_PER_TOKEN; i++) assert(u.verify(ft), 'free call ' + i);
+  assert.strictEqual(u.verify(ft), null, 'a free token stops after its share of calls');
+  const realNow = Date.now, H = 3600 * 1000;
+  Date.now = () => realNow() + 2 * H;
+  try { assert.strictEqual(u.verify(ft), null, 'a spent free token stays spent hours later (no hourly refill)'); } finally { Date.now = realNow; }
+  // per visitor: a few tokens an hour and a capped number a day
+  const ipC = { headers: { 'x-real-ip': '192.0.2.44' } }, t0 = realNow();
+  let got = 0;
+  for (let h = 0; h < 5; h++) for (let k = 0; k < u.FREE_TOKENS_PER_HOUR; k++) if (u.mintFree(ipC, t0 + h * 2 * H + k).token) got++;
+  assert.strictEqual(got, u.FREE_TOKENS_PER_DAY, 'per-visitor daily limit');
+  assert(u.mintFree(ipC, t0 + 33 * H).token, 'the next day starts fresh');
+  assert(u.verify(tok) && u.verify(tok) && u.verify(tok), 'preview and paid tokens are never throttled');
+  res = mockRes(); await fp({ method:'POST', body:{ token: ft, denial:'x' } }, res); assert.strictEqual(res.code, 401, 'spent free token → 401 (the page then asks for a new one)');
+  process.env.FIGHTPACK_FREE = 'off';
+  res = mockRes(); await unlock({ method:'POST', headers: ipB, body:{ free:true } }, res); assert.strictEqual(res.code, 403, 'free mode off → checkout only');
+  res = mockRes(); await checkout({ method:'GET', headers:{} }, res); assert.strictEqual(res.body.free, false);
+  delete process.env.FIGHTPACK_FREE;
   res = mockRes(); await checkout({ method:'POST', headers:{} }, res); assert.strictEqual(res.code, 503, 'unconfigured checkout');
   console.log('all unlock/handler tests passed');
 })().catch(e => { console.error('TEST FAIL', e); process.exit(1); });

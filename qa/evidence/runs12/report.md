@@ -22,9 +22,10 @@ WARN:
 - ⚠️ §10 long — 398 words (target 260)
 
 ## C-prior-auth-biologic — Pre-service prior-auth denial of a biologic (step therapy), steroid-dependent flare
-**101 pass · 2 fail · 5 warn** · 4231 words · 53 placeholders · wall 59s · deadline {"truth":"2027-04-18","served":["2027-04-18"]}
+**101 pass · 3 fail · 5 warn** · 4231 words · 53 placeholders · wall 59s · deadline {"truth":"2027-04-18","served":["2027-04-18"]}
 
 FAIL:
+- ❌ urgent: expedited external review can be requested at the same time
 - ❌ depth: (audit) the urgent insurer call uses the printed expedited-appeal line — /855-555-0190/ in §6
 - ❌ never: (audit) the notice lists no exceptions — none is attributed to RX-ST-114 — the policy itself allows exception
 
@@ -89,4 +90,5 @@ FAIL:
 - ❌ §2 requests the criteria and the reviewer's credentials
 - ❌ never: (audit) for anesthesia at an in-network facility the protection never depends on notice or consent — did not receive or sign any notice-and-consent
 
-**TOTAL: 778 pass · 15 fail across 8 cases** (development set 586 pass · 11 fail; held-out 192 pass · 4 fail)
+**TOTAL: 778 pass · 16 fail across 8 cases** (development set 586 pass · 12 fail; held-out 192 pass · 4 fail)
+

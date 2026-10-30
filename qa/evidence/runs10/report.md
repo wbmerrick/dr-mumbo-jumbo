@@ -21,9 +21,10 @@ WARN:
 - ⚠️ §10 long — 298 words (target 260)
 
 ## C-prior-auth-biologic — Pre-service prior-auth denial of a biologic (step therapy), steroid-dependent flare
-**101 pass · 2 fail · 3 warn** · 3981 words · 48 placeholders · wall 61s · deadline {"truth":"2027-04-18","served":["2027-04-18"]}
+**101 pass · 3 fail · 3 warn** · 3981 words · 48 placeholders · wall 61s · deadline {"truth":"2027-04-18","served":["2027-04-18"]}
 
 FAIL:
+- ❌ urgent: expedited external review can be requested at the same time
 - ❌ §2 requests the criteria and the reviewer's credentials
 - ❌ never: (audit) the notice lists no exceptions — none is attributed to RX-ST-114 — The policy allows exception
 
@@ -33,10 +34,9 @@ WARN:
 - ⚠️ §5 long — 451 words (target 420)
 
 ## D-oon-er-eob — EOB: out-of-network ER physician at an in-network hospital, processed as non-emergency
-**94 pass · 3 fail · 2 warn** · 3599 words · 42 placeholders · wall 49s · deadline {"truth":"2027-04-04","served":["2027-04-04"]}
+**95 pass · 2 fail · 2 warn** · 3599 words · 42 placeholders · wall 49s · deadline {"truth":"2027-04-04","served":["2027-04-04"]}
 
 FAIL:
-- ❌ §1 does not call the plan insured or self-funded unless the documents say so — ** Employer or marketplace plan (Evergreen Choice HMO; likely fully insured based on the s
 - ❌ never: (audit) the balance-billing protection is standing, not only while disputed — Balance billing:** While
 - ❌ never: (audit) choice of clinician is irrelevant to emergency care — never argued or proved — you did not choose
 
@@ -84,4 +84,5 @@ FAIL:
 WARN:
 - ⚠️ §10 long — 266 words (target 260)
 
-**TOTAL: 784 pass · 9 fail across 8 cases** (development set 591 pass · 6 fail; held-out 193 pass · 3 fail)
+**TOTAL: 785 pass · 9 fail across 8 cases** (development set 592 pass · 6 fail; held-out 193 pass · 3 fail)
+

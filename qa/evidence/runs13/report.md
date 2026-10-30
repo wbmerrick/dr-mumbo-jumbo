@@ -26,9 +26,10 @@ WARN:
 - ⚠️ §10 long — 282 words (target 260)
 
 ## C-prior-auth-biologic — Pre-service prior-auth denial of a biologic (step therapy), steroid-dependent flare
-**102 pass · 1 fail · 3 warn** · 4092 words · 37 placeholders · wall 60s · deadline {"truth":"2027-04-18","served":["2027-04-18"]}
+**102 pass · 2 fail · 3 warn** · 4092 words · 37 placeholders · wall 60s · deadline {"truth":"2027-04-18","served":["2027-04-18"]}
 
 FAIL:
+- ❌ urgent: expedited external review can be requested at the same time
 - ❌ never asserts a stability nobody reported — mergency department now. Once medically stable, work with the doctor's offic
 
 WARN:
@@ -92,4 +93,5 @@ WARN:
 - ⚠️ §1 long — 583 words (target 560)
 - ⚠️ §10 long — 299 words (target 260)
 
-**TOTAL: 780 pass · 13 fail across 8 cases** (development set 586 pass · 11 fail; held-out 194 pass · 2 fail)
+**TOTAL: 780 pass · 14 fail across 8 cases** (development set 586 pass · 12 fail; held-out 194 pass · 2 fail)
+

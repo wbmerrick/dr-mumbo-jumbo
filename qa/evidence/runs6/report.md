@@ -1,4 +1,4 @@
-# Fight Pack automated checks — run "rescore/runs6" (today=2026-10-30)
+# Fight Pack automated checks — run "runs6" (today=2026-10-30)
 
 ## A-sleep-paraphrase — Rawest input: patient paraphrase of a sleep-study denial, no identifiers
 **90 pass · 2 fail · 2 warn** · 3633 words · 89 placeholders · wall 59s · deadline {"truth":null,"served":[null]}
@@ -26,7 +26,7 @@ WARN:
 - ⚠️ §10 long — 272 words (target 260)
 
 ## C-prior-auth-biologic — Pre-service prior-auth denial of a biologic (step therapy), steroid-dependent flare
-**101 pass · 2 fail · 2 warn** · 4040 words · 46 placeholders · wall 63s · deadline {"truth":"2027-04-18","served":["2027-04-18"]}
+**102 pass · 2 fail · 2 warn** · 4040 words · 46 placeholders · wall 63s · deadline {"truth":"2027-04-18","served":["2027-04-18"]}
 
 FAIL:
 - ❌ never: (audit) severe symptoms now mean contacting the specialist today, unconditionally — contact your doctor today if symptoms worse
@@ -102,4 +102,5 @@ WARN:
 - ⚠️ §1 long — 653 words (target 560)
 - ⚠️ §10 long — 263 words (target 260)
 
-**TOTAL: 768 pass · 25 fail across 8 cases** (development set 579 pass · 18 fail; held-out 189 pass · 7 fail)
+**TOTAL: 769 pass · 25 fail across 8 cases** (development set 580 pass · 18 fail; held-out 189 pass · 7 fail)
+

@@ -7,6 +7,8 @@ const want = [
   ['G', /first instruction in the kit is the emergency department now/, 'G: ED now is the first instruction'],
   ['G', /never the fallback for an unanswered call/, 'G: ED never a fallback to calling the office'],
   ['G', /not a same-day clinic visit first/, 'G: no same-day clinic visit instead'],
+  ['I', /two months ago and was treated/, 'I: no emergency instruction for a past, treated emergency'],
+  ['J', /she is already admitted/, 'J: no emergency instruction for an admitted patient'],
 ];
 const rows = [];
 for (const r of runs) {

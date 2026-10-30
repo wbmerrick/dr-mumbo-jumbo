@@ -309,7 +309,9 @@ const LABELS = [
   { re: /\b(?:(?:right|left|bilateral|progressive|new|worsening)[- ]){0,2}(?:foot drop|drop foot)\b/gi, src: /foot drop|drop foot/i },
   { re: /\bsaddle (?:anesthesia|anaesthesia)\b/gi, src: /saddle (?:anesthesia|anaesthesia)/i },
   { re: /\b(?:(?:urinary|urge|fecal|faecal|bowel|bladder|functional|overflow|stress|double) )?incontinence(?: episodes?)?\b/gi, src: /incontinen/i },
-  { re: /\b(?:causing|with|and|recurrent|frequent|multiple|repeated|several|history of|had|has had|reports?) falls\b|\bhas fallen\b/gi, src: /\bfall(?:s|en|ing)?\b|\bfell (?:down|over)\b/i },
+  // the word before "falls" shows it is the noun, not the verb ("the deadline falls on"); a function word
+  // stays outside the bracket ("with [if documented: falls]"), a count word is part of the label
+  { re: /(?<=\b(?:causing|with|and|history of|had|has had|reports?|reported)\s)falls\b|\b(?:recurrent|frequent|multiple|repeated|several)\s+falls\b|\bhas fallen\b/gi, src: /\bfall(?:s|en|ing)?\b|\bfell (?:down|over)\b/i },
   { re: /\bnear[- ]miss(?: (?:motor vehicle|car|traffic) (?:accident|crash|collision))?|\bmotor vehicle (?:accident|crash|collision)\b/gi, src: /near[- ]miss|accident|crash|collision/i },
   { re: /\b(?:protein[- ]calorie )?malnutrition\b|\bcachexia\b/gi, src: /malnutrition|cachexia/i },
   { re: /\bhypox(?:emia|aemia|ia)\b/gi, src: /hypox/i },
@@ -374,12 +376,121 @@ function bracketLabels(text, source) {
   return { text: out, count };
 }
 
+// ---------- v9.8: who did it, who may act, how bad it is ----------
+// The request whose denial is the subject of the kit was submitted by someone — but not necessarily by
+// the clinician who signs: "Since I submitted that request, the patient has developed …" (G §3, runs 11
+// and 15) became one bracketed option to delete, red flags and all. The clause is rewritten in the
+// passive, which is always true, so the red flags stay in the letter.
+const REQUEST_CLAUSE = /\b(Since|After|When|Once|Because|As)\s+(?:I|we)\s+(?:originally\s+|first\s+|initially\s+|last\s+)?(submitted|filed|sent|faxed)\s+(the|that|this|my|our)\s+((?:original\s+|initial\s+|first\s+)?(?:prior[- ]authori[sz]ation\s+|pre-?authori[sz]ation\s+|pre-?certification\s+|authori[sz]ation\s+|coverage\s+)?(?:request|claim))\b/gi;
+function passiveRequest(text) {
+  let count = 0;
+  const out = String(text).replace(REQUEST_CLAUSE, (m, conj, verb, det, obj) => {
+    count++;
+    return `${conj} ${/^(?:my|our)$/i.test(det) ? 'the' : det} ${obj} was ${verb.toLowerCase()}`;
+  });
+  return { text: out, count };
+}
+// Legal authority is the family's to claim, never the kit's. "I have power of attorney" (run 16, I §7)
+// and "am authorized to act on her behalf" (run 16, J §8) were written when the context said only "I
+// handle his mail" and "I'm her husband". A first-person claim of legal authority becomes "[only if you
+// hold this in writing: …]" unless the patient's own words claim it. Conditional mentions ("once I have
+// power of attorney") and anything already in a bracket are left alone.
+const AUTH_DOC = '(?:power of attorney|POA|guardian(?:ship)?|conservator(?:ship)?|health[- ]?care (?:proxy|agent|surrogate)|healthcare (?:proxy|agent|surrogate)|attorney-in-fact)';
+const WHOSE = "(?:his|her|their|the patient(?:'s|’s)|my\\s+\\w+(?:'s|’s))";
+const AUTHORITY = new RegExp([
+  `\\b(?:I|we)(?:'ve|’ve|\\s+have|\\s+hold|\\s+now\\s+have)\\s+(?:a\\s+|an\\s+|the\\s+|${WHOSE}\\s+)?(?:signed\\s+|valid\\s+)?(?:durable\\s+|medical\\s+|health[- ]?care\\s+|healthcare\\s+|financial\\s+|general\\s+)?(?:power of attorney|POA)\\b(?:\\s+(?:for|over)\\s+(?:him|her|them|my\\s+\\w+))?`,
+  `\\b(?:I am|I'm|I’m|we are|we're|we’re)\\s+(?:also\\s+)?${WHOSE}\\s+(?:(?:legal(?:ly appointed)?|court[- ]appointed|designated|appointed|authori[sz]ed|personal)\\s+)*(?:representative|${AUTH_DOC}|proxy|agent)\\b`,
+  `\\b(?:am|we\\s+are|we're|we’re)\\s+(?:legally\\s+)?(?:authori[sz]ed|appointed|designated|empowered)\\s+to\\s+(?:act|speak|sign|make\\s+(?:medical\\s+|health[- ]?care\\s+)?decisions|handle|request|file|appeal|receive|obtain|access)\\b(?:\\s+(?:on\\s+${WHOSE}\\s+behalf|for\\s+(?:him|her|them)))?`
+].join('|'), 'gi');
+const SELF_AUTHORITY = /\b(?:I|I'm|I’m|I am|I've|I’ve|I have|my)\b[^.\n]{0,60}\b(?:power of attorney|POA|guardian|conservator|proxy|health[- ]?care agent|healthcare agent|authori[sz]ed representative|legal representative|personal representative|CMS-1696|appointment of representative|representative form|attorney-in-fact)\b/i;
+const CONDITIONAL_LEAD = /\b(?:if|once|when|unless|until|whether|after|before)\b[^.;:!?]*$/i;
+// "… under the enclosed Appointment of Representative form" grounds the claim in the same sentence
+const AUTH_ENCLOSED = /\b(?:enclosed|attached|included)\b[^.;]{0,60}\b(?:form|authori[sz]ation|appointment|CMS-1696|power of attorney|POA)\b|CMS-1696|Appointment of Representative/i;
+function bracketAuthority(text) {
+  let count = 0;
+  const out = String(text).split('\n').map((line) => sentencesOf(line).map((s) => {
+    if (/\?["”'’)*]*\s*$/.test(s) || AUTH_ENCLOSED.test(s)) return s;
+    return bracketSegments(s).map((seg, i) => i % 2 ? seg : seg.replace(AUTHORITY, (m, at, whole) => {
+      const offset = typeof at === 'number' ? at : whole.indexOf(m);
+      if (CONDITIONAL_LEAD.test(seg.slice(Math.max(0, offset - 60), offset))) return m;
+      count++;
+      return `[only if you hold this in writing: ${m}]`;
+    })).join('');
+  }).join('')).join('\n');
+  return { text: out, count };
+}
+// The doctor's letter and the peer-to-peer brief are signed or spoken by whichever clinician the family
+// asks, so a first-person clinical act is the signer's to confirm: "I documented on 10/26/2026 that she
+// is expected to participate …" made the attending the author of the physiatrist's consult (run 16,
+// J §3, a Critical audit finding). The subject becomes a choice — "[I / Dr. ___] documented …" — so the
+// fact stays and the signer names who did it.
+const AUTHOR_ACT = /\bI(\s+(?:personally\s+|also\s+|then\s+|first\s+)?(?:have\s+|had\s+)?(?:documented|examined|evaluated|assessed|observed|recorded|charted|wrote|saw|admitted|ordered|prescribed|performed|measured|referred))\b/g;
+const AUTHOR_MY = /\b(in|on|per|from|during|at)\s+my\s+((?:initial\s+|recent\s+|most recent\s+|last\s+|follow-up\s+)?(?:consult(?:ation)?(?:\s+note)?|note|progress note|clinic note|visit|exam(?:ination)?|evaluation|assessment))\b/gi;
+// section 3 only when a clinician signs it (not the patient's corrected-claim or coverage letter)
+const AUTHOR_SECTIONS = /^## 3\. (?:Letter of medical necessity|Clinician's emergency attestation)|^## 5\. /;
+function attributeActs(text) {
+  let count = 0;
+  let inLetter = false;
+  const out = String(text).split('\n').map((line) => {
+    if (/^## \d{1,2}\. /.test(line)) { inLetter = AUTHOR_SECTIONS.test(line); return line; }
+    if (!inLetter) return line;
+    return bracketSegments(line).map((seg, i) => {
+      if (i % 2) return seg;
+      return seg
+        .replace(AUTHOR_ACT, (m, rest) => { count++; return '[I / Dr. ___]' + rest; })
+        .replace(AUTHOR_MY, (m, prep, what) => { count++; return `${prep} [my / Dr. ___'s] ${what}`; });
+    }).join('');
+  }).join('\n');
+  return { text: out, count };
+}
+// A severity word the patient's own material never uses is the chart's to supply. "Critically slow heart
+// rate", "an unstable patient" and "significant bradycardia" (run 16, I §3 and §9) were written when the
+// family was told only "very slow". In the documents sent to the insurer the word becomes "[if documented:
+// critically] slow"; a risk ("could become unstable") or a negation ("not unstable") is left alone.
+const SEVERITY_ADV = /\b(critically|dangerously|profoundly|severely|markedly|significantly|extremely)\s+(?=(?:low|slow|high|elevated|decreased|bradycardic|tachycardic|hypotensive|hypoxic)\b)/gi;
+const SEVERITY_ADJ = /\b((?:(?:hemodynamically|clinically)\s+)?(?:critical|dangerous|profound|severe|marked|significant|extreme))\s+(?=(?:bradycardi|tachycardi|hypotensi|hypertensi|hypox|arrhythmi|anemi|dehydrat|weakness|bleeding|blood loss|respiratory distress|distress|instability|heart block|slow heart|slowing|low blood pressure|low heart rate|high blood pressure)\w*)/gi;
+// "unstable angina" and an "unstable fracture" are diagnoses, not severity words
+const SEVERITY_UNSTABLE = /\b(?:(?:hemodynamically|critically|dangerously|severely|profoundly|markedly|clinically|medically)\s+)?unstable\b(?!\s+(?:angina|fracture|spine|plaque|pelvis|joint|ankle|knee|shoulder))/gi;
+const SEVERITY_SRC = { critical: /\bcritical/i, dangerous: /\bdangerous/i, profound: /\bprofound/i, severe: /\bsevere/i, marked: /\bmarked(?:ly)?\b/i, significant: /\bsignificant/i, extreme: /\bextreme/i, unstable: /\bunstable\b|\binstabilit/i };
+const SEVERITY_NOT = /\b(?:not|no|never|nor|without|isn't|wasn't|weren't|aren't|become|becomes|becoming|turn|get)\s+(?:\w+\s+)?$/i;
+function bracketSeverity(text, source) {
+  let count = 0;
+  const src = String(source || '');
+  const stem = (w) => w.toLowerCase().replace(/^(?:hemodynamically|clinically)\s+/, '').replace(/ly$/, '');
+  let inLetter = false;
+  const out = String(text).split('\n').map((line) => {
+    if (/^## \d{1,2}\. /.test(line)) { inLetter = LETTER_SECTIONS.test(line); return line; }
+    if (!inLetter) return line;
+    let before = '';
+    return bracketSegments(line).map((seg, i) => {
+      const prior = before;
+      before += seg;
+      if (i % 2) return seg;
+      const swap = (m, word, at, whole) => {
+        const key = stem(word || m);
+        if (SEVERITY_SRC[key] && SEVERITY_SRC[key].test(src)) return m;
+        const lead = prior + whole.slice(0, at);
+        if (riskOnly(lead) || SEVERITY_NOT.test(lead)) return m;
+        if ((lead.match(/["“”]/g) || []).length % 2 === 1) return m; // inside a quotation (a reviewer's objection)
+        count++;
+        return `[if documented: ${m.trim()}]${/\s$/.test(m) ? ' ' : ''}`;
+      };
+      return seg
+        .replace(SEVERITY_ADV, (m, w, at, whole) => swap(m, w, at, whole))
+        .replace(SEVERITY_ADJ, (m, w, at, whole) => swap(m, w, at, whole))
+        .replace(SEVERITY_UNSTABLE, (m, at, whole) => swap(m, 'unstable', at, whole));
+    }).join('');
+  }).join('\n');
+  return { text: out, count };
+}
+
 // ---------- the whole post-processing pass, in order ----------
 // part: 1–6 · safety: the tier read from the decode (parts 2–6) · known: source text plus decode ·
 // attachments: a file was attached · records: medical records were attached.
 // source: the patient's own material (denial and context). When it is not passed, it is the part of
 // `known` before the decode, which always opens with the "## 1. " heading.
 function postProcess(text, { part, safety = null, known = '', source, attachments = false, records = false } = {}) {
+  const L = require('./fightpack-limits.js'); // v9.8.2–v9.8.3 limits; loaded here, after this module is complete
   const own = source !== undefined ? source : String(known).split(/\n## 1\. /)[0];
   const counts = {};
   const step = (name, r) => { counts[name] = r.count; return r.text; };
@@ -391,12 +502,18 @@ function postProcess(text, { part, safety = null, known = '', source, attachment
   t = step('ed_now', edNow(t));
   t = step('choice', noChoiceCondition(t));
   if (NSA_CONTEXT.test(known)) t = step('consent', noConsentWaiver(t));
+  if (NSA_CONTEXT.test(known)) t = step('choice_argument', outsideFences(t, L.dropChoiceArgument));
   t = step('cost_sharing', costSharingNotRate(t));
   t = step('earlier_date', earlierDate(t));
   t = step('coding', outsideFences(t, bracketCoding));
+  if (part > 1) t = step('request_passive', outsideFences(t, passiveRequest));
   if (part > 1) t = step('unverified', outsideFences(t, bracketUnverified));
+  if (part > 1 && !SELF_AUTHORITY.test(own)) t = step('authority', outsideFences(t, bracketAuthority));
+  if (part === 3 || part === 4) t = step('authorship', outsideFences(t, attributeActs));
   if (part > 1 && !records) t = step('records', outsideFences(t, bracketRecordClaims));
   if (part > 1 && part !== 5 && !records) t = step('labels', bracketLabels(t, own));
+  if (part > 1 && part !== 5 && !records) t = step('severity', bracketSeverity(t, own));
+  t = step('setting', outsideFences(t, (x) => L.settingLimits(x, own, part > 1)));
   if (part > 1 || !attachments) t = step('phones', guardPhones(t, known));
   return { text: t, level, counts };
 }
@@ -404,5 +521,6 @@ function postProcess(text, { part, safety = null, known = '', source, attachment
 module.exports = {
   fieldOf, sentencesOf, hedgeAbsolutes, guardPhones, edNow, bracketUnverified, costSharingNotRate, earlierDate,
   bracketCoding, outsideFences, safetyOf, renderSafety, emergencyBanners, noChoiceCondition, noConsentWaiver,
-  bracketRecordClaims, bracketLabels, phoneRoles, postProcess, EMERGENCY_OPEN, TODAY_OPEN
+  bracketRecordClaims, bracketLabels, phoneRoles, postProcess, EMERGENCY_OPEN, TODAY_OPEN,
+  passiveRequest, bracketAuthority, attributeActs, bracketSeverity, LETTER_SECTIONS
 };

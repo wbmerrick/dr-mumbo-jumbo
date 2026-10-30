@@ -1,7 +1,10 @@
 // Dr Mumbo Jumbo — Fight Pack checkout.
-// Creates a Stripe Checkout Session for the one-time $39 Fight Pack and returns its URL.
+// Creates a Stripe Checkout Session for the one-time Fight Pack and returns its URL.
 // Requires STRIPE_SECRET_KEY and STRIPE_PRICE_ID in the environment; until both exist the
-// endpoint reports "unconfigured" and the page falls back to the waitlist.
+// endpoint reports "unconfigured". GET also reports whether free mode is on (the page then
+// skips checkout entirely).
+
+const { isFree } = require('../lib/unlock.js');
 
 module.exports = async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
@@ -11,7 +14,7 @@ module.exports = async (req, res) => {
   const configured = Boolean(secret && price);
 
   if (req.method === 'GET') {
-    res.status(200).json({ configured, preview: Boolean(process.env.FIGHTPACK_PREVIEW_CODE) });
+    res.status(200).json({ configured, preview: Boolean(process.env.FIGHTPACK_PREVIEW_CODE), free: isFree() });
     return;
   }
   if (req.method !== 'POST') {

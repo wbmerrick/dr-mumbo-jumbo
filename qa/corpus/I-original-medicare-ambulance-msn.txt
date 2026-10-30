@@ -1,0 +1,52 @@
+Medicare Summary Notice for Part B (Medical Insurance)
+The Official Summary of Your Medicare Claims from the Centers for Medicare & Medicaid Services
+
+Notice for HAROLD W PRUITT
+Medicare Number 4TN7-WQ2-HJ85
+Date of This Notice October 9, 2026
+Claims Processed Between September 10 – October 8, 2026
+
+Your Deductible Status: You have met your Part B deductible for 2026.
+
+Did Medicare Approve All Services? NO
+Number of Services Medicare Denied 2
+Total You May Be Billed $1,398.10
+
+Providers with Claims Processed
+August 26, 2026 — Tri-County Emergency Medical Services
+
+Your Claims for Part B (Medical Insurance)
+
+Claim number 26-24318-774-120
+Tri-County Emergency Medical Services, 410 Depot Street, Hollis Springs, TN
+Service date August 26, 2026
+
+Service Provided & Billing Code | Service Approved? | Amount Provider Charged | Medicare-Approved Amount | Amount Medicare Paid | Maximum You May Be Billed | See Notes Below
+Ambulance service, advanced life support, emergency transport, level 1 (A0427) | NO | $1,184.60 | $0.00 | $0.00 | $1,184.60 | A
+Ground mileage, per statute mile (A0425) x 14 | NO | $213.50 | $0.00 | $0.00 | $213.50 | A
+Claim Total | | $1,398.10 | $0.00 | $0.00 | $1,398.10 |
+
+Notes for Claims Above
+A  Medicare won't pay for this ambulance service because the information provided does not show that other forms of transportation would have endangered your health. Medicare covers ambulance services only when you need them for a medical condition and other transportation could endanger your health.
+
+How to Handle Denied Claims or File an Appeal
+If you disagree with a coverage decision or payment decision made by Medicare on this notice, you can appeal. Our claims office must receive your appeal within 120 days from the date you get this notice.
+
+We must receive your appeal by: February 11, 2027
+
+1. Circle the service(s) or claim(s) you disagree with on this notice.
+2. Explain in writing why you disagree. Write on this notice or attach a separate page.
+3. Fill in your full name, telephone number, and complete Medicare Number.
+4. Include any information that may help your case, such as records from your provider.
+5. Write your Medicare Number on all documents you send.
+6. Keep copies of everything you send.
+
+Mail this notice and any supporting information to:
+Medicare Part B Claims Office
+c/o Cumberland Benefit Services, LLC (Jurisdiction J)
+Attn: Redeterminations
+P.O. Box 7091
+Nashville, TN 37202-7091
+
+Get help with this notice: Call 1-800-MEDICARE (1-800-633-4227). TTY users can call 1-877-486-2048.
+Tennessee State Health Insurance Assistance Program (SHIP): 1-877-555-0144 — free, unbiased counseling about your Medicare.

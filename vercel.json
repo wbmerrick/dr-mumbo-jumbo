@@ -7,6 +7,9 @@
     "api/unlock.js": { "maxDuration": 30 },
     "api/lead.js": { "maxDuration": 30 }
   },
+  "redirects": [
+    { "source": "/lib/:path*", "destination": "/", "permanent": false }
+  ],
   "rewrites": [
     { "source": "/appeal", "destination": "/appeal.html" },
     { "source": "/fightpack", "destination": "/fightpack.html" },

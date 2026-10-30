@@ -32,7 +32,7 @@ const ENUMS = {
   service_type: ['pre-service', 'post-service', 'unknown'],
   denial_type: ['medical-necessity', 'prior-authorization', 'out-of-network', 'not-covered', 'coding', 'eligibility', 'unknown'],
   case_strength: ['strong', 'good', 'needs-evidence'],
-  plan_type: ['commercial', 'medicare', 'medicaid', 'other', 'unknown']
+  plan_type: ['commercial', 'medicare', 'medicaid', 'original-medicare', 'other', 'unknown']
 };
 const VERIFIED_PHONES = ['8009853059', '8664443272', '8006334227']; // No Surprises Help Desk, EBSA, 1-800-MEDICARE
 const LIMITS = { 1: 560, 2: 500, 3: 520, 5: 420, 6: 450, 7: 400, 8: 290, 9: 400, 10: 260 };
@@ -137,7 +137,7 @@ function check(c) {
   }
 
   // ---------- the source the model was shown ----------
-  const known = [c.denial || '', c.extra || '', c.sourceText || ''].join('\n');
+  const known = [c.denial || '', c.extra || '', c.sourceText || '', c.recordsText || ''].join('\n');
   const knownN = norm(known);
   const knownDigits = digits(known);
   const body = strip(kit);
@@ -152,7 +152,8 @@ function check(c) {
   if (E.denial_date) { const d = dates(field('notice date'), 2026)[0]; ok('decode read the notice date exactly', d && d.iso === E.denial_date, field('notice date')); }
 
   // ---------- the deadline: computed in code, checked against hand-derived truth ----------
-  const truth = E.denial_date && E.appeal_window_days ? addDays(E.denial_date, E.appeal_window_days) : null;
+  // a calendar date printed on the letter controls; otherwise the notice date plus the printed window
+  const truth = E.stated_appeal_deadline || (E.denial_date && E.appeal_window_days ? addDays(E.denial_date, [].concat(E.appeal_window_days).find((x) => x) || 0) : null);
   const served = [...new Set([2, 3, 4, 5, 6].map((p) => parts[p] && parts[p].data && parts[p].data.deadline).filter((x) => x !== undefined))];
   R.stats.deadline = { truth, served };
   if (truth) ok('server-computed deadline equals the hand-derived deadline', served.length === 1 && served[0] === truth, `served ${JSON.stringify(served)} vs ${truth}`);
@@ -183,13 +184,15 @@ function check(c) {
   ok('every claim/member/reference number is from the source', !badIds.length, badIds.join(', '));
   const badPhones = [...new Set((body.match(/\b1?[-. ]?\(?\d{3}\)?[-. ]\d{3}[-. ]\d{4}\b/g) || []).filter((p) => { const d = digits(p).replace(/^1(?=\d{10}$)/, ''); return !knownDigits.includes(d) && !VERIFIED_PHONES.includes(d); }))];
   ok('every phone number is from the source or the verified list', !badPhones.length, badPhones.join(', '));
-  const badCpt = [...new Set((body.match(/\b(?:\d{5}|[A-Z]\d{4})\b/g) || []).filter((t) => !knownN.includes(t.toLowerCase()) && !/^(19|20)\d{3}$/.test(t)))];
+  // a ZIP code ("CA 94244-2430") is an address, counted once by the identifier check above, not a CPT code
+  const bodyNoZip = body.replace(/\b[A-Z]{2}\s+\d{5}(?:-\d{4})?\b|\b\d{5}-\d{4}\b/g, ' ');
+  const badCpt = [...new Set((bodyNoZip.match(/\b(?:\d{5}|[A-Z]\d{4})\b/g) || []).filter((t) => !knownN.includes(t.toLowerCase()) && !/^(19|20)\d{3}$/.test(t)))];
   ok('every CPT/HCPCS code is from the source', !badCpt.length, badCpt.join(', '));
   const badIcd = [...new Set((body.match(/\b[A-Z]\d{2}\.\d{1,4}\b/g) || []).filter((t) => !knownN.includes(t.toLowerCase())))];
   ok('every ICD-10 code is from the source', !badIcd.length, badIcd.join(', '));
   const cites = body.match(/\b(et al\.|doi:|PMID|\d{4};\d+\()/g) || [];
   ok('no fabricated literature citations', !cites.length, cites.join(', '));
-  ok('no empty [] placeholders', !/\[\s*\]/.test(kit));
+  ok('no empty [] placeholders', !/\[\s*\](?!\s+[A-Z0-9])/.test(kit)); // "[ ] Yes [ ] No" in a call log is a checkbox
   R.stats.placeholders = (kit.match(/\[[^\[\]]{1,300}\]/g) || []).length;
 
   // ---------- regulatory correctness ----------
@@ -198,7 +201,8 @@ function check(c) {
   // The plan-specific checks test the kit's text against the TRUE plan type, so a wrong tracker
   // plan_type is one defect (the json check above), not a cascade of checks for the wrong plan.
   const truthPlans = Array.isArray(E.plan_type) ? E.plan_type : E.plan_type ? [E.plan_type] : null;
-  const plan = truthPlans ? (truthPlans.includes(meta && meta.plan_type) ? meta.plan_type : truthPlans[0]) : meta && meta.plan_type;
+  const plan0 = truthPlans ? (truthPlans.includes(meta && meta.plan_type) ? meta.plan_type : truthPlans[0]) : meta && meta.plan_type;
+  const plan = plan0 === 'original-medicare' ? 'other' : plan0; // the plan-specific checks treat Original Medicare as 'other'
   if (plan === 'medicare') {
     ok('§10 uses the printed 65-day window', /65/.test(s10));
     ok('§10 notes automatic Independent Review Entity review', /independent review|\bIRE\b|automatically/i.test(s10));
@@ -207,6 +211,9 @@ function check(c) {
     ok('§10 gives the filing window', /\b\d+[- ](calendar )?days?\b|deadline/i.test(s10));
     ok('§10 names the State (Fair) Hearing', /(state|fair) hearing/i.test(s10));
     ok('§9 adapts to Medicaid (State Hearing, next-level heading)', loc[8].h === SLOTS[8][1] && /(state|fair) hearing/i.test(S[9] || ''), loc[8].h);
+  } else if (plan === 'other') {
+    // Original Medicare, TRICARE, VA, federal employees: each program has its own levels — the case's own checks carry them
+    ok('§10 gives the filing window', /\b\d+[- ](calendar )?days?\b|deadline/i.test(s10));
   } else {
     ok('§10 gives the filing window', /180|deadline/i.test(s10));
     ok('§10 mentions external review', /external (independent )?review|independent review/i.test(s10));
@@ -220,6 +227,8 @@ function check(c) {
   // only the post-service 60 is wrong there)
   if (meta && meta.service_type === 'pre-service') ok('§10 decision clock for care not yet received is 30 days (72 hours if urgent)', meta.urgent === true ? /72 hours/i.test(s10) && decDays !== 60 : decDays === 30, String(decDays));
   if (meta && meta.urgent) ok('urgent case asks for expedited review (72 hours)', /expedited/i.test(S[2] || '') && /72 hours/i.test(s10));
+  // (run-16 audit, Critical) urgent care on an employer or marketplace plan: the expedited external review can go now
+  if (E.urgent === true && plan === 'commercial') ok('urgent: expedited external review can be requested at the same time', /external review[^.\n]{0,160}(same time|simultaneous|at once|alongside|in parallel|concurrent)|(same time|simultaneous|at once|alongside|in parallel|concurrent)[^.\n]{0,160}external review/i.test(strip([1, 2, 6, 9, 10].map((n) => S[n] || '').join('\n'))));
   // The same clock is computed in code and served with every part.
   const clocks = [...new Set([2, 3, 4, 5, 6].map((p) => parts[p] && parts[p].data && parts[p].data.clock).filter((x) => x !== undefined))];
   R.stats.clock = clocks;
@@ -232,8 +241,10 @@ function check(c) {
   // a negated mention ("no language indicating Medicare, Medicaid, or self-funded status") asserts nothing
   const PT = 'original medicare|medicare advantage|medicare|medicaid|medi-cal|self-funded|self funded|fully insured|insured|erisa';
   const planAsserts = planLine.replace(new RegExp(`\\b(?:no|not|never|without|nor)\\b[^.;()\\n]{0,60}?\\b(?:${PT})\\b(?:\\s*(?:,\\s*(?:or|and)?|or|and|\\/)\\s*(?:${PT})\\b)*`, 'gi'), ' ');
-  if (!/self-funded|self funded|fully insured|administered by|third-party administrator|\bTPA\b/i.test(known)) ok('§1 does not call the plan insured or self-funded unless the documents say so', !/fully insured|\binsured\b|self-funded|self funded/i.test(planAsserts) || /unknown|not (stated|shown|clear|printed)|ask (your )?HR|check|\bif\b/i.test(planLine), planLine.trim().slice(0, 90));
-  if (!/stable/i.test(known)) ok('never asserts a stability nobody reported', !/(?<!\b(?:once|until|when|after|if) (?:you|he|she|they|the patient) )\b(is|are|remains?|seems?) (clinically |medically )?stable\b|stable (enough|chronic)/i.test(strip(kit)), (strip(kit).match(/[^\n]{0,40}\bstable\b[^\n]{0,30}/i) || [''])[0]);
+  if (!/self-funded|self funded|fully insured|insured by|underwritten by|administered by|third-party administrator|\bTPA\b/i.test(known)) ok('§1 does not call the plan insured or self-funded unless the documents say so', !/fully insured|\binsured\b|self-funded|self funded/i.test(planAsserts) || /unknown|not (stated|shown|clear|printed)|(?:not|n't) (?:state|say|show)|ask (your )?HR|check|\bif\b|insured or self-funded|self-funded or (?:fully )?insured/i.test(planLine), planLine.trim().slice(0, 90));
+  // a reviewer's question quoted for the doctor to answer ("Is the patient stable enough …?") asserts nothing
+  const unquoted = strip(kit).replace(/["“][^"“”\n]{0,200}\?["”]/g, ' ');
+  if (!/stable/i.test(known)) ok('never asserts a stability nobody reported', !/(?<!\b(?:once|until|when|after|if) (?:you|he|she|they|the patient) )\b(is|are|remains?|seems?) (clinically |medically )?stable\b|stable (enough|chronic)/i.test(unquoted), (unquoted.match(/[^\n]{0,40}\bstable\b[^\n]{0,30}/i) || [''])[0]);
   ok('never tells the doctor the case is not urgent', !/(is not|isn't|not) an urgent case|this (case )?is not urgent/i.test(S[4] || ''));
   const done = strip(kit).match(/\bI have (also )?(reported|filed a complaint|contacted|called|spoken)\b|office is (now |currently )?submitting|all required documentation is (now )?included/i);
   ok('no pending step written as already done', !done, done && done[0]);
@@ -264,7 +275,9 @@ function check(c) {
   while ((rm = refRe.exec(kit))) {
     const label = (rm[1] || rm[4] || '').replace(/[’]/g, "'"); const num = Number(rm[2] || rm[3]);
     const hit = XREF.find(([re]) => re.test(label));
-    if (hit && hit[1] !== num) badRefs.push(`${label.trim()} → section ${num}`);
+    // a letter the doctor writes and signs is section 3, whatever the kit calls it ("the expedited appeal letter")
+    const signed = num === 3 && /\b(?:sign|signs|signed)\b/i.test(label) && /letter/i.test(label);
+    if (hit && hit[1] !== num && !signed) badRefs.push(`${label.trim()} → section ${num}`);
   }
   ok('cross-references point at the right section', !badRefs.length, badRefs.join('; '));
 
@@ -287,16 +300,18 @@ function check(c) {
   const b4 = ((S[4] || '').match(/^\s*[-•]\s+/gm) || []).length;
   ok('§4 has 6–8 bullets', b4 >= 6 && b4 <= 8, String(b4));
   ok('§2 requests the criteria and the reviewer\'s credentials', /credential|reviewer/i.test(s2) && /criteria|guideline|policy/i.test(s2));
-  ok('§2 preserves the next level of review', (plan === 'medicaid' ? /(state|fair) hearing|next level/i : /external (independent )?review|independent review/i).test(S[2] || ''));
+  ok('§2 preserves the next level of review', (plan === 'medicaid' ? /(state|fair) hearing|next level/i : plan === 'other' ? /next level|reconsideration|further appeal/i : /external (independent )?review|independent review/i).test(S[2] || ''));
   const p2p = /criteri/i.test(S[5] || '') && /push back|objection/i.test(S[5] || '');
-  if (L3 === 'lmn') ok('§5 maps criteria and prepares for push-back', p2p);
+  // Original Medicare has no peer-to-peer at redetermination: there §5 says so and maps the coverage standard instead
+  const noP2P = plan === 'other' && /no peer-to-peer|not (?:usually )?(?:a )?peer-to-peer|do(?:es)? not (?:offer|include|have|use|allow|provide) (?:a )?peer-to-peer|without (?:a )?peer-to-peer|instead of a peer-to-peer/i.test(S[5] || '') && /criteri|standard|must show|requirement/i.test(S[5] || '');
+  if (L3 === 'lmn') ok('§5 maps criteria and prepares for push-back', p2p || noP2P);
   if (L3 === 'attestation') ok('§5 maps the standard and push-back, or says a processing denial usually has no peer-to-peer', (/criteri|standard/i.test(S[5] || '') && /push back|objection/i.test(S[5] || '')) || /processing|no peer-to-peer|not (usually )?(a )?peer-to-peer/i.test(S[5] || ''));
   ok('§6 and §7 end with a call log', /call log|write down/i.test(S[6] || '') && /call log|write down/i.test(S[7] || ''));
   if (meta && meta.service_type === 'post-service') ok('§7 asks for an itemized statement and an account hold', /itemized/i.test(S[7] || '') && /hold/i.test(S[7] || ''));
   else ok('§7 (nothing billed yet) works the ordering office instead', /appeal|peer-to-peer|records|prior[- ]auth/i.test(S[7] || ''));
   if (meta && meta.service_type === 'pre-service') ok('§8 (nothing billed yet) requests the deciding records, not an itemized bill', /record|note|report|result/i.test(S[8] || '') && !/(request|send|provide|copy of)[^.\n]{0,30}itemized/i.test(strip(S[8] || '')));
   else ok('§8 requests the records and a coded itemized bill', /itemized/i.test(S[8] || '') && /record/i.test(S[8] || ''));
-  ok('§9 is for after the final internal denial', /exhaust|final|appeal decision/i.test(S[9] || '') || plan === 'medicare');
+  ok('§9 is for after the final internal denial', (plan === 'other' ? /exhaust|final|appeal decision|redetermination|upholds?|decision letter/i : /exhaust|final|appeal decision/i).test(S[9] || '') || plan === 'medicare');
   ok('denial reason is quoted in §1/§2', new RegExp(c.reason.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i').test(s1 + (S[2] || '')), c.reason);
 
   // ---------- clinical depth (per case, from the manifest) ----------

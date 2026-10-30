@@ -8,6 +8,8 @@
   var progress = $('progress'), kitout = $('kitout'), docsEl = $('docs');
   var attached = null, records = null, token = null, parts = {}, meta = null;
   var configured = null;
+  // Free unless the server says otherwise (GET /api/checkout → free:false switches back to checkout).
+  var free = true;
 
   var EXAMPLE_DENIAL = 'EXAMPLE NOTICE OF ADVERSE BENEFIT DETERMINATION — Reference 00000000. Date of notice: 10/02/2026. Member: [name]. Provider: Example Imaging Center. Date of service: 09/14/2026. Service: MRI lumbar spine without contrast (CPT 72148), billed $1,650.00. DETERMINATION: DENIED. Reason CO-50: not deemed a medical necessity by the payer. Per policy IMG-204, advanced imaging of the lumbar spine requires documentation of at least six weeks of conservative therapy unless red-flag findings are present. Member responsibility pending appeal: $1,650.00. You or your authorized representative may file an internal appeal within 180 days of this notice.';
   var EXAMPLE_EXTRA = 'Eight weeks of physical therapy and naproxen before the MRI; new left-leg weakness and numbness started in late August; my orthopedist ordered the MRI to decide about surgery.';
@@ -208,7 +210,6 @@
   // ---------- deadlines ----------
   var dlDenial = $('dlDenial'), dlStated = $('dlStated'), dlFiled = $('dlFiled'), dlType = $('dlType'), dlList = $('dlList'), dlDays = $('dlDays'), dlPlan = $('dlPlan');
   function addDays(iso, n){ var d = new Date(iso + 'T12:00:00'); if(isNaN(d)) return null; d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); }
-  function addMonths(iso, n){ var d = new Date(iso + 'T12:00:00'); if(isNaN(d)) return null; d.setMonth(d.getMonth()+n); return d.toISOString().slice(0,10); }
   function fmt(iso){ if(!iso) return '—'; var d = new Date(iso + 'T12:00:00'); return isNaN(d) ? '—' : d.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric', year:'numeric' }); }
   var dlRows = [];
   function computeDeadlines(){
@@ -217,29 +218,36 @@
     var days = parseInt(dlDays.value, 10); if(!(days > 0)) days = null;
     dlRows = [];
     // 1) Filing deadline: a date printed on the letter beats a day count from the letter, which beats the general rule.
-    var defaultDays = plan === 'medicare' ? 65 : plan === 'medicaid' ? 60 : 180;
+    var defaultDays = plan === 'medicare' ? 65 : plan === 'medicaid' ? 60 : plan === 'original-medicare' ? 120 : 180;
     var appealDue = stated || (den ? addDays(den, days || defaultDays) : null);
     var appealNote = stated ? 'The deadline printed on your letter.'
       : den && days ? days + ' days from the notice date, as your letter says.'
-      : den ? (plan === 'medicare' ? 'Medicare Advantage notices usually give 65 days from the notice date. Your letter controls.' : plan === 'medicaid' ? 'Medicaid notices commonly give about 60 days — check yours; your letter controls.' : 'General rule: 180 days from the notice date. Your letter controls.')
+      : den ? (plan === 'medicare' ? 'Medicare Advantage notices usually give 65 days from the notice date. Your letter controls.' : plan === 'medicaid' ? 'Medicaid notices commonly give about 60 days — check yours; your letter controls.' : plan === 'original-medicare' ? 'Original Medicare gives 120 days from the day you get the notice; the date printed on your notice controls.' : 'General rule: 180 days from the notice date. Your letter controls.')
       : 'Enter the notice date (and the days the letter gives you) above.';
     dlRows.push({ title: 'File your internal appeal by', date: appealDue, note: appealNote });
     if(appealDue){ dlRows.push({ title: 'Safe target: have it sent by', date: addDays(appealDue, -14), note: 'Two weeks early leaves room for the doctor\'s letter and certified mail.' }); }
     // 2) Decision due. Commercial and Medicare Advantage clocks happen to match: 72 h expedited, 30 days pre-service, 60 days post-service/payment.
-    var decisionDays = type === 'urgent' ? 3 : type === 'pre-service' ? 30 : 60;
-    var who = plan === 'medicare' ? 'The plan' : 'Insurer';
-    if(plan === 'medicaid' || plan === 'other'){
+    var decisionDays = plan === 'original-medicare' ? 60 : type === 'urgent' ? 3 : type === 'pre-service' ? 30 : 60;
+    var who = plan === 'medicare' ? 'The plan' : plan === 'original-medicare' ? 'The Medicare contractor' : 'Insurer';
+    if(plan === 'original-medicare'){
+      dlRows.push({ title: who + '\'s written decision due', date: addDays(filed, decisionDays), note: 'A redetermination is generally decided within 60 days of receiving your request — longer if you send more evidence later.' });
+    } else if(plan === 'medicaid' || plan === 'other'){
       dlRows.push({ title: who + '\'s written decision due', date: addDays(filed, decisionDays), note: 'Shown using the general rule (' + (type === 'urgent' ? '72 hours' : decisionDays + ' days') + '); ' + (plan === 'medicaid' ? 'Medicaid plans' : 'this plan type') + ' may use a different clock — the notice tells you.' });
     } else {
       dlRows.push({ title: who + '\'s written decision due', date: addDays(filed, decisionDays), note: type === 'urgent' ? 'Expedited appeals: generally 72 hours.' : (type === 'pre-service' ? 'Generally 30 days for care not yet received.' : 'Generally 60 days for care already received.') });
     }
-    // 3) What happens if they say no again.
+    // 3) What happens if they say no again. The next level's clock starts on the date of the decision letter,
+    //    which is not known yet, so this row carries no date: a date shown here could fall after the real one.
     if(plan === 'medicare'){
       dlRows.push({ title: 'If they uphold the denial', date: null, note: 'Medicare Advantage sends your case automatically to an Independent Review Entity — no filing needed. Watch for its letter; it explains the next appeal level.' });
     } else if(plan === 'medicaid'){
       dlRows.push({ title: 'If they uphold the denial: ask for a state fair hearing', date: null, note: 'The deadline and address are on the notice — Medicaid uses a state fair hearing rather than the external review below.' });
+    } else if(plan === 'original-medicare'){
+      dlRows.push({ title: 'If they uphold the denial: ask for a reconsideration', date: null, note: 'Within 180 days of getting the redetermination decision — a Qualified Independent Contractor reviews it. Original Medicare has no external review.' });
+    } else if(plan === 'other'){
+      dlRows.push({ title: 'If they uphold the denial', date: null, note: 'The decision letter names your next level of review and its deadline.' });
     } else {
-      dlRows.push({ title: 'If they uphold the denial: request external review within', date: addMonths(addDays(filed, decisionDays), 4), note: 'Generally about 4 months after the FINAL denial — check that letter for the exact date and where to file.' });
+      dlRows.push({ title: 'If they uphold the denial: request external review', date: null, note: 'Within 4 months of the date on the FINAL denial letter — count from that letter when it arrives; it also says where to file.' });
     }
     dlList.innerHTML = dlRows.map(function(r){ return '<li><div><b>' + escapeHtml(r.title) + '</b><small>' + escapeHtml(r.note) + '</small></div><span class="d">' + fmt(r.date) + '</span></li>'; }).join('');
   }
@@ -257,7 +265,7 @@
       if(meta.stated_appeal_deadline && /^\d{4}-\d{2}-\d{2}$/.test(meta.stated_appeal_deadline)) dlStated.value = meta.stated_appeal_deadline;
       var wd = parseInt(meta.appeal_window_days, 10); if(wd > 0 && wd <= 730) dlDays.value = String(wd);
       if(meta.urgent) dlType.value = 'urgent'; else if(meta.service_type === 'pre-service') dlType.value = 'pre-service'; else dlType.value = 'post-service';
-      if(meta.plan_type === 'medicare' || meta.plan_type === 'medicaid' || meta.plan_type === 'other') dlPlan.value = meta.plan_type; else dlPlan.value = 'commercial';
+      if(meta.plan_type === 'medicare' || meta.plan_type === 'medicaid' || meta.plan_type === 'original-medicare' || meta.plan_type === 'other') dlPlan.value = meta.plan_type; else dlPlan.value = 'commercial';
     }
     var chip = $('strength'), cs = strengthFromDecode() || (meta && meta.case_strength);
     if(cs === 'strong' || cs === 'good' || cs === 'needs-evidence'){
@@ -307,6 +315,10 @@
         if(!res.ok && (res.status === 0 || res.status >= 500)){
           return new Promise(function(r){ setTimeout(r, 1500); }).then(ask);
         }
+        // a free token that has done its share of kits: get a fresh one once, then ask again
+        if(!res.ok && res.status === 401 && free){
+          return renewFree().then(function(t2){ tok = t2; return ask(); });
+        }
         return res;
       }).then(function(res){
         if(res.ok && res.data.missing && res.data.missing.length){
@@ -329,7 +341,7 @@
     // The decode (part 1) is the plan; parts 2–6 are written in parallel from it.
     var failures = [];
     fetchPart(1).then(function(){
-      var decode = (parts[1] || '').slice(0, 6000);
+      var decode = (parts[1] || '').slice(0, 8000);
       return Promise.all([2,3,4,5,6].map(function(p){
         return fetchPart(p, { decode: decode }).catch(function(e){ failures.push((PART_LABEL[p] || 'part ' + p) + ' (' + (e && e.message ? e.message : 'error') + ')'); });
       }));
@@ -339,12 +351,12 @@
       renderKit();
       save('dmj_fp_kit', { parts: parts, meta: meta, ts: Date.now() });
       clearStash();
-      if(failures.length){ showError('Most of your kit is below, but these sections did not finish: ' + failures.join('; ') + '. Your unlock is still valid — click "Rebuild with edits" to try again.'); }
+      if(failures.length){ showError('Most of your kit is below, but these sections did not finish: ' + failures.join('; ') + '. ' + tryAgain()); }
       kitout.scrollIntoView({ behavior:'smooth', block:'start' });
     }).catch(function(e){
       building = false; buy.disabled = false;
       progress.classList.remove('on');
-      showError((e && e.message ? e.message : 'Something went wrong.') + ' Your unlock is still valid — click "Rebuild with edits" or try again.');
+      showError((e && e.message ? e.message : 'Something went wrong.') + ' ' + tryAgain());
       if(parts[1]) kitout.classList.add('on');
       $('tool').scrollIntoView({ behavior:'smooth', block:'start' });
     });
@@ -355,9 +367,36 @@
     return false;
   }
   function keepToken(tok){ token = tok; save('dmj_fp_token', { token: tok, exp: Date.now() + 71*3600*1000 }); refreshBuyLabel(); }
-  function refreshBuyLabel(){ if(haveToken()){ buy.textContent = 'Build my Fight Pack →'; $('pricenote').textContent = 'Unlocked — rebuild as often as you need for 3 days.'; } }
+  function refreshBuyLabel(){
+    if(free){ buy.textContent = 'Build my Fight Pack — free →'; $('pricenote').textContent = 'Free. Rebuild it as often as you need.'; return; }
+    if(haveToken()){ buy.textContent = 'Build my Fight Pack →'; $('pricenote').textContent = 'Unlocked — rebuild as often as you need for 3 days.'; }
+  }
+  function tryAgain(){ return free ? 'Click "Rebuild with edits" to try again.' : 'Your unlock is still valid — click "Rebuild with edits" to try again.'; }
+  // Free mode: the server hands out a token per visitor, a few an hour.
+  var renewing = null;
+  function renewFree(){
+    if(!renewing){
+      renewing = postJSON('/api/unlock', { free: true }, 30000).then(function(res){
+        renewing = null;
+        if(!res.ok || !res.data.token){ throw new Error(res.data.message || 'Could not start your kit.'); }
+        keepToken(res.data.token);
+        return res.data.token;
+      });
+    }
+    return renewing;
+  }
+  function freeToken(){ return haveToken() ? Promise.resolve(token) : renewFree(); }
+  // Paid mode (free:false from the server) restores the checkout copy.
+  function applyMode(){
+    if(free) return;
+    $('eyebrow').textContent = 'One denial · built by a practicing physician';
+    $('codelink').hidden = false;
+    if(!haveToken()){ buy.textContent = 'Get my Fight Pack →'; $('pricenote').textContent = 'One-time. Use it for this denial as often as you need for 3 days.'; }
+    refreshBuyLabel();
+  }
 
   $('regen').addEventListener('click', function(){
+    if(free){ hideError(); freeToken().then(function(t){ build(t); }).catch(function(e){ showError(e.message); }); return; }
     if(!haveToken()){ showError('Your 3-day unlock has ended. Get a new Fight Pack for a new denial.'); $('tool').scrollIntoView({behavior:'smooth'}); return; }
     build(token);
   });
@@ -381,6 +420,12 @@
   buy.addEventListener('click', function(){
     hideError();
     var inp = inputs();
+    if(free){
+      if(!inp.denial && !inp.file){ showError('Paste the denial letter — or add a photo or PDF of it — first.'); denial.focus(); return; }
+      buy.disabled = true;
+      freeToken().then(function(t){ buy.disabled = false; build(t); }).catch(function(e){ buy.disabled = false; showError(e.message); });
+      return;
+    }
     if(!inp.denial && !inp.file){ showError('Paste the denial letter — or add a photo or PDF of it — first, so your kit is ready the moment you\'re back from checkout.'); denial.focus(); return; }
     if(haveToken()){ build(token); return; }
     if(configured === false){ wait.classList.add('on'); wait.scrollIntoView({behavior:'smooth', block:'center'}); return; }
@@ -388,7 +433,7 @@
     stashInputs();
     postJSON('/api/checkout', {}, 30000).then(function(res){
       if(res.ok && res.data.url){ location.href = res.data.url; return; }
-      buy.disabled = false; buy.textContent = 'Get my Fight Pack — $39 →';
+      buy.disabled = false; buy.textContent = 'Get my Fight Pack →';
       if(res.status === 503){ configured = false; wait.classList.add('on'); wait.scrollIntoView({behavior:'smooth', block:'center'}); return; }
       showError(res.data.message || "Couldn't start checkout. Try again in a moment.");
     });
@@ -416,7 +461,7 @@
     if(canceled){ showNotice('No charge was made. Your text is still here whenever you\'re ready.'); }
 
     refreshBuyLabel();
-    fetch('/api/checkout', { method:'GET' }).then(function(r){ return r.json(); }).then(function(d){ configured = !!d.configured; if(!configured && !sid && !haveToken()){ $('pricenote').textContent = 'Launching shortly — reserve the founding price below.'; } }).catch(function(){ configured = null; });
+    fetch('/api/checkout', { method:'GET' }).then(function(r){ return r.json(); }).then(function(d){ configured = !!d.configured; free = d.free !== false; applyMode(); if(!free && !configured && !sid && !haveToken()){ $('pricenote').textContent = 'Launching shortly — reserve the founding price below.'; } }).catch(function(){ configured = null; });
 
     if(sid){
       showNotice('Payment received — unlocking your kit…');

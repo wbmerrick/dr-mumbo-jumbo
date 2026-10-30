@@ -100,6 +100,37 @@ module.exports = [
     phi: ['Theodore', 'THEODORE', 'Okafor', 'OKAFOR', 'KBP-207733415'],
     reason: 'out-of-network level',
     notes: 'Scheduled surgery, so no emergency argument. The protection is the federal ancillary-services rule: an out-of-network anesthesiologist at an in-network facility may not balance bill, the plan must apply in-network cost-sharing (the $780 out-of-network deductible is wrong), and notice-and-consent cannot waive it for anesthesia. Do not pay the $1,860; ask the plan to reprocess; No Surprises Help Desk; the EOB prints "self-funded", so EBSA, not the state insurance department.'
+  },
+  {
+    id: 'I-original-medicare-ambulance',
+    heldout: true,
+    round: 2,
+    title: 'Held-out (round 2): Original Medicare MSN — emergency ambulance denied, daughter filing',
+    denial: C('I-original-medicare-ambulance-msn.txt'),
+    extra: "I'm Harold's daughter, Renee Pruitt-Cole, and I handle his mail. On August 26 Dad passed out in the kitchen. When he came to he was gray and sweaty and said his chest hurt. Mom called 911 and the ambulance took him to Westbrook Regional Medical Center, about 14 miles away, the closest hospital. The ER told us his heart rate was very slow. They kept him overnight, adjusted his medicines, and he has been doing fine since. Mom doesn't drive, and Dad couldn't have sat up in a car. Now Medicare won't pay for the ambulance and the company billed $1,398.10. How do we appeal?",
+    file: null,
+    expect: { denial_type: ['medical-necessity', 'not-covered'], plan_type: ['other', 'original-medicare'], service_type: ['post-service'], claim_number: '26-24318-774-120', denial_date: '2026-10-09', stated_appeal_deadline: '2027-02-11', appeal_window_days: [120, null], urgent: false },
+    letter3: ['attestation', 'lmn'],
+    phi: ['Harold', 'HAROLD', 'Pruitt', 'PRUITT', '4TN7-WQ2-HJ85'],
+    reason: 'other forms of transportation',
+    notes: 'Original Medicare is not a plan: the first appeal is a redetermination by the Medicare contractor named on the notice (generally decided within 60 days), then a reconsideration by a Qualified Independent Contractor within 180 days of that decision, then an ALJ hearing. No Independent Review Entity, no external review, no 65-day Medicare Advantage window; the printed date (February 11, 2027) controls. The daughter files with CMS-1696. The case turns on the ambulance crew\'s patient care report and the ER record: fainting, chest pain and a very slow heart rate, transport to the closest hospital, and why a car would have endangered him. The fainting was two months ago, was treated, and he is well, so the kit carries no emergency instruction now. Sources: CMS MLN006562 (Part A/B appeals); 42 CFR 410.40 (ambulance coverage).'
+  },
+  {
+    id: 'J-urgent-irf-pdf-records',
+    heldout: true,
+    round: 2,
+    title: 'Held-out (round 2): urgent pre-service denial of inpatient rehab after stroke — letter as PDF, records attached',
+    denial: '',
+    extra: "My wife Denise had a stroke on October 21. She's still in Riverside General. The hospital wants to send her to Lakeshore Rehab, but the insurance said no and wants a nursing home. The rehab doctor says she's getting stronger every day; yesterday she did almost 3 hours of therapy. The hospital says she could be discharged in the next day or two. I attached the denial letter and her therapy notes. I'm her husband, Gary.",
+    file: 'J-irf-denial-letter.pdf',
+    records: 'J-records.pdf',
+    sourceText: htmlText('J-irf-denial-letter.html'),
+    recordsText: htmlText('J-records.html'),
+    expect: { denial_type: ['medical-necessity'], plan_type: ['commercial'], service_type: ['pre-service'], claim_number: 'UM-IRF-2026-448190', denial_date: '2026-10-28', stated_appeal_deadline: null, appeal_window_days: 180, urgent: true },
+    letter3: 'lmn',
+    phi: ['Denise', 'DENISE', 'Albright', 'ALBRIGHT', 'KHP-77102935', '04/09/1963'],
+    reason: 'three hours of therapy',
+    notes: 'Urgent pre-service care: the treating doctor can call the 24-hour expedited line (1-888-555-0172) today, the plan must decide within 72 hours, and expedited external review can be requested at the same time. In an urgent case the doctor can act for her without a form. The peer-to-peer line (1-888-555-0186) is separate and time-limited. The reviewer saw 90 minutes on 10/25; the attached records show 165 minutes on 10/27, an improving trend, the rehab physician\'s expectation of 3 hours within 2–3 days, three therapy disciplines, and daily physician oversight (labetalol titration, dysphagia) — reasons a skilled nursing facility is not equivalent. She is already admitted, so the kit carries no emergency-department instruction. Records are attached, so record facts may be stated. Sources: 29 CFR 2590.715-2719 (urgent claims follow the attending provider; expedited external review with the expedited appeal; 72 hours).'
   }
 ];
 
@@ -167,7 +198,7 @@ const DEPTH = {
       { re: '(office|clinic)\\W{0,3}(phone|number|line|at|:)\\W{0,3}\\(?1-855-555-0188|call[^.\\n]{0,40}(doctor|office|clinic)[^.\\n]{0,15}(at|on) \\(?1-855-555-0188', why: "(audit) the prescriber line is the insurer's line for prescribers, not the doctor's office" },
       { re: 'is contraindicated in this patient', why: '(audit) "contraindicated" only with a drug-specific safety reason the clinician fills in' },
       { re: '\\[CPT code', why: '(audit) a self-injected pen is identified by drug name and strength, never a procedure code' },
-      { re: '(RX-ST-114|the (plan\'s )?policy)[^.\\n]{0,40}(allows?|permits?|provides?|includes?|recogni[sz]es?|contains?|offers?)[^.\\n]{0,20}exception|exception (criteria|provisions?) (in|of|under) (Policy )?RX-ST-114', stripped: true, why: '(audit) the notice lists no exceptions — none is attributed to RX-ST-114' },
+      { re: '(RX-ST-114|the (plan\'s )?policy)(?:(?!\\b(?:if|whether|does|do)\\b)[^.\\n]){0,40}(allows?|permits?|provides?|includes?|recogni[sz]es?|contains?|offers?)[^.\\n]{0,20}exception|exception (criteria|provisions?) (in|of|under) (Policy )?RX-ST-114', stripped: true, why: '(audit) the notice lists no exceptions — none is attributed to RX-ST-114' },
       { re: '(delay|wait)[^.\\n]{0,60}contraindicated|contraindicated[^.\\n]{0,40}(delay|wait)', why: '(audit) a delay is never a "contraindication"' }
     ]
   },
@@ -276,6 +307,59 @@ const DEPTH = {
       { re: 'prudent', why: 'a scheduled surgery is not an emergency, so no emergency argument' },
       { re: '(file|send|submit)[^.\\n]{0,40}(complaint|request)[^.\\n]{0,40}state insurance department', why: 'a self-funded plan is not regulated by the state insurance department' },
       { re: 'in-network rates?\\b', why: "the protection is the patient's in-network cost-sharing, not the provider's payment rate" }
+    ]
+  },
+  'I-original-medicare-ambulance': {
+    ids: ['4TN7-WQ2-HJ85', '26-24318-774-120'],
+    mustHave: [
+      { re: 'redetermination', where: [1, 2, 10], why: 'Original Medicare: the first appeal is a redetermination by the Medicare contractor' },
+      { re: 'reconsideration', where: [9, 10], why: 'the next level is a reconsideration by a Qualified Independent Contractor' },
+      { re: '180 days', where: [9, 10], why: 'the reconsideration request is due within 180 days of the redetermination decision' },
+      { re: '60 days', where: [10], why: 'the Medicare contractor generally decides a redetermination within 60 days' },
+      { re: 'CMS-1696|Appointment of Representative', where: [1, 2, 10], why: 'the daughter files for him: the Appointment of Representative form comes first' },
+      { re: "run report|patient care report|\\bPCR\\b|trip (report|sheet)|ambulance (report|record)|EMS (report|record)|ambulance (crew|company|service)[^.\\n]{0,20}(record|report|notes?)", where: [1, 4, 8], why: "the ambulance crew's patient care report is the decisive record" },
+      { re: 'contraindicated|endanger|could not (safely )?(sit|ride|travel|go)|couldn\'t have sat|unsafe', where: [2, 3], why: 'answers the stated reason: other transport would have endangered his health' },
+      { re: 'closest|nearest', where: [2, 3], why: 'the transport went to the closest hospital' }
+    ],
+    mustNot: [
+      { re: 'Go to an emergency department now, or call 911\\. What you describe|Emergency first:', why: 'must-pass: the fainting was two months ago and was treated, so there is no emergency instruction now' },
+      { re: 'Contact the doctor today about what you describe', why: 'the only red flag was a past emergency that was treated, so there is no safety line' },
+      { re: '(?<!\\b(?:no|not|never|without)\\b[^.\\n]{0,25})(?:Independent Review Entity|\\bIRE\\b)', why: 'Original Medicare has no Independent Review Entity step; that is Medicare Advantage' },
+      { re: '65[- ]days?', why: 'the 65-day window is Medicare Advantage; this notice prints its own date' },
+      { re: 'external review request|I (hereby )?request (an |a )?(independent )?external review|state insurance department', where: [9], why: 'Original Medicare has no external review; the next level is a reconsideration' },
+      { re: 'EBSA|Department of Labor', why: 'Original Medicare is not an employer plan' },
+      { re: '## 9\\. If they say no again — external review request', why: 'the section 9 heading for Original Medicare is the next level of review, not an external review request' },
+      { re: '115\\s*%|115 percent|limiting charge', why: '(audit2) an ambulance supplier must accept Medicare\'s amount: if Medicare pays, he owes only the 20% coinsurance' },
+      { re: "\\bI(?:'ve|\\s+have|\\s+hold)\\s+(?:a\\s+|his\\s+|the\\s+)?(?:durable\\s+|medical\\s+|health[- ]?care\\s+|financial\\s+)?power of attorney|\\bI'm his (?:POA|power of attorney)", stripped: true, why: '(audit2) the daughter said only that she handles his mail — no power of attorney' },
+      { re: 'critically slow|dangerously (?:slow|low)|(?:significant|severe|profound|marked)(?:ly)? (?:slow|bradycardi)|\\bunstable\\b', where: [2, 3, 5, 9], stripped: true, why: '(audit2) the family was told only "very slow": severity words come from the chart, in brackets' },
+      { re: 'Attn:?\\s*(?:the\\s+)?Medical Director', why: '(audit2) the notice says Attn: Redeterminations' },
+      { re: 'peer-to-peer|(?<!Attn:?[^\\n]{0,40})\\bmedical director', where: [3, 4], stripped: true, why: '(audit2) Original Medicare has no peer-to-peer or medical-director step at redetermination' },
+      { re: 'not validated', stripped: true, why: '(audit2) the test is that other transport was contraindicated; "not validated" garbles it' }
+    ]
+  },
+  'J-urgent-irf-pdf-records': {
+    ids: ['KHP-77102935', 'UM-IRF-2026-448190'],
+    mustHave: [
+      { re: '1-888-555-0172', where: [1, 4, 6, 10], why: 'urgent: the expedited appeal goes to the printed 24-hour line' },
+      { re: '1-888-555-0186', where: [1, 4, 5, 10], why: 'the printed peer-to-peer line, time-limited' },
+      { re: '165 minutes|2 hours 45 minutes|2\\.75 hours|2 hours and 45 minutes', where: [2, 3, 5], why: 'answers the stated reason with the newer record: 165 minutes on 10/27, not the 90 the reviewer saw' },
+      { re: '10/27|October 27', where: [3, 5], why: 'the denial relied on 10/25; the 10/27 note is newer' },
+      { re: 'speech', where: [3, 5], why: 'she needs physical, occupational and speech therapy' },
+      { re: 'blood pressure|labetalol', where: [3, 5], why: 'she needs daily physician oversight (blood pressure titration, dysphagia), which a skilled nursing facility does not give' },
+      { re: 'MP-REH-007', where: [2, 8], why: 'quotes and requests the named policy' },
+      { re: "(doctor|physician|Dr\\.? Vasquez)[^.\\n]{0,100}(can|may|should|will) (call|request|file|ask)", where: [1, 4, 6, 10], why: 'in an urgent case the doctor can request the expedited appeal directly' },
+      { re: '1-888-555-0186', where: [6, 7], why: '(audit2) the phone scripts keep the printed peer-to-peer number' }
+    ],
+    mustNot: [
+      { re: 'Go to an emergency department now, or call 911\\. What you describe|Emergency first:', why: 'must-pass: she is already admitted, so there is no emergency-department instruction' },
+      { re: 'Contact the doctor today about what you describe', why: 'she is in the hospital under her doctors\' care, so there is no safety line' },
+      { re: 'EBSA|Department of Labor', where: [9, 10], why: 'the letter says the plan is insured and regulated by the state insurance department' },
+      { re: '\\bI (?:documented|examined|evaluated|assessed|wrote|recorded|noted|consulted)\\b[^.\\n]{0,80}(?:10/26|October 26)|\\bmy (?:consult(?:ation)?|note|evaluation|assessment|exam(?:ination)?)\\b[^.\\n]{0,40}(?:10/26|October 26)', where: [3, 5], stripped: true, why: '(audit2) the 10/26 consult is Dr. Lindqvist\'s: a signer who did not write it would attest to it' },
+      { re: "\\b(?:if|when)\\s+(?:the plan|Keystone|the (?:plan(?:'s)?\\s+)?(?:physician\\s+)?reviewer|the (?:plan(?:'s)?\\s+)?medical director|they)\\b[^.\\n]{0,60}\\bcalls?\\b", where: [4], why: '(audit2) the letter makes the peer-to-peer the doctor\'s call to place (1-888-555-0186, within 7 days) — never wait for one' },
+      { re: 'billed for the (?:denied )?difference|hold the account', where: [1, 10], why: '(audit2) nothing has been billed: the exposure is going to Lakeshore without approval, not a hospital bill' },
+      { re: 'physiatric oversight|not validated|(?:skilled nursing|SNF)[^.\\n]{0,60}\\b(?:1|one)\\s*(?:[–-]|to)\\s*(?:2|two) hours', where: [3, 5], stripped: true, why: '(audit2) the record says daily physician oversight; the SNF therapy figure and "not validated" are unsourced' },
+      { re: '(?:patient|she) reports? (?:tolerat|participat)|participat\\w* fully in all', where: [3, 5], stripped: true, why: '(audit2) the minutes come from the therapy notes (she has aphasia), and only 10/25 reads "participating fully"' },
+      { re: "authori[sz]ed to act on (?:her|his) behalf|\\bI(?:'ve|\\s+have|\\s+hold)\\s+(?:a\\s+|her\\s+|the\\s+)?(?:durable\\s+|medical\\s+|health[- ]?care\\s+)?power of attorney", stripped: true, why: '(audit2) the husband never said he holds legal authority' }
     ]
   }
 };

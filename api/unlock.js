@@ -1,8 +1,9 @@
 // Dr Mumbo Jumbo — Fight Pack unlock.
-// Exchanges a paid Stripe Checkout session (or the private preview code) for a signed,
-// time-limited token that /api/fightpack accepts. Nothing is stored server-side.
+// Hands out a signed, time-limited token that /api/fightpack accepts: for free while free mode is on
+// (FIGHTPACK_FREE unset), or in exchange for a paid Stripe Checkout session or the private preview code.
+// Nothing is stored server-side.
 
-const { sign } = require('../lib/unlock.js');
+const { sign, isFree, mintFree } = require('../lib/unlock.js');
 
 module.exports = async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
@@ -19,7 +20,26 @@ module.exports = async (req, res) => {
     return;
   }
 
-  // Private preview code (for testing before payments are switched on).
+  // Free mode: any visitor, a few kits an hour (lib/unlock.js).
+  if (body.free) {
+    if (!isFree()) {
+      res.status(403).json({ error: 'paid', message: 'The Fight Pack is no longer free — use checkout to unlock it.' });
+      return;
+    }
+    const r = mintFree(req);
+    if (r.error === 'busy') {
+      res.status(429).json({ error: 'busy', message: "You've built several kits in the last hour. Please try again in a little while." });
+      return;
+    }
+    if (!r.token) {
+      res.status(503).json({ error: 'unconfigured', message: 'Unlock is not switched on yet.' });
+      return;
+    }
+    res.status(200).json({ token: r.token, free: true });
+    return;
+  }
+
+  // Private preview code (for testing).
   const code = String(body.code || '').trim();
   if (code) {
     const expected = process.env.FIGHTPACK_PREVIEW_CODE;
