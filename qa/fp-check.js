@@ -50,7 +50,8 @@ function dates(text, defaultYear) {
   while ((m = re2.exec(text))) out.push({ raw: m[0], iso: iso(+m[1], +m[2], +m[3]) });
   // a month name, not any word that starts like one ("separately" + a list number on the next line is not Sep 1)
   const re3 = /\b(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|June?|July?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?[ \t]+(\d{1,2})(?:st|nd|rd|th)?(?:,?[ \t]+(\d{4}))?\b/gi;
-  while ((m = re3.exec(text))) out.push({ raw: m[0], iso: iso(m[3] ? +m[3] : defaultYear, MONTHS[m[1].toLowerCase().slice(0, 3)], +m[2]) });
+  // a date written without its year ("by the March 29 deadline") may fall in the next year
+  while ((m = re3.exec(text))) out.push({ raw: m[0], iso: iso(m[3] ? +m[3] : defaultYear, MONTHS[m[1].toLowerCase().slice(0, 3)], +m[2]), alt: m[3] ? null : iso(defaultYear + 1, MONTHS[m[1].toLowerCase().slice(0, 3)], +m[2]) });
   return out.filter((d) => d.iso);
 }
 // a bracket is a prompt for the user, not an assertion; the server's "[Only if …]" sentence brackets run longer
@@ -170,7 +171,8 @@ function check(c) {
   const srcDates = new Set(dates(known, 2026).map((d) => d.iso).concat([TODAY]));
   const derivable = new Set(srcDates);
   for (const d of srcDates) { for (const n of [1, 2, 3, 7, 14, 15, 30, 45, 60, 65, 90, 120, 180]) { derivable.add(addDays(d, n)); derivable.add(addDays(d, -n)); } derivable.add(addMonths(d, 4)); }
-  const outDates = dates(body, 2026);
+  const known_ = (x) => srcDates.has(x) || x === truth || derivable.has(x);
+  const outDates = dates(body, 2026).map((d) => (d.alt && !known_(d.iso) && known_(d.alt) ? { ...d, iso: d.alt } : d));
   const badDates = outDates.filter((d) => !srcDates.has(d.iso) && d.iso !== truth && !derivable.has(d.iso));
   ok('every date is from the source or is the computed deadline', !badDates.length, [...new Set(badDates.map((d) => d.raw))].join(', '));
   const otherDerived = outDates.filter((d) => !srcDates.has(d.iso) && d.iso !== truth && derivable.has(d.iso));
@@ -193,7 +195,10 @@ function check(c) {
   // ---------- regulatory correctness ----------
   const s10 = S[10] || '';
   ok('§10 says the deadline printed on the letter controls', /printed|on your (denial )?letter|letter (always )?(controls|wins|governs)/i.test(s10));
-  const plan = meta && meta.plan_type;
+  // The plan-specific checks test the kit's text against the TRUE plan type, so a wrong tracker
+  // plan_type is one defect (the json check above), not a cascade of checks for the wrong plan.
+  const truthPlans = Array.isArray(E.plan_type) ? E.plan_type : E.plan_type ? [E.plan_type] : null;
+  const plan = truthPlans ? (truthPlans.includes(meta && meta.plan_type) ? meta.plan_type : truthPlans[0]) : meta && meta.plan_type;
   if (plan === 'medicare') {
     ok('§10 uses the printed 65-day window', /65/.test(s10));
     ok('§10 notes automatic Independent Review Entity review', /independent review|\bIRE\b|automatically/i.test(s10));
@@ -224,7 +229,10 @@ function check(c) {
   if (!/prefer/i.test(known)) ok('no "plan-preferred equivalent" when the notice names no preferred product', !/plan-preferred/i.test(kit));
   // (audit, run 4) funding is unknown unless printed; no invented stability; nothing pending written as done
   const planLine = (s1.match(/^\s*[-*•]?\s*\**\s*plan(?:\s+type)?\s*\**\s*:([^\n]*)/im) || [])[1] || '';
-  if (!/self-funded|self funded|fully insured|administered by|third-party administrator|\bTPA\b/i.test(known)) ok('§1 does not call the plan insured or self-funded unless the documents say so', !/fully insured|\binsured\b|self-funded|self funded/i.test(planLine) || /unknown|not (stated|shown|clear|printed)|ask (your )?HR|check|\bif\b/i.test(planLine), planLine.trim().slice(0, 90));
+  // a negated mention ("no language indicating Medicare, Medicaid, or self-funded status") asserts nothing
+  const PT = 'original medicare|medicare advantage|medicare|medicaid|medi-cal|self-funded|self funded|fully insured|insured|erisa';
+  const planAsserts = planLine.replace(new RegExp(`\\b(?:no|not|never|without|nor)\\b[^.;()\\n]{0,60}?\\b(?:${PT})\\b(?:\\s*(?:,\\s*(?:or|and)?|or|and|\\/)\\s*(?:${PT})\\b)*`, 'gi'), ' ');
+  if (!/self-funded|self funded|fully insured|administered by|third-party administrator|\bTPA\b/i.test(known)) ok('§1 does not call the plan insured or self-funded unless the documents say so', !/fully insured|\binsured\b|self-funded|self funded/i.test(planAsserts) || /unknown|not (stated|shown|clear|printed)|ask (your )?HR|check|\bif\b/i.test(planLine), planLine.trim().slice(0, 90));
   if (!/stable/i.test(known)) ok('never asserts a stability nobody reported', !/(?<!\b(?:once|until|when|after|if) (?:you|he|she|they|the patient) )\b(is|are|remains?|seems?) (clinically |medically )?stable\b|stable (enough|chronic)/i.test(strip(kit)), (strip(kit).match(/[^\n]{0,40}\bstable\b[^\n]{0,30}/i) || [''])[0]);
   ok('never tells the doctor the case is not urgent', !/(is not|isn't|not) an urgent case|this (case )?is not urgent/i.test(S[4] || ''));
   const done = strip(kit).match(/\bI have (also )?(reported|filed a complaint|contacted|called|spoken)\b|office is (now |currently )?submitting|all required documentation is (now )?included/i);
@@ -300,7 +308,8 @@ function check(c) {
   for (const m of c.mustNot || []) {
     // forbidden even inside [brackets] — unless stripped:true (a bracketed prompt such as
     // "[if documented: …]" is the clinician's to fill in, not an assertion)
-    const hit = (m.stripped ? strip(kit) : kit).match(new RegExp(m.re, 'i'));
+    const where = m.where ? m.where.map((n) => S[n] || '').join('\n') : kit; // optional: only these sections
+    const hit = (m.stripped ? strip(where) : where).match(new RegExp(m.re, 'i'));
     ok(`never: ${m.why}`, !hit, hit && hit[0]);
   }
 

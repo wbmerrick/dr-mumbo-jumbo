@@ -230,7 +230,7 @@ const DEPTH = {
       { re: 'within (6|six) months', why: 'the letter states no timeframe for the face-to-face exam' },
       { re: '20 ?%|Part B coinsurance', why: 'Medicare Advantage plans set their own cost-sharing' },
       { re: 'fecal incontinence|documented (episodes of )?(bowel|bladder|incontinence)', why: '(audit) the family reported "accidents"; never upgraded to documented incontinence' },
-      { re: 'urge incontinence|urinary incontinence', why: '(audit) "accidents" is a lay description, never a diagnostic label' },
+      { re: 'urge incontinence|urinary incontinence', stripped: true, why: '(audit) "accidents" is a lay description, never a diagnostic label' },
       { re: 'demonstrated (the )?(cognitive|ability|safe)', stripped: true, why: '(audit) no exam findings asserted in the clinician\'s voice' },
       { re: 'home assessment[^.\\n]{0,60}\\b(?<!(?:those|these|the|your|other|supporting|all|any) )(confirms|confirmed|shows|showed|documents|documented|demonstrat)', stripped: true, why: '(audit) a record that is not in the source is named, never characterized' },
       { re: '410\\.38', why: '(audit) no regulation numbers' },
@@ -252,6 +252,7 @@ const DEPTH = {
     mustNot: [
       { re: 'has not (yet )?(started|tried|had|completed|done)[^.\\n]{0,30}(physical therapy|\\bPT\\b|conservative)', stripped: true, why: '(audit) unsourced patient facts go in brackets in the doctor letter' },
       { re: 'see (me|you|her|him) today|(fit|squeeze) (me|you|her|him) in today', why: '(audit) emergency signs mean the emergency department now, not a same-day clinic visit first' },
+      { re: 'urinary retention|retention of urine|foot drop|drop foot|saddle an(a)?esthesia|causing falls|has fallen', where: [3, 5], stripped: true, why: '(run-9 audit) the doctor signs the patient\'s own words ("trouble starting to pee", "tripping on my right foot"), not exam-derived labels' },
       { re: "if you (cannot|can't|can not|are unable to|could not) (reach|get through to|be seen|get (an? )?appointment)[^.\\n]{0,160}(emergency|\\bER\\b|911)", stripped: true, why: '(run-7 review) emergency care is never the fallback for an unanswered call to the office' },
       { re: '\\bbe seen (by [^.\\n]{0,40})?today|can I be seen today', stripped: true, why: '(run-7 review) a same-day office visit is not a substitute for the emergency department' },
       { re: 'EBSA|Department of Labor', why: 'Medicaid is not an ERISA plan' },

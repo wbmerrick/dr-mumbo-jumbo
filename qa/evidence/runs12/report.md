@@ -36,10 +36,9 @@ WARN:
 - ⚠️ §10 long — 311 words (target 260)
 
 ## D-oon-er-eob — EOB: out-of-network ER physician at an in-network hospital, processed as non-emergency
-**95 pass · 2 fail · 2 warn** · 3823 words · 41 placeholders · wall 54s · deadline {"truth":"2027-04-04","served":["2027-04-04"]}
+**96 pass · 1 fail · 2 warn** · 3823 words · 41 placeholders · wall 54s · deadline {"truth":"2027-04-04","served":["2027-04-04"]}
 
 FAIL:
-- ❌ §1 does not call the plan insured or self-funded unless the documents say so — ** Employer or marketplace plan (the documents say "Evergreen Choice HMO" and do not say s
 - ❌ never: (audit) choice of clinician is irrelevant to emergency care — never argued or proved — I did not choose
 
 WARN:
@@ -73,10 +72,11 @@ WARN:
 - ⚠️ §10 long — 280 words (target 260)
 
 ## G-medicaid-mri-redflags — Held-out: Medicaid managed-care denial of a lumbar MRI, new neurological red flags
-**102 pass · 1 fail · 2 warn** · 3921 words · 47 placeholders · wall 51s · deadline {"truth":"2026-12-22","served":["2026-12-22"]}
+**102 pass · 2 fail · 2 warn** · 3921 words · 47 placeholders · wall 51s · deadline {"truth":"2026-12-22","served":["2026-12-22"]}
 
 FAIL:
 - ❌ no "plan-preferred equivalent" when the notice names no preferred product
+- ❌ never: (run-9 audit) the doctor signs the patient's own words ("trouble starting to pee", "tripping on my right foot"), not exam-derived labels — causing falls
 
 WARN:
 - ⚠️ §1 long — 746 words (target 560)
@@ -89,4 +89,4 @@ FAIL:
 - ❌ §2 requests the criteria and the reviewer's credentials
 - ❌ never: (audit) for anesthesia at an in-network facility the protection never depends on notice or consent — did not receive or sign any notice-and-consent
 
-**TOTAL: 777 pass · 15 fail across 8 cases** (development set 585 pass · 12 fail; held-out 192 pass · 3 fail)
+**TOTAL: 778 pass · 15 fail across 8 cases** (development set 586 pass · 11 fail; held-out 192 pass · 4 fail)

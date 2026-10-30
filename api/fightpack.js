@@ -81,11 +81,21 @@ function urgencyOf(decode) {
   return null;
 }
 // The decode's "- **Plan:** …" line, mapped to the tracker's plan types. null when unclear.
+// The line names the type first, then the words that show it, so the type is read from that head
+// (before a dash, parenthesis, semicolon, colon or full stop), and a negated mention ("no language
+// indicating Medicare, Medicaid, or self-funded status") never decides it. Before v9.5, run 13's
+// decode of an employer HMO with exactly that wording became "medicare".
+const PLAN_TERMS = 'original medicare|medicare advantage|medicare|medicaid|medi-cal|self-funded|self funded|fully insured|insured|erisa';
+const NEGATED_PLAN = new RegExp(`\\b(?:no|not|never|without|nor|rather than|instead of|unlike|other than)\\b[^.;()\\n]{0,60}?\\b(?:${PLAN_TERMS})\\b(?:\\s*(?:,\\s*(?:or|and)?|or|and|\\/)\\s*(?:${PLAN_TERMS})\\b)*`, 'gi');
 function planTypeOf(decode) {
   if (!decode) return null;
   const m = decode.match(/^[ \t]*(?:[-*•][ \t]+)?\**[ \t]*plan(?:[ \t]+type)?[ \t]*(?:\*\*)?[ \t]*:[ \t]*(?:\*\*)?[ \t]*(.+)$/im);
   if (!m) return null;
-  const v = m[1].toLowerCase();
+  const v = m[1].toLowerCase().replace(/[*_"“”]/g, '');
+  const head = v.split(/\s[—–-]\s|\(|;|:|\.(?:\s|$)/)[0];
+  return classifyPlan(head.replace(NEGATED_PLAN, ' ')) || classifyPlan(v.replace(NEGATED_PLAN, ' '));
+}
+function classifyPlan(v) {
   if (/original medicare/.test(v)) return 'other';
   if (/medicare/.test(v)) return 'medicare';
   if (/medicaid|medi-cal/.test(v)) return 'medicaid';

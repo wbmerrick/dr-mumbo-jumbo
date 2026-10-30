@@ -78,12 +78,13 @@ WARN:
 - ⚠️ §10 long — 360 words (target 260)
 
 ## G-medicaid-mri-redflags — Held-out: Medicaid managed-care denial of a lumbar MRI, new neurological red flags
-**100 pass · 3 fail · 2 warn** · 3866 words · 43 placeholders · wall 64s · deadline {"truth":"2026-12-22","served":["2026-12-22"]}
+**100 pass · 4 fail · 2 warn** · 3866 words · 43 placeholders · wall 64s · deadline {"truth":"2026-12-22","served":["2026-12-22"]}
 
 FAIL:
 - ❌ depth: (run-7 review) the first instruction in the kit is the emergency department now, not a call to the office — /safety first:?\*{0,2}:?\s*go to (an|the) emergency department now/ in §1
 - ❌ never: (audit) unsourced patient facts go in brackets in the doctor letter — has not yet started physical therapy
 - ❌ never: (audit) emergency signs mean the emergency department now, not a same-day clinic visit first — see me today
+- ❌ never: (run-9 audit) the doctor signs the patient's own words ("trouble starting to pee", "tripping on my right foot"), not exam-derived labels — saddle anesthesia
 
 WARN:
 - ⚠️ §1 long — 663 words (target 560)
@@ -101,4 +102,4 @@ WARN:
 - ⚠️ §1 long — 653 words (target 560)
 - ⚠️ §10 long — 263 words (target 260)
 
-**TOTAL: 768 pass · 24 fail across 8 cases** (development set 579 pass · 18 fail; held-out 189 pass · 6 fail)
+**TOTAL: 768 pass · 25 fail across 8 cases** (development set 579 pass · 18 fail; held-out 189 pass · 7 fail)

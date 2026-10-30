@@ -63,7 +63,10 @@ WARN:
 - ⚠️ §10 long — 262 words (target 260)
 
 ## G-medicaid-mri-redflags — Held-out: Medicaid managed-care denial of a lumbar MRI, new neurological red flags
-**103 pass · 0 fail · 4 warn** · 4181 words · 49 placeholders · wall 56s · deadline {"truth":"2026-12-22","served":["2026-12-22"]}
+**103 pass · 1 fail · 4 warn** · 4181 words · 49 placeholders · wall 56s · deadline {"truth":"2026-12-22","served":["2026-12-22"]}
+
+FAIL:
+- ❌ never: (run-9 audit) the doctor signs the patient's own words ("trouble starting to pee", "tripping on my right foot"), not exam-derived labels — saddle anesthesia
 
 WARN:
 - ⚠️ model-computed dates (arithmetic correct, but should not be computed) — October 20, 2026
@@ -81,4 +84,4 @@ FAIL:
 WARN:
 - ⚠️ §10 long — 266 words (target 260)
 
-**TOTAL: 784 pass · 8 fail across 8 cases** (development set 591 pass · 6 fail; held-out 193 pass · 2 fail)
+**TOTAL: 784 pass · 9 fail across 8 cases** (development set 591 pass · 6 fail; held-out 193 pass · 3 fail)

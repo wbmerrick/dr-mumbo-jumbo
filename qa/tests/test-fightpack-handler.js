@@ -499,3 +499,81 @@ let n = 0; const ok = (c, m) => { assert(c, m); n++; };
   a16.strictEqual(T16.computeDeadline('- Notice date: October 23, 2026\n- Appeal deadline as printed: 60 calendar days from the date of this notice').date.toISOString().slice(0, 10), '2026-12-22', 'a printed date still works');
   console.log('v9.3 placeholder-date tests passed');
 })().catch((e) => { console.error('TEST FAIL', e); process.exit(1); });
+
+// ---------- v9.4: exam-derived labels in the doctor-signed sections (run-9 audit, Major) ----------
+(async () => {
+  const T17 = require('../../api/fightpack.js')._test;
+  const a17 = require('assert');
+  const G = 'For the last 3 days my right leg has been getting weaker and I keep tripping on my right foot. Since yesterday I have trouble starting to pee and my skin feels numb between my legs.';
+  const L = (body, src = G, h = '## 3. Letter of medical necessity — for your doctor to sign') => T17.bracketLabels(`${h}\n${body}`, src).text.split('\n')[1];
+  a17.strictEqual(L('Since yesterday she has experienced urinary retention (difficulty initiating urination).'), 'Since yesterday she has experienced [if documented: urinary retention] (difficulty initiating urination).');
+  a17.strictEqual(L('She reports progressive right foot drop and saddle anesthesia.'), 'She reports [if documented: progressive right foot drop] and [if documented: saddle anesthesia].');
+  a17.strictEqual(L('Worsening right leg weakness over 3 days causing falls.'), 'Worsening right leg weakness over 3 days [if documented: causing falls].');
+  a17.strictEqual(L('Shortness of breath and dyspnea on exertion.', 'too short of breath'), 'Shortness of breath and dyspnea on exertion.', 'a plain synonym stays');
+  a17.strictEqual(L('He is at continued risk for falls and has a high fall risk.', "can't get to the bathroom in time"), 'He is at continued risk for falls and has a high fall risk.', 'a risk is not a reported fall');
+  a17.strictEqual(L('He has had incontinence episodes.', "He can't get to the bathroom in time and has had accidents."), 'He has had [if documented: incontinence episodes].');
+  a17.strictEqual(L('He has had incontinence episodes.', 'History of urge incontinence.'), 'He has had incontinence episodes.', 'a label the source uses stays');
+  a17.strictEqual(L('[Confirm: urinary retention on bladder scan] noted.'), '[Confirm: urinary retention on bladder scan] noted.', 'an existing bracket is left alone');
+  a17.strictEqual(L('She has urinary retention.', G, '## 4. Note for your doctor\'s office'), 'She has urinary retention.', 'a note to the doctor\'s office is not a letter to the insurer');
+  a17.strictEqual(L('a near-miss motor vehicle accident at a red light', 'fell asleep at a red light once'), 'a [if documented: near-miss motor vehicle accident] at a red light');
+  // through postProcess: parts 3 and 4 only, source taken from before the decode, skipped with records
+  const known = G + '\n\n## 1. Your denial, decoded — and how strong your case is\n- the decode may say urinary retention';
+  a17.strictEqual(T17.postProcess('## 3. Letter of medical necessity — for your doctor to sign\nShe has urinary retention.', { part: 3, known }).text, '## 3. Letter of medical necessity — for your doctor to sign\nShe has [if documented: urinary retention].', "the decode's wording is not a source");
+  a17.strictEqual(T17.postProcess('## 3. Letter of medical necessity — for your doctor to sign\nShe has urinary retention.', { part: 3, known, records: true }).text, '## 3. Letter of medical necessity — for your doctor to sign\nShe has urinary retention.');
+  a17.strictEqual(T17.postProcess('## 5. Peer-to-peer talking points — for your doctor\n- foot drop on the right', { part: 4, known }).counts.labels, 1);
+  console.log('v9.4 clinician-label tests passed');
+})().catch((e) => { console.error('TEST FAIL', e); process.exit(1); });
+
+// ---------- v9.5: the plan type is read from the Plan line's head; a negated mention never decides it ----------
+// Run 13's decode of an employer HMO said "no language indicating Medicare…" and the old parser returned "medicare",
+// which would have told the patient an Independent Review Entity reviews the case automatically.
+(async () => {
+  const T18 = require('../../api/fightpack.js')._test;
+  const a18 = require('assert');
+  const pt = T18.planTypeOf;
+  a18.strictEqual(pt('- **Plan:** Employer or marketplace plan (the plan name is "Evergreen Choice HMO" and the insurer is Evergreen Mutual Health — no language indicating Medicare, Medicaid, or self-funded status). You are filing for yourself.'), 'commercial', 'run 13, D');
+  a18.strictEqual(pt('- **Plan:** Not Medicare — an employer plan'), 'commercial', 'a negated head');
+  a18.strictEqual(pt('- **Plan:** No Medicare or Medicaid language; employer plan'), 'commercial', 'a negated list');
+  a18.strictEqual(pt('- **Plan:** This is not a Medicare plan; it is an employer plan'), 'commercial');
+  a18.strictEqual(pt('- **Plan:** Medicare Advantage — the notice names "Silverline Complete (HMO), a Medicare Advantage plan"'), 'medicare');
+  a18.strictEqual(pt('- **Plan:** Medicare Advantage plan — the notice is not from Original Medicare'), 'medicare', 'the head decides');
+  a18.strictEqual(pt('- **Plan:** Medi-Cal managed care plan (California Medicaid), and you are filing for yourself.'), 'medicaid');
+  a18.strictEqual(pt('- **Plan:** Medicaid — no Medicare involvement'), 'medicaid');
+  a18.strictEqual(pt('- **Plan:** Harborline Select PPO (employer group 44817)'), 'commercial', 'a plan name, then the words that show it');
+  a18.strictEqual(pt('- **Plan:** Unknown whether self-funded or fully insured — the notice shows "Evergreen Choice HMO"'), 'commercial');
+  a18.strictEqual(pt('- **Plan:** Not stated — the EOB does not say'), 'unknown');
+  console.log('v9.5 plan-type tests passed');
+})().catch((e) => { console.error('TEST FAIL', e); process.exit(1); });
+
+// ---------- v9.6: no sentence split inside a bracket; labels bracketed in every letter to the insurer ----------
+(async () => {
+  const T19 = require('../../api/fightpack.js')._test;
+  const a19 = require('assert');
+  // run 14, E, section 9: the full stop inside the coding bracket hid the next sentence from the done-guard
+  const e14 = "Body. [Only if the billing office confirms it: The medication and ultrasound guidance codes are separately billable when medically necessary and documented, which they were for this injection. — otherwise delete this sentence.] The billing office has verified the codes match the documentation and has requested the plan's specific claim-edit rules that were applied.";
+  a19.deepStrictEqual(T19.sentencesOf(e14).map((x) => x.trim().slice(0, 24)), ['Body.', '[Only if the billing off', 'The billing office has v']);
+  a19.ok(/\[Only if this has happened: The billing office has verified the codes match/.test(T19.bracketUnverified(e14).text), 'the done-guard now sees it');
+  a19.deepStrictEqual(T19.sentencesOf('One [stray. Two.').map((x) => x.trim()), ['One [stray.', 'Two.'], 'an unbalanced bracket splits as before');
+  // labels in the patient's own letters (sections 2 and 9), not in notes, scripts or deadlines
+  const src = 'For the last 3 days my right leg has been getting weaker and I keep tripping on my right foot.';
+  const B = (h, body) => T19.bracketLabels(`${h}\n${body}`, src).text.split('\n')[1];
+  a19.strictEqual(B('## 2. Your appeal letter', 'I now have progressive right leg weakness with foot drop.'), 'I now have progressive right leg weakness with [if documented: foot drop].');
+  a19.strictEqual(B('## 9. If they say no again — your next level of review', 'I developed leg weakness, foot drop, and numbness.'), 'I developed leg weakness, [if documented: foot drop], and numbness.');
+  for (const h of ['## 1. Your denial, decoded — and how strong your case is', "## 4. Note for your doctor's office", '## 6. Phone script — calling the insurer', '## 10. Your deadlines and next moves']) a19.strictEqual(B(h, 'Ask about foot drop.'), 'Ask about foot drop.', h);
+  const known = src + '\n\n## 1. Your denial, decoded — and how strong your case is\n- foot drop';
+  a19.strictEqual(T19.postProcess('## 2. Your appeal letter\nI have foot drop.', { part: 2, known }).counts.labels, 1, 'part 2 runs the guard');
+  a19.strictEqual(T19.postProcess('## 9. If they say no again — external review request\nI have foot drop.\n## 10. Your deadlines and next moves\n- foot drop', { part: 6, known }).counts.labels, 1, 'part 6: section 9 only');
+  a19.strictEqual(T19.postProcess('## 2. Your appeal letter\nI have foot drop.', { part: 2, known, records: true }).text, '## 2. Your appeal letter\nI have foot drop.', 'records attached: left to them');
+  // a label named as a risk is not a finding (run 14, G); a finding after a risk cue still is
+  const H3 = '## 3. Letter of medical necessity — for your doctor to sign';
+  a19.strictEqual(B(H3, 'Cauda equina syndrome is a surgical emergency where delay can cause permanent paralysis and incontinence.'), 'Cauda equina syndrome is a surgical emergency where delay can cause permanent paralysis and incontinence.');
+  a19.strictEqual(B(H3, 'Continued denial places her at risk for malnutrition, anemia and perforation.'), 'Continued denial places her at risk for malnutrition, anemia and perforation.');
+  a19.strictEqual(B(H3, 'Given the risk of permanent injury, she now has foot drop.'), 'Given the risk of permanent injury, she now has [if documented: foot drop].');
+  a19.strictEqual(B(H3, 'She has foot drop, which can cause incontinence.'), 'She has [if documented: foot drop], which can cause incontinence.');
+  a19.strictEqual(B(H3, 'He cannot reach the bathroom in time, resulting in incontinence accidents.', "has had accidents"), 'He cannot reach the bathroom in time, resulting in [if documented: incontinence] accidents.', 'an actual result is a finding');
+  a19.strictEqual(B(H3, 'His breathlessness prevents him from reaching the bathroom in time, resulting in incontinence.', 'has had accidents'), 'His breathlessness prevents him from reaching the bathroom in time, resulting in [if documented: incontinence].', 'a limitation is not a risk');
+  a19.strictEqual(B(H3, 'The chair would prevent falls and incontinence.', 'has had accidents'), 'The chair would prevent falls and incontinence.');
+  // text inside an outer bracket is left alone, nested brackets included
+  a19.strictEqual(B(H3, '[Describe the new note: walks only [number] steps, resulting in incontinence.] Then sign.', "has had accidents"), '[Describe the new note: walks only [number] steps, resulting in incontinence.] Then sign.');
+  console.log('v9.6 bracket-sentence / letter-label tests passed');
+})().catch((e) => { console.error('TEST FAIL', e); process.exit(1); });
