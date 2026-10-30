@@ -21,6 +21,7 @@ const { PREAMBLE, DECODE_RULE, SEC } = require('./_lib/fightpack-prompts.js');
 const G = require('./_lib/fightpack-guards.js');
 const { SAFETY_LABEL_RULE, SAFETY_EMERGENCY, SAFETY_TODAY, MA_PHYSICIAN, MEDICAID_RULES, URGENT_EXTERNAL, ORIGINAL_MEDICARE, FUNDING_INSURED, FUNDING_SELF, P2P_HEAD, P2P_TAIL, PHONE_ROLES_HEAD, CLINICIAN_CHECK } = require('./_lib/fightpack-rules.js');
 const { fieldOf, safetyOf, phoneRoles, postProcess } = G;
+const F = require('./_lib/fightpack-facts.js');
 
 // ---------- deterministic facts from the decode ----------
 // The decode's "Read from your letter" list and its Urgent line are the kit's single source
@@ -369,6 +370,19 @@ function normalizeSections(raw, part) {
   return { text: out.join('\n').trim(), trimmed };
 }
 
+// v9.10: what code states itself (api/_lib/fightpack-facts.js). For part 1 the text is the decode, so the
+// facts written there reach every writer of parts 2-6. A policy number must be in the patient's documents;
+// when those came as files, the decode's reading of them counts.
+function stateFacts(text, part, ctx) {
+  const source = [ctx.denial || '', ctx.extra || ''].join('\n');
+  let t = text;
+  if (part === 1) {
+    if (originalMedicare(t) && F.isAmbulance(source + '\n' + t)) t = F.owedLine(t, source);
+    if (ctx.level !== 'emergency' && effectiveUrgency(t) === true && careStatusOf(t) !== 'post') t = F.doctorMayRequest(t);
+  }
+  return F.policyNumbers(t, source + (ctx.files ? '\n' + (part === 1 ? t : ctx.decode || '') : ''));
+}
+
 // ---------- what a refusal from the model API means for the reader ----------
 // The account's spend limit or credit balance is not a passing fault, so it is said plainly (trying again
 // will not help); an attachment the model cannot read, or too much to read at once, asks for a clearer or
@@ -487,6 +501,7 @@ module.exports = async (req, res) => {
     if (plan === 'medicaid') ask += MEDICAID_RULES + '\n\n';
     if (urgent === true && plan === 'commercial') ask += URGENT_EXTERNAL + '\n\n';
     if (original) ask += ORIGINAL_MEDICARE + '\n\n';
+    if (original && F.isAmbulance([denial, extra, decode].join('\n'))) ask += F.AMBULANCE_ASSIGNED + '\n\n';
     if (funding === 'insured') ask += FUNDING_INSURED + '\n\n';
     if (funding === 'self-funded') ask += FUNDING_SELF + '\n\n';
     if (p2p && !original) ask += `${P2P_HEAD}: ${p2p.phone}${p2p.window ? ', ' + p2p.window : ''}${p2p.date ? ` — by ${fmtLong(p2p.date)}` : ''}. ${P2P_TAIL}\n\n`;
@@ -541,7 +556,8 @@ module.exports = async (req, res) => {
     const norm = normalizeSections(raw, part);
     const post = postProcess(norm.text, { part, safety, known: [denial, extra, decode].join('\n'), attachments: !!(denialFile || recordsFile), records: !!recordsFile });
     const routed = part > 1 ? oneRoute(post.text, funding) : post.text;
-    const text = part === 6 ? fixMeta(routed, decodeFacts(decode), fallbackFacts(decode)) : part === 1 ? expeditedFirst(twoRequests(post.text), post.level) : routed;
+    const built = part === 6 ? fixMeta(routed, decodeFacts(decode), fallbackFacts(decode)) : part === 1 ? expeditedFirst(twoRequests(post.text), post.level) : routed;
+    const text = stateFacts(built, part, { denial, extra, decode, files: !!(denialFile || recordsFile), level: post.level });
     const missing = P.slots.filter((alts) => !alts.some((h) => text.includes(h))).map((alts) => alts[0]);
     const usage = data.usage ? { in: data.usage.input_tokens, out: data.usage.output_tokens, cache_read: data.usage.cache_read_input_tokens || 0, cache_write: data.usage.cache_creation_input_tokens || 0 } : null;
     res.status(200).json({ part, text, sid: auth.sid === 'preview' || auth.sid === 'free' ? auth.sid : 'paid', stop: data.stop_reason || null, missing, trimmed: norm.trimmed, safety: post.level, ...post.counts, usage, deadline: deadline ? isoOf(deadline.date) : null, urgent, clock });
@@ -552,4 +568,4 @@ module.exports = async (req, res) => {
 };
 
 // exposed for unit tests
-module.exports._test = Object.assign({ computeDeadline, parseDate, factOf, urgencyOf, planTypeOf, originalMedicare, fundingOf, p2pOf, careStatusOf, effectiveUrgency, decisionClock, decodeFacts, fallbackFacts, fixMeta, twoRequests, expeditedFirst, oneRoute, normalizeSections, canonicalHeading }, G);
+module.exports._test = Object.assign({ computeDeadline, parseDate, factOf, urgencyOf, planTypeOf, originalMedicare, fundingOf, p2pOf, careStatusOf, effectiveUrgency, decisionClock, decodeFacts, fallbackFacts, fixMeta, twoRequests, expeditedFirst, oneRoute, stateFacts, normalizeSections, canonicalHeading }, G);

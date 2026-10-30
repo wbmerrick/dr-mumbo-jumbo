@@ -1,7 +1,7 @@
 # Fight Pack automated checks — run "runs18" (today=2026-10-30)
 
 ## C-prior-auth-biologic — Pre-service prior-auth denial of a biologic (step therapy), steroid-dependent flare
-**104 pass · 0 fail · 4 warn** · 4521 words · 54 placeholders · wall 69s · deadline {"truth":"2027-04-18","served":["2027-04-18"]}
+**105 pass · 0 fail · 4 warn** · 4521 words · 54 placeholders · wall 69s · deadline {"truth":"2027-04-18","served":["2027-04-18"]}
 
 WARN:
 - ⚠️ §1 long — 819 words (target 560)
@@ -10,7 +10,7 @@ WARN:
 - ⚠️ §10 long — 414 words (target 260)
 
 ## I-original-medicare-ambulance — Held-out (round 2): Original Medicare MSN — emergency ambulance denied, daughter filing
-**104 pass · 2 fail · 2 warn** · 3574 words · 46 placeholders · wall 55s · deadline {"truth":"2027-02-11","served":["2027-02-11"]}
+**105 pass · 2 fail · 2 warn** · 3574 words · 46 placeholders · wall 55s · deadline {"truth":"2027-02-11","served":["2027-02-11"]}
 
 FAIL:
 - ❌ never: (audit2) the family was told only "very slow": severity words come from the chart, in brackets — marked bradycardi
@@ -21,7 +21,7 @@ WARN:
 - ⚠️ §10 long — 369 words (target 260)
 
 ## J-urgent-irf-pdf-records — Held-out (round 2): urgent pre-service denial of inpatient rehab after stroke — letter as PDF, records attached
-**102 pass · 3 fail · 6 warn** · 4955 words · 42 placeholders · wall 74s · deadline {"truth":"2027-04-26","served":["2027-04-26"]}
+**103 pass · 3 fail · 6 warn** · 4955 words · 42 placeholders · wall 74s · deadline {"truth":"2027-04-26","served":["2027-04-26"]}
 
 FAIL:
 - ❌ never: the letter says the plan is insured and regulated by the state insurance department — Department of Labor
@@ -36,5 +36,5 @@ WARN:
 - ⚠️ §9 long — 487 words (target 400)
 - ⚠️ §10 long — 354 words (target 260)
 
-**TOTAL: 310 pass · 5 fail across 3 cases** (development set 104 pass · 0 fail; held-out 206 pass · 5 fail)
+**TOTAL: 313 pass · 5 fail across 3 cases** (development set 105 pass · 0 fail; held-out 208 pass · 5 fail)
 

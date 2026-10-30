@@ -80,6 +80,7 @@ api/_lib/           the Fight Pack engine, kept out of the public site (Vercel s
                     fightpack-preamble.js / -sections.js / -rules.js / -prompts.js — the kit writer's rules, as prose
                     fightpack-guards.js — the deterministic text guards and the safety renderer
                     fightpack-limits.js — settings, vehicles and waits; choice and notice (v9.8.2–v9.8.3)
+                    fightpack-facts.js — the ambulance bill, policy numbers, the doctor's expedited request (v9.10)
 lib/                code-library data (CPT in three modules, ICD-10, denial reasons); unlock.js (tokens); files.js (attachments).
                     These stay publicly readable (static hosting serves them; vercel.json only redirects the plain /lib/ path),
                     so nothing secret or proprietary goes here.

@@ -24,5 +24,5 @@ for n in 5 6 7 8 9 10 11 12 13 14 15; do score runs$n $AH; done
 score runs16 I-original-medicare-ambulance J-urgent-irf-pdf-records
 score runs17 C-prior-auth-biologic I-original-medicare-ambulance J-urgent-irf-pdf-records
 score runs18 C-prior-auth-biologic I-original-medicare-ambulance J-urgent-irf-pdf-records
-for n in 19 20 21; do score runs$n $AJ; done
+for n in 19 20 21 23; do score runs$n $AJ; done
 score runs22-free G-medicaid-mri-redflags J-urgent-irf-pdf-records

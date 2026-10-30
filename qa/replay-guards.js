@@ -24,8 +24,10 @@ for (const c of fs.readdirSync(to).filter((d) => /^[A-J]-/.test(d))) {
     // the handler's own code steps after the guards, as the server runs them (v9.8.1)
     const funding = H.fundingOf ? H.fundingOf(decode, m.denial || '') : null;
     const routed = p > 1 && H.oneRoute ? H.oneRoute(r.text, funding) : r.text;
-    const out = p === 6 ? H.fixMeta(routed, H.decodeFacts(decode), H.fallbackFacts ? H.fallbackFacts(decode) : undefined)
+    const built = p === 6 ? H.fixMeta(routed, H.decodeFacts(decode), H.fallbackFacts ? H.fallbackFacts(decode) : undefined)
       : p === 1 && H.expeditedFirst ? H.expeditedFirst(H.twoRequests(routed), r.level || G.safetyOf(routed)) : routed; // a stored decode is already rendered
+    // v9.10: the facts code states itself
+    const out = H.stateFacts ? H.stateFacts(built, p, { denial: m.denial || '', extra: m.extra || '', decode, files: !!(m.file || m.records), level: r.level || (p === 1 ? G.safetyOf(routed) : null) }) : built;
     j.data.text = out; fs.writeFileSync(f, JSON.stringify(j, null, 2)); parts[p] = out;
   }
   fs.writeFileSync(path.join(to, c, 'kit.md'), [1, 2, 3, 4, 5, 6].map((p) => parts[p]).filter(Boolean).join('\n\n'));

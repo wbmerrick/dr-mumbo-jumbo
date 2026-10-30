@@ -1,7 +1,7 @@
 # Fight Pack automated checks — run "runs14" (today=2026-10-30)
 
 ## A-sleep-paraphrase — Rawest input: patient paraphrase of a sleep-study denial, no identifiers
-**90 pass · 2 fail · 3 warn** · 4033 words · 111 placeholders · wall 53s · deadline {"truth":null,"served":[null]}
+**91 pass · 2 fail · 3 warn** · 4033 words · 111 placeholders · wall 53s · deadline {"truth":null,"served":[null]}
 
 FAIL:
 - ❌ no "plan-preferred equivalent" when the notice names no preferred product
@@ -13,7 +13,7 @@ WARN:
 - ⚠️ §10 long — 309 words (target 260)
 
 ## B-inpatient-loc-photo — Phone photo of a hospital level-of-care denial (inpatient → observation)
-**102 pass · 1 fail · 3 warn** · 4220 words · 64 placeholders · wall 78s · deadline {"truth":"2027-03-21","served":["2027-03-21"]}
+**103 pass · 1 fail · 3 warn** · 4220 words · 64 placeholders · wall 78s · deadline {"truth":"2027-03-21","served":["2027-03-21"]}
 
 FAIL:
 - ❌ never: (audit) never claim a service is available only to inpatients — available only at the inpatient
@@ -24,7 +24,7 @@ WARN:
 - ⚠️ §5 long — 493 words (target 420)
 
 ## C-prior-auth-biologic — Pre-service prior-auth denial of a biologic (step therapy), steroid-dependent flare
-**102 pass · 2 fail · 5 warn** · 4262 words · 47 placeholders · wall 56s · deadline {"truth":"2027-04-18","served":["2027-04-18"]}
+**103 pass · 2 fail · 5 warn** · 4262 words · 47 placeholders · wall 56s · deadline {"truth":"2027-04-18","served":["2027-04-18"]}
 
 FAIL:
 - ❌ urgent: expedited external review can be requested at the same time
@@ -38,7 +38,7 @@ WARN:
 - ⚠️ §10 long — 347 words (target 260)
 
 ## D-oon-er-eob — EOB: out-of-network ER physician at an in-network hospital, processed as non-emergency
-**94 pass · 3 fail · 2 warn** · 3750 words · 39 placeholders · wall 61s · deadline {"truth":"2027-04-04","served":["2027-04-04"]}
+**95 pass · 3 fail · 2 warn** · 3750 words · 39 placeholders · wall 61s · deadline {"truth":"2027-04-04","served":["2027-04-04"]}
 
 FAIL:
 - ❌ §8 requests the records and a coded itemized bill
@@ -50,7 +50,7 @@ WARN:
 - ⚠️ §5 long — 449 words (target 420)
 
 ## E-coding-bundling — Self-funded (ERISA) EOB: bundling and modifier denials on an orthopaedic office visit
-**93 pass · 3 fail · 2 warn** · 3948 words · 35 placeholders · wall 53s · deadline {"truth":"2027-03-29","served":["2027-03-29"]} · verified sums $646.00
+**94 pass · 3 fail · 2 warn** · 3948 words · 35 placeholders · wall 53s · deadline {"truth":"2027-03-29","served":["2027-03-29"]} · verified sums $646.00
 
 FAIL:
 - ❌ §7 asks for an itemized statement and an account hold
@@ -62,7 +62,7 @@ WARN:
 - ⚠️ §10 long — 361 words (target 260)
 
 ## F-medicare-advantage-pmd — Medicare Advantage Integrated Denial Notice: power wheelchair, 65-day printed deadline
-**104 pass · 2 fail · 5 warn** · 4595 words · 67 placeholders · wall 70s · deadline {"truth":"2026-12-18","served":["2026-12-18"]}
+**105 pass · 2 fail · 5 warn** · 4595 words · 67 placeholders · wall 70s · deadline {"truth":"2026-12-18","served":["2026-12-18"]}
 
 FAIL:
 - ❌ §4 has 6–8 bullets — 9
@@ -76,7 +76,7 @@ WARN:
 - ⚠️ §10 long — 342 words (target 260)
 
 ## G-medicaid-mri-redflags — Held-out: Medicaid managed-care denial of a lumbar MRI, new neurological red flags
-**103 pass · 1 fail · 5 warn** · 4295 words · 58 placeholders · wall 56s · deadline {"truth":"2026-12-22","served":["2026-12-22"]}
+**104 pass · 1 fail · 5 warn** · 4295 words · 58 placeholders · wall 56s · deadline {"truth":"2026-12-22","served":["2026-12-22"]}
 
 FAIL:
 - ❌ depth: the red flags are new, so they need a new exam and documentation — /new (exam|visit|evaluation|request|note)|re-?examin|examine (you|her|him)|updated (note|exam|order)|document(s|ing)? (the )?(new|red[- ]flag)|addendum/ in §1,§3,§4,§10
@@ -89,7 +89,7 @@ WARN:
 - ⚠️ §10 long — 307 words (target 260)
 
 ## H-oon-anesthesia-asc — Held-out: self-funded plan EOB, out-of-network anesthesiologist at an in-network surgery center
-**88 pass · 4 fail · 1 warn** · 3498 words · 31 placeholders · wall 49s · deadline {"truth":"2027-03-07","served":["2027-03-07"]}
+**89 pass · 4 fail · 1 warn** · 3498 words · 31 placeholders · wall 49s · deadline {"truth":"2027-03-07","served":["2027-03-07"]}
 
 FAIL:
 - ❌ §7 asks for an itemized statement and an account hold
@@ -100,5 +100,5 @@ FAIL:
 WARN:
 - ⚠️ §1 long — 638 words (target 560)
 
-**TOTAL: 776 pass · 18 fail across 8 cases** (development set 585 pass · 13 fail; held-out 191 pass · 5 fail)
+**TOTAL: 784 pass · 18 fail across 8 cases** (development set 591 pass · 13 fail; held-out 193 pass · 5 fail)
 

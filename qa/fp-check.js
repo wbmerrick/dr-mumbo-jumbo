@@ -184,6 +184,10 @@ function check(c) {
   ok('every claim/member/reference number is from the source', !badIds.length, badIds.join(', '));
   const badPhones = [...new Set((body.match(/\b1?[-. ]?\(?\d{3}\)?[-. ]\d{3}[-. ]\d{4}\b/g) || []).filter((p) => { const d = digits(p).replace(/^1(?=\d{10}$)/, ''); return !knownDigits.includes(d) && !VERIFIED_PHONES.includes(d); }))];
   ok('every phone number is from the source or the verified list', !badPhones.length, badPhones.join(', '));
+  // (re-audit, run 21) a coverage-policy number is from the documents, brackets included: a doctor asked to
+  // "cite NCD 20.4" would cite the implantable-defibrillator policy
+  const badPolicy = [...new Set((kit.match(/\b(?:National Coverage Determination(?:\s*\(NCD\))?|Local Coverage Determination(?:\s*\(LCD\))?|NCD|LCD)\s+(?:No\.?\s*|number\s+|section\s+)?L?\d{1,5}(?:\.\d{1,3})*\b/g) || []).filter((t) => !new RegExp(`(?<![\\d.,])${t.match(/L?\d{1,5}(?:\.\d{1,3})*$/)[0].replace(/\./g, '\\.')}(?![\\d]|\\.\\d)`).test(known)))];
+  ok('every coverage-policy number (NCD, LCD) is from the source', !badPolicy.length, badPolicy.join(', '));
   // a ZIP code ("CA 94244-2430") is an address, counted once by the identifier check above, not a CPT code
   const bodyNoZip = body.replace(/\b[A-Z]{2}\s+\d{5}(?:-\d{4})?\b|\b\d{5}-\d{4}\b/g, ' ');
   const badCpt = [...new Set((bodyNoZip.match(/\b(?:\d{5}|[A-Z]\d{4})\b/g) || []).filter((t) => !knownN.includes(t.toLowerCase()) && !/^(19|20)\d{3}$/.test(t)))];

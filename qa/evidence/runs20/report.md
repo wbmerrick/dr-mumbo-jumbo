@@ -1,7 +1,7 @@
 # Fight Pack automated checks — run "runs20" (today=2026-10-30)
 
 ## A-sleep-paraphrase — Rawest input: patient paraphrase of a sleep-study denial, no identifiers
-**91 pass · 1 fail · 4 warn** · 4182 words · 117 placeholders · wall 52s · deadline {"truth":null,"served":[null]}
+**92 pass · 1 fail · 4 warn** · 4182 words · 117 placeholders · wall 52s · deadline {"truth":null,"served":[null]}
 
 FAIL:
 - ❌ every CPT/HCPCS code is from the source — 95810
@@ -13,7 +13,7 @@ WARN:
 - ⚠️ §10 long — 299 words (target 260)
 
 ## B-inpatient-loc-photo — Phone photo of a hospital level-of-care denial (inpatient → observation)
-**102 pass · 1 fail · 3 warn** · 4084 words · 73 placeholders · wall 78s · deadline {"truth":"2027-03-21","served":["2027-03-21"]}
+**103 pass · 1 fail · 3 warn** · 4084 words · 73 placeholders · wall 78s · deadline {"truth":"2027-03-21","served":["2027-03-21"]}
 
 FAIL:
 - ❌ §7 asks for an itemized statement and an account hold
@@ -24,7 +24,7 @@ WARN:
 - ⚠️ §10 long — 286 words (target 260)
 
 ## C-prior-auth-biologic — Pre-service prior-auth denial of a biologic (step therapy), steroid-dependent flare
-**104 pass · 0 fail · 4 warn** · 4455 words · 47 placeholders · wall 65s · deadline {"truth":"2027-04-18","served":["2027-04-18"]}
+**105 pass · 0 fail · 4 warn** · 4455 words · 47 placeholders · wall 65s · deadline {"truth":"2027-04-18","served":["2027-04-18"]}
 
 WARN:
 - ⚠️ §1 long — 850 words (target 560)
@@ -33,7 +33,7 @@ WARN:
 - ⚠️ §10 long — 336 words (target 260)
 
 ## D-oon-er-eob — EOB: out-of-network ER physician at an in-network hospital, processed as non-emergency
-**95 pass · 2 fail · 2 warn** · 3703 words · 39 placeholders · wall 50s · deadline {"truth":"2027-04-04","served":["2027-04-04"]}
+**96 pass · 2 fail · 2 warn** · 3703 words · 39 placeholders · wall 50s · deadline {"truth":"2027-04-04","served":["2027-04-04"]}
 
 FAIL:
 - ❌ depth: (audit) a plan may not judge an emergency by diagnosis codes alone — /diagnosis codes? alone|solely on (the basis of )?(the )?diagnosis/ in §1,§2,§3,§5,§6
@@ -44,7 +44,7 @@ WARN:
 - ⚠️ §10 long — 310 words (target 260)
 
 ## E-coding-bundling — Self-funded (ERISA) EOB: bundling and modifier denials on an orthopaedic office visit
-**93 pass · 3 fail · 2 warn** · 3454 words · 40 placeholders · wall 44s · deadline {"truth":"2027-03-29","served":["2027-03-29"]}
+**94 pass · 3 fail · 2 warn** · 3454 words · 40 placeholders · wall 44s · deadline {"truth":"2027-03-29","served":["2027-03-29"]}
 
 FAIL:
 - ❌ §2 requests the criteria and the reviewer's credentials
@@ -56,7 +56,7 @@ WARN:
 - ⚠️ §10 long — 268 words (target 260)
 
 ## F-medicare-advantage-pmd — Medicare Advantage Integrated Denial Notice: power wheelchair, 65-day printed deadline
-**104 pass · 2 fail · 6 warn** · 4543 words · 81 placeholders · wall 66s · deadline {"truth":"2026-12-18","served":["2026-12-18"]}
+**105 pass · 2 fail · 6 warn** · 4543 words · 81 placeholders · wall 66s · deadline {"truth":"2026-12-18","served":["2026-12-18"]}
 
 FAIL:
 - ❌ depth: (audit) the coverage ladder includes ruling out a scooter — /scooter|\bPOV\b|power-operated/ in §3,§5
@@ -71,7 +71,7 @@ WARN:
 - ⚠️ §10 long — 284 words (target 260)
 
 ## G-medicaid-mri-redflags — Held-out: Medicaid managed-care denial of a lumbar MRI, new neurological red flags
-**104 pass · 0 fail · 6 warn** · 4428 words · 72 placeholders · wall 56s · deadline {"truth":"2026-12-22","served":["2026-12-22"]}
+**105 pass · 0 fail · 6 warn** · 4428 words · 72 placeholders · wall 56s · deadline {"truth":"2026-12-22","served":["2026-12-22"]}
 
 WARN:
 - ⚠️ model-computed dates (arithmetic correct, but should not be computed) — October 22, 2026
@@ -82,7 +82,7 @@ WARN:
 - ⚠️ §10 long — 351 words (target 260)
 
 ## H-oon-anesthesia-asc — Held-out: self-funded plan EOB, out-of-network anesthesiologist at an in-network surgery center
-**91 pass · 1 fail · 2 warn** · 3505 words · 34 placeholders · wall 50s · deadline {"truth":"2027-03-07","served":["2027-03-07"]}
+**92 pass · 1 fail · 2 warn** · 3505 words · 34 placeholders · wall 50s · deadline {"truth":"2027-03-07","served":["2027-03-07"]}
 
 FAIL:
 - ❌ never: (audit) for anesthesia at an in-network facility the protection never depends on notice or consent — never received any notice
@@ -92,7 +92,7 @@ WARN:
 - ⚠️ §10 long — 265 words (target 260)
 
 ## I-original-medicare-ambulance — Held-out (round 2): Original Medicare MSN — emergency ambulance denied, daughter filing
-**105 pass · 1 fail · 3 warn** · 3597 words · 52 placeholders · wall 60s · deadline {"truth":"2027-02-11","served":["2027-02-11"]}
+**106 pass · 1 fail · 3 warn** · 3597 words · 52 placeholders · wall 60s · deadline {"truth":"2027-02-11","served":["2027-02-11"]}
 
 FAIL:
 - ❌ depth: the daughter files for him: the Appointment of Representative form comes first — /CMS-1696|Appointment of Representative/ in §1,§2,§10
@@ -103,7 +103,7 @@ WARN:
 - ⚠️ §10 long — 296 words (target 260)
 
 ## J-urgent-irf-pdf-records — Held-out (round 2): urgent pre-service denial of inpatient rehab after stroke — letter as PDF, records attached
-**104 pass · 1 fail · 6 warn** · 5062 words · 32 placeholders · wall 78s · deadline {"truth":"2027-04-26","served":["2027-04-26"]}
+**105 pass · 1 fail · 6 warn** · 5062 words · 32 placeholders · wall 78s · deadline {"truth":"2027-04-26","served":["2027-04-26"]}
 
 FAIL:
 - ❌ never: (audit2) the record says daily physician oversight; the SNF therapy figure and "not validated" are unsourced — not validated
@@ -116,5 +116,5 @@ WARN:
 - ⚠️ §9 long — 482 words (target 400)
 - ⚠️ §10 long — 414 words (target 260)
 
-**TOTAL: 993 pass · 12 fail across 10 cases** (development set 589 pass · 9 fail; held-out 404 pass · 3 fail)
+**TOTAL: 1003 pass · 12 fail across 10 cases** (development set 595 pass · 9 fail; held-out 408 pass · 3 fail)
 

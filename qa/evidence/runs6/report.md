@@ -1,7 +1,7 @@
 # Fight Pack automated checks — run "runs6" (today=2026-10-30)
 
 ## A-sleep-paraphrase — Rawest input: patient paraphrase of a sleep-study denial, no identifiers
-**90 pass · 2 fail · 2 warn** · 3633 words · 89 placeholders · wall 59s · deadline {"truth":null,"served":[null]}
+**91 pass · 2 fail · 2 warn** · 3633 words · 89 placeholders · wall 59s · deadline {"truth":null,"served":[null]}
 
 FAIL:
 - ❌ depth: uses the safety fact the patient supplied — /fell asleep|drowsy driving|red light/ in §1,§3
@@ -12,7 +12,7 @@ WARN:
 - ⚠️ §5 long — 462 words (target 420)
 
 ## B-inpatient-loc-photo — Phone photo of a hospital level-of-care denial (inpatient → observation)
-**100 pass · 3 fail · 4 warn** · 4277 words · 69 placeholders · wall 87s · deadline {"truth":"2027-03-21","served":["2027-03-21"]}
+**101 pass · 3 fail · 4 warn** · 4277 words · 69 placeholders · wall 87s · deadline {"truth":"2027-03-21","served":["2027-03-21"]}
 
 FAIL:
 - ❌ never asserts a stability nobody reported — ended duration reflects that he was not stable enough for discharge after on
@@ -26,7 +26,7 @@ WARN:
 - ⚠️ §10 long — 272 words (target 260)
 
 ## C-prior-auth-biologic — Pre-service prior-auth denial of a biologic (step therapy), steroid-dependent flare
-**102 pass · 2 fail · 2 warn** · 4040 words · 46 placeholders · wall 63s · deadline {"truth":"2027-04-18","served":["2027-04-18"]}
+**103 pass · 2 fail · 2 warn** · 4040 words · 46 placeholders · wall 63s · deadline {"truth":"2027-04-18","served":["2027-04-18"]}
 
 FAIL:
 - ❌ never: (audit) severe symptoms now mean contacting the specialist today, unconditionally — contact your doctor today if symptoms worse
@@ -37,7 +37,7 @@ WARN:
 - ⚠️ §5 long — 544 words (target 420)
 
 ## D-oon-er-eob — EOB: out-of-network ER physician at an in-network hospital, processed as non-emergency
-**92 pass · 5 fail · 2 warn** · 3979 words · 35 placeholders · wall 64s · deadline {"truth":"2027-04-04","served":["2027-04-04"]}
+**93 pass · 5 fail · 2 warn** · 3979 words · 35 placeholders · wall 64s · deadline {"truth":"2027-04-04","served":["2027-04-04"]}
 
 FAIL:
 - ❌ §7 asks for an itemized statement and an account hold
@@ -51,7 +51,7 @@ WARN:
 - ⚠️ §6 long — 545 words (target 450)
 
 ## E-coding-bundling — Self-funded (ERISA) EOB: bundling and modifier denials on an orthopaedic office visit
-**95 pass · 1 fail · 2 warn** · 3731 words · 25 placeholders · wall 67s · deadline {"truth":"2027-03-29","served":["2027-03-29"]} · verified sums $646
+**96 pass · 1 fail · 2 warn** · 3731 words · 25 placeholders · wall 67s · deadline {"truth":"2027-03-29","served":["2027-03-29"]} · verified sums $646
 
 FAIL:
 - ❌ never: (audit) nothing is written as done that has not happened — billing office has confirmed
@@ -61,7 +61,7 @@ WARN:
 - ⚠️ §10 long — 269 words (target 260)
 
 ## F-medicare-advantage-pmd — Medicare Advantage Integrated Denial Notice: power wheelchair, 65-day printed deadline
-**101 pass · 5 fail · 5 warn** · 4573 words · 69 placeholders · wall 66s · deadline {"truth":"2026-12-18","served":["2026-12-18"]}
+**102 pass · 5 fail · 5 warn** · 4573 words · 69 placeholders · wall 66s · deadline {"truth":"2026-12-18","served":["2026-12-18"]}
 
 FAIL:
 - ❌ depth: (audit) a record gap is fixed by a new visit or dated addendum, not only a letter — /addendum|new (face-to-face|visit|exam|evaluation|mobility)/ in §1,§3,§4,§10
@@ -78,7 +78,7 @@ WARN:
 - ⚠️ §10 long — 360 words (target 260)
 
 ## G-medicaid-mri-redflags — Held-out: Medicaid managed-care denial of a lumbar MRI, new neurological red flags
-**100 pass · 4 fail · 2 warn** · 3866 words · 43 placeholders · wall 64s · deadline {"truth":"2026-12-22","served":["2026-12-22"]}
+**101 pass · 4 fail · 2 warn** · 3866 words · 43 placeholders · wall 64s · deadline {"truth":"2026-12-22","served":["2026-12-22"]}
 
 FAIL:
 - ❌ depth: (run-7 review) the first instruction in the kit is the emergency department now, not a call to the office — /safety first:?\*{0,2}:?\s*go to (an|the) emergency department now/ in §1
@@ -91,7 +91,7 @@ WARN:
 - ⚠️ §5 long — 454 words (target 420)
 
 ## H-oon-anesthesia-asc — Held-out: self-funded plan EOB, out-of-network anesthesiologist at an in-network surgery center
-**89 pass · 3 fail · 2 warn** · 3591 words · 28 placeholders · wall 49s · deadline {"truth":"2027-03-07","served":["2027-03-07"]}
+**90 pass · 3 fail · 2 warn** · 3591 words · 28 placeholders · wall 49s · deadline {"truth":"2027-03-07","served":["2027-03-07"]}
 
 FAIL:
 - ❌ no pending step written as already done — I have also contacted
@@ -102,5 +102,5 @@ WARN:
 - ⚠️ §1 long — 653 words (target 560)
 - ⚠️ §10 long — 263 words (target 260)
 
-**TOTAL: 769 pass · 25 fail across 8 cases** (development set 580 pass · 18 fail; held-out 189 pass · 7 fail)
+**TOTAL: 777 pass · 25 fail across 8 cases** (development set 586 pass · 18 fail; held-out 191 pass · 7 fail)
 

@@ -1,7 +1,7 @@
 # Fight Pack automated checks — run "runs4" (today=2026-10-30)
 
 ## A-sleep-paraphrase — Rawest input: patient paraphrase of a sleep-study denial, no identifiers
-**87 pass · 5 fail · 3 warn** · 4070 words · 112 placeholders · wall 62s · deadline {"truth":null,"served":[null]}
+**88 pass · 5 fail · 3 warn** · 4070 words · 112 placeholders · wall 62s · deadline {"truth":null,"served":[null]}
 
 FAIL:
 - ❌ server decision clock: 30 days / 72 hours for care not yet received — []
@@ -16,7 +16,7 @@ WARN:
 - ⚠️ §10 long — 273 words (target 260)
 
 ## B-inpatient-loc-photo — Phone photo of a hospital level-of-care denial (inpatient → observation)
-**98 pass · 5 fail · 3 warn** · 4230 words · 58 placeholders · wall 74s · deadline {"truth":"2027-03-21","served":["2027-03-21"]}
+**99 pass · 5 fail · 3 warn** · 4230 words · 58 placeholders · wall 74s · deadline {"truth":"2027-03-21","served":["2027-03-21"]}
 
 FAIL:
 - ❌ server decision clock: 60 days for care already received — []
@@ -31,7 +31,7 @@ WARN:
 - ⚠️ §5 long — 565 words (target 420)
 
 ## C-prior-auth-biologic — Pre-service prior-auth denial of a biologic (step therapy), steroid-dependent flare
-**98 pass · 6 fail · 3 warn** · 4022 words · 43 placeholders · wall 61s · deadline {"truth":"2027-04-18","served":["2027-04-18"]}
+**99 pass · 6 fail · 3 warn** · 4022 words · 43 placeholders · wall 61s · deadline {"truth":"2027-04-18","served":["2027-04-18"]}
 
 FAIL:
 - ❌ urgent: expedited external review can be requested at the same time
@@ -47,7 +47,7 @@ WARN:
 - ⚠️ §10 long — 265 words (target 260)
 
 ## D-oon-er-eob — EOB: out-of-network ER physician at an in-network hospital, processed as non-emergency
-**88 pass · 9 fail · 3 warn** · 3877 words · 39 placeholders · wall 60s · deadline {"truth":"2027-04-04","served":["2027-04-04"]}
+**89 pass · 9 fail · 3 warn** · 3877 words · 39 placeholders · wall 60s · deadline {"truth":"2027-04-04","served":["2027-04-04"]}
 
 FAIL:
 - ❌ §10 decision clock for care already received is 60 days — 30
@@ -66,7 +66,7 @@ WARN:
 - ⚠️ §6 long — 463 words (target 450)
 
 ## E-coding-bundling — Self-funded (ERISA) EOB: bundling and modifier denials on an orthopaedic office visit
-**91 pass · 5 fail · 3 warn** · 3718 words · 29 placeholders · wall 55s · deadline {"truth":"2027-03-29","served":["2027-03-29"]} · verified sums $646
+**92 pass · 5 fail · 3 warn** · 3718 words · 29 placeholders · wall 55s · deadline {"truth":"2027-03-29","served":["2027-03-29"]} · verified sums $646
 
 FAIL:
 - ❌ server decision clock: 60 days for care already received — []
@@ -81,7 +81,7 @@ WARN:
 - ⚠️ §10 long — 301 words (target 260)
 
 ## F-medicare-advantage-pmd — Medicare Advantage Integrated Denial Notice: power wheelchair, 65-day printed deadline
-**96 pass · 10 fail · 5 warn** · 4189 words · 53 placeholders · wall 76s · deadline {"truth":"2026-12-18","served":["2026-12-18"]}
+**97 pass · 10 fail · 5 warn** · 4189 words · 53 placeholders · wall 76s · deadline {"truth":"2026-12-18","served":["2026-12-18"]}
 
 FAIL:
 - ❌ server decision clock: 30 days / 72 hours for care not yet received — []
@@ -102,5 +102,5 @@ WARN:
 - ⚠️ §5 long — 572 words (target 420)
 - ⚠️ §10 long — 301 words (target 260)
 
-**TOTAL: 558 pass · 40 fail across 6 cases**
+**TOTAL: 564 pass · 40 fail across 6 cases**
 

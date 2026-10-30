@@ -1,11 +1,11 @@
 # Fight Pack automated checks — run "runs16" (today=2026-10-30)
 
 ## I-original-medicare-ambulance — Held-out (round 2): Original Medicare MSN — emergency ambulance denied, daughter filing
-**99 pass · 7 fail · 1 warn** · 3731 words · 52 placeholders · wall 68s · deadline {"truth":"2027-02-11","served":["2027-02-11"]}
+**100 pass · 7 fail · 1 warn** · 3731 words · 52 placeholders · wall 68s · deadline {"truth":"2027-02-11","served":["2027-02-11"]}
 
 FAIL:
 - ❌ every dollar amount is from the source or an exact sum of source amounts — $200
-- ❌ never: (audit2) an ambulance supplier must accept Medicare's amount: if Medicare pays, he owes only the 20% coinsurance — 115%
+- ❌ never: (audit2, re-audit I-1) an ambulance claim is always paid on assignment: what he owes never depends on participation, and if Medicare pays he owes only the deductible and 20% coinsurance — 115%
 - ❌ never: (audit2) the daughter said only that she handles his mail — no power of attorney — I have power of attorney
 - ❌ never: (audit2) the family was told only "very slow": severity words come from the chart, in brackets — unstable
 - ❌ never: (audit2) the notice says Attn: Redeterminations — Attn: Medical Director
@@ -16,7 +16,7 @@ WARN:
 - ⚠️ §1 long — 697 words (target 560)
 
 ## J-urgent-irf-pdf-records — Held-out (round 2): urgent pre-service denial of inpatient rehab after stroke — letter as PDF, records attached
-**95 pass · 10 fail · 6 warn** · 5031 words · 39 placeholders · wall 85s · deadline {"truth":"2027-04-26","served":["2027-04-26"]}
+**96 pass · 10 fail · 6 warn** · 5031 words · 39 placeholders · wall 85s · deadline {"truth":"2027-04-26","served":["2027-04-26"]}
 
 FAIL:
 - ❌ urgent: expedited external review can be requested at the same time
@@ -38,5 +38,5 @@ WARN:
 - ⚠️ §7 long — 406 words (target 400)
 - ⚠️ §10 long — 365 words (target 260)
 
-**TOTAL: 194 pass · 17 fail across 2 cases** (development set 0 pass · 0 fail; held-out 194 pass · 17 fail)
+**TOTAL: 196 pass · 17 fail across 2 cases** (development set 0 pass · 0 fail; held-out 196 pass · 17 fail)
 

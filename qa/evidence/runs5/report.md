@@ -1,7 +1,7 @@
 # Fight Pack automated checks — run "runs5" (today=2026-10-30)
 
 ## A-sleep-paraphrase — Rawest input: patient paraphrase of a sleep-study denial, no identifiers
-**89 pass · 3 fail · 3 warn** · 3728 words · 100 placeholders · wall 53s · deadline {"truth":null,"served":[null]}
+**90 pass · 3 fail · 3 warn** · 3728 words · 100 placeholders · wall 53s · deadline {"truth":null,"served":[null]}
 
 FAIL:
 - ❌ cross-references point at the right section — - My appeal letter and the doctor's letter → section 3
@@ -14,7 +14,7 @@ WARN:
 - ⚠️ §10 long — 266 words (target 260)
 
 ## B-inpatient-loc-photo — Phone photo of a hospital level-of-care denial (inpatient → observation)
-**101 pass · 2 fail · 2 warn** · 4078 words · 78 placeholders · wall 74s · deadline {"truth":"2027-03-21","served":["2027-03-21"]}
+**102 pass · 2 fail · 2 warn** · 4078 words · 78 placeholders · wall 74s · deadline {"truth":"2027-03-21","served":["2027-03-21"]}
 
 FAIL:
 - ❌ depth: (audit) builds on care still needed after the approved observation window — /(approved|authori[sz]ed)[^.\n]{0,80}(08/04|August 4)|(08/04|August 4)[^.\n]{0,160}(still|continu|remain|beyond|after|through|past|08/05|August 5)/ in §1,§3,§5
@@ -25,7 +25,7 @@ WARN:
 - ⚠️ §5 long — 579 words (target 420)
 
 ## C-prior-auth-biologic — Pre-service prior-auth denial of a biologic (step therapy), steroid-dependent flare
-**104 pass · 0 fail · 4 warn** · 4306 words · 52 placeholders · wall 70s · deadline {"truth":"2027-04-18","served":["2027-04-18"]}
+**105 pass · 0 fail · 4 warn** · 4306 words · 52 placeholders · wall 70s · deadline {"truth":"2027-04-18","served":["2027-04-18"]}
 
 WARN:
 - ⚠️ §1 long — 750 words (target 560)
@@ -34,7 +34,7 @@ WARN:
 - ⚠️ §10 long — 325 words (target 260)
 
 ## D-oon-er-eob — EOB: out-of-network ER physician at an in-network hospital, processed as non-emergency
-**94 pass · 3 fail · 4 warn** · 4047 words · 41 placeholders · wall 64s · deadline {"truth":"2027-04-04","served":["2027-04-04"]}
+**95 pass · 3 fail · 4 warn** · 4047 words · 41 placeholders · wall 64s · deadline {"truth":"2027-04-04","served":["2027-04-04"]}
 
 FAIL:
 - ❌ every dollar amount is from the source or an exact sum of source amounts — $100, $350
@@ -48,7 +48,7 @@ WARN:
 - ⚠️ §10 long — 348 words (target 260)
 
 ## E-coding-bundling — Self-funded (ERISA) EOB: bundling and modifier denials on an orthopaedic office visit
-**93 pass · 3 fail · 2 warn** · 3794 words · 30 placeholders · wall 61s · deadline {"truth":"2027-03-29","served":["2027-03-29"]}
+**94 pass · 3 fail · 2 warn** · 3794 words · 30 placeholders · wall 61s · deadline {"truth":"2027-03-29","served":["2027-03-29"]}
 
 FAIL:
 - ❌ no pending step written as already done — I have contacted
@@ -60,7 +60,7 @@ WARN:
 - ⚠️ §10 long — 327 words (target 260)
 
 ## F-medicare-advantage-pmd — Medicare Advantage Integrated Denial Notice: power wheelchair, 65-day printed deadline
-**105 pass · 1 fail · 4 warn** · 4325 words · 63 placeholders · wall 73s · deadline {"truth":"2026-12-18","served":["2026-12-18"]}
+**106 pass · 1 fail · 4 warn** · 4325 words · 63 placeholders · wall 73s · deadline {"truth":"2026-12-18","served":["2026-12-18"]}
 
 FAIL:
 - ❌ never: (audit) "accidents" is a lay description, never a diagnostic label — urge incontinence
@@ -72,7 +72,7 @@ WARN:
 - ⚠️ §10 long — 265 words (target 260)
 
 ## G-medicaid-mri-redflags — Held-out: Medicaid managed-care denial of a lumbar MRI, new neurological red flags
-**98 pass · 6 fail · 2 warn** · 3718 words · 48 placeholders · wall 59s · deadline {"truth":"2026-12-22","served":["2026-12-22"]}
+**99 pass · 6 fail · 2 warn** · 3718 words · 48 placeholders · wall 59s · deadline {"truth":"2026-12-22","served":["2026-12-22"]}
 
 FAIL:
 - ❌ every phone number is from the source or the verified list — 1-888-466-2219
@@ -87,7 +87,7 @@ WARN:
 - ⚠️ §5 long — 475 words (target 420)
 
 ## H-oon-anesthesia-asc — Held-out: self-funded plan EOB, out-of-network anesthesiologist at an in-network surgery center
-**89 pass · 3 fail · 1 warn** · 3336 words · 36 placeholders · wall 51s · deadline {"truth":"2027-03-07","served":["2027-03-07"]}
+**90 pass · 3 fail · 1 warn** · 3336 words · 36 placeholders · wall 51s · deadline {"truth":"2027-03-07","served":["2027-03-07"]}
 
 FAIL:
 - ❌ §3 letter type matches the denial (corrected) — attestation
@@ -97,5 +97,5 @@ FAIL:
 WARN:
 - ⚠️ §1 long — 577 words (target 560)
 
-**TOTAL: 773 pass · 21 fail across 8 cases** (development set 586 pass · 12 fail; held-out 187 pass · 9 fail)
+**TOTAL: 781 pass · 21 fail across 8 cases** (development set 592 pass · 12 fail; held-out 189 pass · 9 fail)
 
