@@ -425,7 +425,9 @@ function bracketAuthority(text) {
 // J §3, a Critical audit finding). The subject becomes a choice — "[I / Dr. ___] documented …" — so the
 // fact stays and the signer names who did it.
 const AUTHOR_ACT = /\bI(\s+(?:personally\s+|also\s+|then\s+|first\s+)?(?:have\s+|had\s+)?(?:documented|examined|evaluated|assessed|observed|recorded|charted|wrote|saw|admitted|ordered|prescribed|performed|measured|referred))\b/g;
-const AUTHOR_MY = /\b(in|on|per|from|during|at)\s+my\s+((?:initial\s+|recent\s+|most recent\s+|last\s+|follow-up\s+)?(?:consult(?:ation)?(?:\s+note)?|note|progress note|clinic note|visit|exam(?:ination)?|evaluation|assessment))\b/gi;
+// v9.13: also after "of", "since", "after", "before" or "following", and with a date between ("within 2–3 days of my
+// October 26 consultation", run 26, J §5, the run-26 audit's J-2: false when the other doctor makes the call)
+const AUTHOR_MY = /\b(in|on|per|from|during|at|of|since|after|before|following)\s+my\s+((?:(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|June?|July?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?\s+\d{1,2}(?:,\s*\d{4})?\s+|\d{1,2}\/\d{1,2}(?:\/\d{2,4})?\s+)?(?:initial\s+|recent\s+|most recent\s+|last\s+|follow-up\s+)?(?:consult(?:ation)?(?:\s+note)?|note|progress note|clinic note|visit|exam(?:ination)?|evaluation|assessment))\b/gi;
 // section 3 only when a clinician signs it (not the patient's corrected-claim or coverage letter)
 const AUTHOR_SECTIONS = /^## 3\. (?:Letter of medical necessity|Clinician's emergency attestation)|^## 5\. /;
 function attributeActs(text) {
@@ -451,6 +453,9 @@ const SEVERITY_ADV = /\b(critically|dangerously|profoundly|severely|markedly|sig
 const SEVERITY_ADJ = /\b((?:(?:hemodynamically|clinically)\s+)?(?:critical|dangerous|profound|severe|marked|significant|extreme))\s+(?=(?:bradycardi|tachycardi|hypotensi|hypertensi|hypox|arrhythmi|anemi|dehydrat|weakness|bleeding|blood loss|respiratory distress|distress|instability|heart block|slow heart|slowing|low blood pressure|low heart rate|high blood pressure)\w*)/gi;
 // "unstable angina" and an "unstable fracture" are diagnoses, not severity words
 const SEVERITY_UNSTABLE = /\b(?:(?:hemodynamically|critically|dangerously|severely|profoundly|markedly|clinically|medically)\s+)?unstable\b(?!\s+(?:angina|fracture|spine|plaque|pelvis|joint|ankle|knee|shoulder))/gi;
+// (v9.13 tried bracketing "life-threatening" too, for the run-26 audit's I-3. The diff gate over every stored kit
+// stopped it: 70 changed lines, most of them case D's prudent-layperson argument ("would recognize these symptoms
+// as potentially life-threatening") and differentials ("to rule out life-threatening conditions"). It did not ship.)
 const SEVERITY_SRC = { critical: /\bcritical/i, dangerous: /\bdangerous/i, profound: /\bprofound/i, severe: /\bsevere/i, marked: /\bmarked(?:ly)?\b/i, significant: /\bsignificant/i, extreme: /\bextreme/i, unstable: /\bunstable\b|\binstabilit/i };
 const SEVERITY_NOT = /\b(?:not|no|never|nor|without|isn't|wasn't|weren't|aren't|become|becomes|becoming|turn|get)\s+(?:\w+\s+)?$/i;
 function bracketSeverity(text, source) {

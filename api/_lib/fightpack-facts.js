@@ -1,4 +1,4 @@
-// Fight Pack facts (v9.10-v9.11): what code now states, removes or tells the writers itself, because the writers
+// Fight Pack facts (v9.10-v9.13): what code now states, removes or tells the writers itself, because the writers
 // kept getting it wrong after the prompt said otherwise. api/fightpack.js applies them after the guards.
 
 const MONEY = /\$\d{1,3}(?:,\d{3})*(?:\.\d{2})?/;
@@ -66,7 +66,99 @@ function doctorMayRequest(decode) {
 // to Medicare now as additional documentation" and offered "a corrected claim". The rule that everything goes in
 // together reached only parts 2-6, so the decode, which every writer follows, never had it. Part 1 now reads the
 // program from the notice itself; parts 2-6 from the decode.
-const ORIGINAL_RECORDS = 'WHERE THE RECORDS GO (Original Medicare; decided in code): the ambulance company\'s report, the hospital\'s records and the doctor\'s letter are sent to the family, who mail them together with the redetermination request to the address the notice prints. Never ask anyone to send records to Medicare separately, "directly" or "as additional documentation", and never suggest a corrected claim: evidence that arrives after the request delays the decision, and a denied claim is appealed, not resubmitted. If the ambulance company or another provider wants to act itself, it can file its own redetermination request.';
+// v9.12: the rule says only what to do. Its v9.11 wording quoted the phrases to avoid ("as additional
+// documentation", "a corrected claim"), and run 24 wrote both of them again; negative examples prime the error.
+// v9.13: the run-26 audit (I-R3-2) found "mail … by February 11" and "120 days from the notice date": the request
+// is filed when the contractor receives it, and the 120 days run from receipt of the notice, presumed 5 days after
+// its date (42 CFR 405.942(a)).
+const ORIGINAL_RECORDS = "WHERE THE RECORDS GO (Original Medicare; decided in code): every record (the provider's own records, for an ambulance its trip report; the hospital's records; the doctor's letter) is sent to the family, who mail them in one package with the redetermination request to the address the notice prints. On Original Medicare a denied claim is appealed, and that package is how the documentation reaches Medicare. A provider that wants to act itself files its own redetermination request. A record that arrives after the request was mailed goes to the same address with the claim number, and each later submission can add up to 14 days to the decision. The request counts as filed on the day the contractor receives it, so the deadline is the day it must arrive: the family mails it at least a week early by a trackable method. The 120 days run from the day the notice was received, which Medicare presumes is 5 days after the date on it.";
+
+// ---------- v9.13: the expedited external review on an insured employer plan ----------
+// The run-26 audit (J-R3-2, borderline Critical): J's kit had the concurrent expedited external review request
+// faxed to the plan. On an insured plan the state's process applies, and under the NAIC model act it is filed with
+// the state insurance commissioner, who assigns the reviewer; the reviewer may decide the expedited internal appeal
+// must finish first; and if the plan upholds the denial, expedited external review can be asked for that day
+// (45 CFR 147.136(c)(2)(iii), (d)). The decode's "Two requests at once" line (api/fightpack.js) and the writers
+// say where it goes.
+const EXTERNAL_ROUTE = {
+  insured: " On an insured plan it generally goes to your state's insurance department, which assigns the independent reviewer; the department or the plan's expedited line can tell you how to file it today. The reviewer may decide the plan's expedited appeal has to finish first.",
+  'self-funded': " On a self-funded plan it goes to the plan, which must send it to an independent review organization.",
+};
+const EXTERNAL_UPHELD = ' If the plan upholds the denial, ask for the expedited external review that same day.';
+const INSURED_EXTERNAL = "EXPEDITED EXTERNAL REVIEW ON THIS INSURED PLAN (decided in code): the expedited external review request is addressed to the state insurance department, the regulator the letter names, which assigns the independent reviewer. The kit tells the family to call the department, or the plan's expedited line, to learn how to file it today, and that the reviewer may decide the plan's expedited appeal has to finish first. If the plan upholds the denial, the family asks for the expedited external review that same day.";
+
+// ---------- v9.12: the provider's part, on Original Medicare ----------
+// The billing-office script's own spec told every writer to "ask whether the provider will submit a corrected
+// claim, add documentation, or appeal" (right for a commercial plan's coding error). On Original Medicare a denied
+// claim is appealed, so case I's kits asked the ambulance company to send its records to Medicare itself, or to
+// file a corrected claim, in 7 of the 8 runs from 16 to 24, through the v9.11 rule against it: the spec outvoted
+// the rule. Code now gives the writer the Original Medicare version of that line, and takes the provider route
+// out of what the writers still produce (medicareRoute).
+const PROVIDER_ASK = "ask whether the provider will submit a corrected claim, add documentation, or appeal on the patient's behalf (for coding, authorization, or level-of-care denials this is usually the fastest fix)";
+const PROVIDER_ASK_ORIGINAL = 'ask them to send you their records for the date of service (for an ambulance, the trip report) so the records go in with your redetermination request, and whether they will also file their own redetermination request';
+// The doctor's letter has the same conflict: its spec offers "a peer-to-peer discussion", which Original Medicare
+// does not have at redetermination, and run 25's letter offered one ("[If peer-to-peer is offered, I am available
+// at …]") under the rule that says there is none.
+const P2P_OFFER = 'if the notice prints a peer-to-peer line, say the clinician will call it within the window it gives; otherwise offer a peer-to-peer discussion at [best days/times and direct phone]';
+const P2P_OFFER_ORIGINAL = "the contractor decides on the written record, so close with the clinician's direct line for any question about the letter: [best days/times and direct phone]";
+function specFor(spec, ctx) {
+  return ctx && ctx.original ? String(spec).split(PROVIDER_ASK).join(PROVIDER_ASK_ORIGINAL).split(P2P_OFFER).join(P2P_OFFER_ORIGINAL) : spec;
+}
+// An alternative that sends records to Medicare apart from the appeal, a corrected claim or a resubmission;
+// never one that sends them to the family or with the provider's own redetermination request.
+function providerRoute(x) {
+  if (/\bto (?:me|us|you|the family)\b|\bown redetermination\b|\bwith (?:my|our|your|the) (?:appeal|request|redetermination)\b/i.test(x)) return false;
+  return /corrected claim|resubmi|(?:additional|more|supporting|further) documentation|\bto Medicare\b|\bsubmit\b[^,]{0,40}\b(?:documentation|records?|trip (?:report|sheet)|run (?:report|sheet))\b/i.test(x);
+}
+const PROVIDER_EDITS = [
+  // "Will your company submit additional documentation or appeal on Harold's behalf?" → "… appeal on Harold's behalf?"
+  [/\b((?:re)?submit\b[^?.!;\n]{0,90}?),?[ \t]+or[ \t]+(?=(?:file|start|support|request|appeal)\b)/gi, (all, x) => (providerRoute(x) ? '' : all)],
+  // "… file an appeal or submit additional documentation on the patient's behalf?" → "… file an appeal on …"
+  [/(\b(?:file|start|support)\b[^?.!;\n]{0,60}?)[ \t]+or[ \t]+((?:re)?submit\b[^?.!;\n]{0,60}?)(?=[ \t]+on\b[^?.!;\n]{0,40}\bbehalf\b|[ \t]*[?.!;]|$)/gim, (all, a, x) => (providerRoute(x) ? a : all)],
+  // a clause that sends the records to Medicare on their own
+  [/,?[ \t]+or ask (?:the|your|them|him|her)\b[^.?!;\n]{0,100}?\bto (?:submit|send)\b[^.?!;\n]{0,60}?\bto Medicare\b[^.?!;\n]*/gi, ''],
+  [/[ \t]*(?:—|–|;|,)[ \t]*if not, ask (?:them|it|the\b[^.?!;\n]{1,40}?) to (?:submit|send) (?:it|them)\b[^.?!;\n]{0,40}?\bto Medicare\b[^.?!;\n]*/gi, ''],
+  [/[ \t]+or will be (?:submitted|sent)\b[^.?!;\n]{0,40}?\bas additional documentation\b/gi, ''],
+  [/,[ \t]*or should (?:the|your)\b[^.?!;\n]{0,60}?\b(?:submit|send) (?:it|them)\b[^.?!;\n]{0,20}?\bdirectly to Medicare\b/gi, ''],
+  // a question asking the provider to send its records to Medicare: they come to the family instead
+  [/\b(can|could|will|would) (you|your company|your office|they)( be willing to)? (?:re)?submit (it|them|documentation|records|the [\w -]{1,40}?|your [\w -]{1,40}?)((?: now)?(?: directly)? to Medicare(?: now)?(?: as additional documentation)?|(?: now)? as additional documentation)\b/gi,
+    (all, v, who, will, obj, tail) => `${v} ${who}${will || ''} send ${/^(?:it|them)$/i.test(obj) ? obj + ' to me' : 'me ' + obj}${/\bnow\b/i.test(tail) ? ' now' : ''}`],
+  // "ask them to submit it to Medicare now …" → "ask them to send it to you"
+  [/\bask (them|him|her|the\b[^.?!;\n]{1,60}?) to (?:submit|send|fax|mail) (it|them|the\b[^.?!;\n]{1,40}?)(?: directly)? to Medicare\b(?: now)?(?: as additional documentation)?/gi, (all, who, obj) => `ask ${who} to send ${obj} to you`],
+  // the optional sentence a letter carries about a provider sending records to Medicare, and the offer to a
+  // doctor's office to send the letter to Medicare itself
+  [/[ \t]*\[I have (?:also )?asked\b[^\[\]\n]{0,160}?\bto Medicare\b[^\[\]\n]*\]/gi, ''],
+  [/[ \t]*\bIf you prefer to (?:send|submit|fax|mail)\b[^.?!\n]{0,60}?\bdirectly to (?:Medicare|the Medicare|the contractor)\b[^.?!\n]*[.?!]/gi, ''],
+  // run 26 (§4, the run-26 audit's I-4 residue): "If you prefer, your office can fax the letter and records directly
+  // to the Medicare contractor and send the family a copy for their records."
+  [/[ \t]*\bIf you(?: would)? prefer,?[ \t]+(?:you|your (?:office|practice|team|company))[ \t]+(?:can|could|may)[ \t]+(?:also[ \t]+)?(?:fax|send|mail|submit|forward)\b[^.?!\n]{0,100}?\b(?:directly|straight)[ \t]+to[ \t]+(?:the[ \t]+)?(?:Medicare|contractor)\b[^.?!\n]*[.?!]/gi, ''],
+];
+// The run-21 forms (the re-audit's own I-4 examples): "ask Tri-County … and Westbrook … to send their records to
+// the Medicare claims office", "Can you send the emergency department records … to Medicare and to me?", and the
+// letter's "[I have asked … to send … directly to your office …]". Who receives the records instead depends on who
+// is speaking: the family is "you" in the decode and the deadlines, and speaks as "me" in its own letters and
+// scripts, as "us" in its note to the doctor's office; the doctor's letter and brief say "the family".
+const SEND_TO = { 1: 'you', 2: 'me', 3: 'the family', 4: 'us', 5: 'the family', 6: 'me', 7: 'me', 8: 'me', 9: 'me', 10: 'you' };
+const TO_MEDICARE = String.raw`(?:directly[ \t]+)?to[ \t]+(?:the[ \t]+)?Medicare\b(?:'s)?(?:[ \t]+(?:Part[ \t]+[AB][ \t]+)?(?:claims|appeals)[ \t]+office|[ \t]+address(?:[ \t]+on[ \t]+the[ \t]+(?:letter|notice))?|[ \t]+contractor|[ \t]+appeals)?`;
+// what is sent: never across a comma or a new clause ("… to you, and you mail everything to Medicare" is the family's own step)
+const SENT = String.raw`(?:(?!\b(?:and|then|so)[ \t]+(?:you|I|we)\b|\bto[ \t]+(?:me|us|you|the[ \t]+family)\b)[^.?!;,\n]){1,140}?`;
+const ROUTE_ASK = new RegExp(String.raw`(\b(?:ask|asked|asking|have|request(?:ed|ing)?)\b[^.?!;,\n]{1,140}?\bto[ \t]+(?:send|submit|fax|mail|forward)\b${SENT})${TO_MEDICARE}`, 'gi');
+const ROUTE_CAN = new RegExp(String.raw`(\b(?:can|could|will|would)[ \t]+(?:you|your[ \t]+(?:company|office|team)|they)(?:[ \t]+please)?(?:[ \t]+be[ \t]+willing[ \t]+to)?[ \t]+(?:send|fax|forward|mail)\b${SENT})${TO_MEDICARE}(?:[ \t]+and[ \t]+(?:to[ \t]+)?(?:me|us))?`, 'gi');
+const ROUTE_BRACKET = /[ \t]*\[I(?:'ve| have)? (?:also )?asked\b[^\[\]\n]{0,200}?\bto (?:send|submit|fax|mail|forward)\b[^\[\]\n]{0,160}?\b(?:directly to (?:your office|you)|to (?:the )?Medicare\b)[^\[\]\n]*\]/gi;
+function medicareRoute(text) {
+  let sec = 0;
+  return String(text).split('\n').map((line) => {
+    const h = line.match(/^##[ \t]+(\d{1,2})\./);
+    if (h) { sec = Number(h[1]); return line; }
+    let l = line;
+    for (const [re, to] of PROVIDER_EDITS) l = l.replace(re, to);
+    const who = SEND_TO[sec] || 'you';
+    l = l.replace(ROUTE_BRACKET, '').replace(ROUTE_ASK, `$1to ${who}`).replace(ROUTE_CAN, `$1to ${who === 'the family' ? 'the family' : 'me'}`);
+    // with one alternative left, "Which is faster?" has nothing to compare
+    if (l !== line) l = l.replace(/(\?)[ \t]+Which (?:one )?(?:is|would be) (?:faster|quicker|better|easier)\?/gi, '$1');
+    return l;
+  }).join('\n');
+}
 function originalNotice(text) {
   const t = String(text || '');
   if (/Medicare Summary Notice|Medicare Part [AB] Claims Office|Attn:?[ \t]*Redeterminations/i.test(t)) return true;
@@ -91,7 +183,8 @@ function extraRules(ctx) {
     r += ORIGINAL_RECORDS + '\n\n';
     if (isAmbulance([source, ctx.decode || ''].join('\n'))) r += AMBULANCE_ASSIGNED + '\n\n';
   }
+  if (ctx.part > 1 && ctx.urgent === true && ctx.plan === 'commercial' && ctx.funding === 'insured' && ctx.care !== 'post') r += INSURED_EXTERNAL + '\n\n';
   return r;
 }
 
-module.exports = { AMBULANCE_ASSIGNED, ORIGINAL_RECORDS, DATED_RECORDS, isAmbulance, originalNotice, extraRules, owedLine, policyNumbers, doctorMayRequest, WHY_DOCTOR };
+module.exports = { AMBULANCE_ASSIGNED, ORIGINAL_RECORDS, DATED_RECORDS, PROVIDER_ASK, PROVIDER_ASK_ORIGINAL, P2P_OFFER, P2P_OFFER_ORIGINAL, EXTERNAL_ROUTE, EXTERNAL_UPHELD, INSURED_EXTERNAL, isAmbulance, originalNotice, extraRules, specFor, medicareRoute, owedLine, policyNumbers, doctorMayRequest, WHY_DOCTOR };

@@ -92,10 +92,11 @@ WARN:
 - ⚠️ §10 long — 265 words (target 260)
 
 ## I-original-medicare-ambulance — Held-out (round 2): Original Medicare MSN — emergency ambulance denied, daughter filing
-**107 pass · 1 fail · 3 warn** · 3597 words · 52 placeholders · wall 60s · deadline {"truth":"2027-02-11","served":["2027-02-11"]}
+**106 pass · 2 fail · 3 warn** · 3597 words · 52 placeholders · wall 60s · deadline {"truth":"2027-02-11","served":["2027-02-11"]}
 
 FAIL:
 - ❌ depth: the daughter files for him: the Appointment of Representative form comes first — /CMS-1696|Appointment of Representative/ in §1,§2,§10
+- ❌ never: (re-audit I-4; extended 30 Oct 2026 to the provider's own offer, "submit additional documentation or appeal", which the first form missed in runs 16, 18, 20, 21 and 24) the records go to the family and in with the appeal: never sent to Medicare separately, as additional documentation, or as a corrected claim — Will your company submit additional documentation or
 
 WARN:
 - ⚠️ §1 long — 717 words (target 560)
@@ -116,5 +117,5 @@ WARN:
 - ⚠️ §9 long — 482 words (target 400)
 - ⚠️ §10 long — 414 words (target 260)
 
-**TOTAL: 1004 pass · 12 fail across 10 cases** (development set 595 pass · 9 fail; held-out 409 pass · 3 fail)
+**TOTAL: 1003 pass · 13 fail across 10 cases** (development set 595 pass · 9 fail; held-out 408 pass · 4 fail)
 

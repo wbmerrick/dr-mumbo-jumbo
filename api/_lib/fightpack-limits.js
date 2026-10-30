@@ -21,7 +21,9 @@ const VEHICLE = new RegExp(VEHICLE_SRC, 'i');
 const LEVEL_SRC = "skilled nursing|\\bSNFs?\\b|sub-?acute|nursing (?:home|facilit)|home health|outpatient (?:care|therapy|rehab|setting|level|management|treatment|observation|basis)|\\bobservation\\b|lower level of (?:care|service)|lower-level (?:care|service)|custodial care|basic life support|\\bBLS\\b|power[- ]operated vehicle|\\bPOVs?\\b|scooter|manual wheelchair|\\bcanes?\\b|\\bwalkers?\\b|\\bwaiting\\b|\\bdelay(?:ing|ed)?\\b|conservative (?:management|care|treatment|therapy)";
 const LEVEL = new RegExp(LEVEL_SRC, 'i');
 const WAIT = /\b(?:wait(?:ing)?|delay(?:ing|ed|s)?)\b/i; // a delay is never a contraindication, even for a ride
-const NOT_VALIDATED = /(\b(?:[Ii]s|[Aa]re|[Ww]as|[Ww]ere)\s+(?:(?:also|therefore|simply|clearly|likewise|thus)\s+)?)?\b([Nn])ot\s+validated\s+(?:for|in)\b/g;
+// v9.13: also "not validated to" a verb ("It is not validated to deliver the intensity of therapy…", run 26, J §5):
+// a setting "is not designed to" do it; a vehicle with "to" is left as written
+const NOT_VALIDATED = /(\b(?:[Ii]s|[Aa]re|[Ww]as|[Ww]ere)\s+(?:(?:also|therefore|simply|clearly|likewise|thus)\s+)?)?\b([Nn])ot\s+validated\s+(for|in|to)\b/g;
 const CLAUSE_BREAK = /[;:—→]|\s[–-]\s|[?!]["”*_]*\s/;
 const ANAPHOR = /^(?:(?:and|but|so|yet|because)\s+)?(?:it|this|that|which|they|these|those|(?:this|that|the|such an?|these|those) (?:lower )?(?:level|setting|facility|facilities|placement|option|alternative|vehicle|mode|transport|transportation|device|equipment|approach|care)(?: of (?:care|transport|transportation|service|services))?)$/i;
 const FIG_SETTING = /skilled nursing(?: facilit(?:y|ies)| level| care)?|\bSNFs?\b|sub-?acute(?: rehab\w*| care| setting| level| facilit(?:y|ies))?|nursing (?:home|facilit(?:y|ies))|home health(?: care)?|outpatient (?:therapy|rehab\w*)/gi;
@@ -55,7 +57,7 @@ function settingLimits(text, source, letters) {
     let ctx = null;
     return sentencesOf(line).map((s) => {
       const inB = insideBrackets(s);
-      let t = s.replace(NOT_VALIDATED, (m, be, n, at) => {
+      let t = s.replace(NOT_VALIDATED, (m, be, n, prep, at) => {
         if (inB[at]) return m;
         const before = s.slice(0, at);
         let kind = null;
@@ -67,6 +69,11 @@ function settingLimits(text, source, letters) {
           kind = WAIT.test(before) ? 'level' : VEHICLE.test(before) ? 'vehicle' : LEVEL.test(before) ? 'level' : null;
         }
         if (!kind) return m;
+        if (prep === 'to') {
+          if (kind !== 'level') return m;
+          count++;
+          return (be || '') + n + 'ot designed to';
+        }
         count++;
         if (be) return be + (kind === 'vehicle' ? 'contraindicated for' : 'not appropriate for');
         if (kind === 'vehicle') return (n === 'N' ? 'C' : 'c') + 'ontraindicated for';

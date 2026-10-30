@@ -92,7 +92,7 @@ FAIL:
 - ❌ §7 asks for an itemized statement and an account hold
 - ❌ never: (audit2, re-audit I-1) an ambulance claim is always paid on assignment: what he owes never depends on participation, and if Medicare pays he owes only the deductible and 20% coinsurance — non-participating or does not accept assignment, the amount could be higher
 - ❌ never: (audit2) the family was told only "very slow": severity words come from the chart, in brackets — unstable
-- ❌ never: (re-audit I-4) the records go to the family and in with the appeal: never sent to Medicare separately, as additional documentation, or as a corrected claim — ask Tri-County Emergency Medical Services and Westbrook Regional Medical Center to send their records to the Medicare
+- ❌ never: (re-audit I-4; extended 30 Oct 2026 to the provider's own offer, "submit additional documentation or appeal", which the first form missed in runs 16, 18, 20, 21 and 24) the records go to the family and in with the appeal: never sent to Medicare separately, as additional documentation, or as a corrected claim — ask Tri-County Emergency Medical Services and Westbrook Regional Medical Center to send their records to the Medicare
 
 WARN:
 - ⚠️ §1 long — 777 words (target 560)

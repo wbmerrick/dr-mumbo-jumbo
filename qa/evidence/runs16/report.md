@@ -1,7 +1,7 @@
 # Fight Pack automated checks — run "runs16" (today=2026-10-30)
 
 ## I-original-medicare-ambulance — Held-out (round 2): Original Medicare MSN — emergency ambulance denied, daughter filing
-**101 pass · 7 fail · 1 warn** · 3731 words · 52 placeholders · wall 68s · deadline {"truth":"2027-02-11","served":["2027-02-11"]}
+**100 pass · 8 fail · 1 warn** · 3731 words · 52 placeholders · wall 68s · deadline {"truth":"2027-02-11","served":["2027-02-11"]}
 
 FAIL:
 - ❌ every dollar amount is from the source or an exact sum of source amounts — $200
@@ -9,6 +9,7 @@ FAIL:
 - ❌ never: (audit2) the daughter said only that she handles his mail — no power of attorney — I have power of attorney
 - ❌ never: (audit2) the family was told only "very slow": severity words come from the chart, in brackets — unstable
 - ❌ never: (audit2) the notice says Attn: Redeterminations — Attn: Medical Director
+- ❌ never: (re-audit I-4; extended 30 Oct 2026 to the provider's own offer, "submit additional documentation or appeal", which the first form missed in runs 16, 18, 20, 21 and 24) the records go to the family and in with the appeal: never sent to Medicare separately, as additional documentation, or as a corrected claim — Would your company be willing to resubmit the claim with more documentation, or
 - ❌ never: (audit2) Original Medicare has no peer-to-peer or medical-director step at redetermination — peer-to-peer
 - ❌ never: (audit2) the test is that other transport was contraindicated; "not validated" garbles it — not validated
 
@@ -38,5 +39,5 @@ WARN:
 - ⚠️ §7 long — 406 words (target 400)
 - ⚠️ §10 long — 365 words (target 260)
 
-**TOTAL: 197 pass · 17 fail across 2 cases** (development set 0 pass · 0 fail; held-out 197 pass · 17 fail)
+**TOTAL: 196 pass · 18 fail across 2 cases** (development set 0 pass · 0 fail; held-out 196 pass · 18 fail)
 

@@ -83,12 +83,13 @@ WARN:
 - ⚠️ §10 long — 281 words (target 260)
 
 ## I-original-medicare-ambulance — Held-out (round 2): Original Medicare MSN — emergency ambulance denied, daughter filing
-**105 pass · 3 fail · 3 warn** · 3774 words · 51 placeholders · wall 50s · deadline {"truth":"2027-02-11","served":["2027-02-11"]}
+**104 pass · 4 fail · 3 warn** · 3774 words · 51 placeholders · wall 50s · deadline {"truth":"2027-02-11","served":["2027-02-11"]}
 
 FAIL:
 - ❌ §7 asks for an itemized statement and an account hold
 - ❌ §8 requests the records and a coded itemized bill
 - ❌ depth: the transport went to the closest hospital — /closest|nearest/ in §2,§3
+- ❌ never: (re-audit I-4; extended 30 Oct 2026 to the provider's own offer, "submit additional documentation or appeal", which the first form missed in runs 16, 18, 20, 21 and 24) the records go to the family and in with the appeal: never sent to Medicare separately, as additional documentation, or as a corrected claim — or submit additional documentation
 
 WARN:
 - ⚠️ §1 long — 785 words (target 560)
@@ -108,5 +109,5 @@ WARN:
 - ⚠️ §9 long — 456 words (target 400)
 - ⚠️ §10 long — 365 words (target 260)
 
-**TOTAL: 1005 pass · 11 fail across 10 cases** (development set 597 pass · 7 fail; held-out 408 pass · 4 fail)
+**TOTAL: 1004 pass · 12 fail across 10 cases** (development set 597 pass · 7 fail; held-out 407 pass · 5 fail)
 

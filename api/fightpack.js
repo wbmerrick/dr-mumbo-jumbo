@@ -182,13 +182,19 @@ function decisionClock(care, plan, original) {
 // Urgent line, so the patient and every writer (the decode is the plan for parts 2–6) know the expedited
 // external review can go at the same time as the expedited appeal (api/_lib/fightpack-rules.js URGENT_EXTERNAL).
 const TWO_REQUESTS = "**Two requests at once:** because this is urgent, you or the doctor can generally ask for an expedited external review at the same time as the expedited appeal, so you do not have to wait for the plan's answer. The notice or the plan's appeals line can tell you how.";
-function twoRequests(decode) {
-  if (effectiveUrgency(decode) !== true || planTypeOf(decode) !== 'commercial' || /two requests at once/i.test(decode)) return decode;
+// v9.13: and where that request goes, by how the plan is funded, and what to do the day the plan upholds the
+// denial (api/_lib/fightpack-facts.js EXTERNAL_ROUTE; the run-26 audit's J-R3-2).
+function twoRequests(decode, funding) {
+  if (effectiveUrgency(decode) !== true || planTypeOf(decode) !== 'commercial') return decode;
+  const route = (F.EXTERNAL_ROUTE[funding] || '') + F.EXTERNAL_UPHELD;
+  // a decode written before v9.13 already has the line without the route: the route is added once
+  if (decode.includes(TWO_REQUESTS)) return decode.includes(F.EXTERNAL_UPHELD.trim()) ? decode : decode.replace(TWO_REQUESTS, TWO_REQUESTS + route);
+  if (/two requests at once/i.test(decode)) return decode;
   const m = decode.match(URGENT_LINE);
   if (!m) return decode;
   const lead = m[0].match(/^[ \t]*(?:[-*•][ \t]+)?/)[0];
   const at = m.index + m[0].length;
-  return decode.slice(0, at) + '\n' + lead + TWO_REQUESTS + decode.slice(at);
+  return decode.slice(0, at) + '\n' + lead + TWO_REQUESTS + route + decode.slice(at);
 }
 // Urgent care not yet received: the first step is the expedited request itself. The run-16 audit found held-out
 // J's decode leading with a billing-office call (Major), and runs 16-19 led it with a billing-office call, a
@@ -380,6 +386,10 @@ function stateFacts(text, part, ctx) {
     if (originalMedicare(t) && F.isAmbulance(source + '\n' + t)) t = F.owedLine(t, source);
     if (ctx.level !== 'emergency' && effectiveUrgency(t) === true && careStatusOf(t) !== 'post') t = F.doctorMayRequest(t);
   }
+  // v9.12: on Original Medicare the provider's records go to the family and in with the appeal. Only there: on
+  // other plans a corrected claim is often the right fix (run ungated over the stored kits, this would have
+  // removed 15 such lines from cases A, D and E).
+  if (part === 1 ? originalMedicare(t) || F.originalNotice(source) : originalMedicare(ctx.decode || '')) t = F.medicareRoute(t);
   return F.policyNumbers(t, source + (ctx.files ? '\n' + (part === 1 ? t : ctx.decode || '') : ''));
 }
 
@@ -506,9 +516,9 @@ module.exports = async (req, res) => {
     if (p2p && !original) ask += `${P2P_HEAD}: ${p2p.phone}${p2p.window ? ', ' + p2p.window : ''}${p2p.date ? ` — by ${fmtLong(p2p.date)}` : ''}. ${P2P_TAIL}\n\n`;
     if (clock) ask += `DECISION CLOCK (from the claims rules for this plan and care status — use exactly, never another number): ${clock}.\n\n`;
   }
-  ask += F.extraRules({ part, denial, extra, decode, original, records: !!recordsFile, files: !!(denialFile || recordsFile), plan, care, urgent }); // v9.11: rules that live in api/_lib/fightpack-facts.js
+  ask += F.extraRules({ part, denial, extra, decode, original, records: !!recordsFile, files: !!(denialFile || recordsFile), plan, care, urgent, funding }); // v9.11: rules that live in api/_lib/fightpack-facts.js
   const one = P.headings.length === 1;
-  ask += `${KIT_MAP} You are writing part ${part} of 6: ONLY ${one ? 'the section' : `the ${P.headings.length} sections`} below${part === 6 ? ', then the fenced json block' : ''} — no title, no preface, no other section. Start ${one ? 'it' : 'each'} with its exact "## " heading line, write ${one ? 'it' : 'every one of them'} in full, then stop.\n\n${P.spec}${part === 3 || part === 4 ? '\n\n' + CLINICIAN_CHECK : ''}`;
+  ask += `${KIT_MAP} You are writing part ${part} of 6: ONLY ${one ? 'the section' : `the ${P.headings.length} sections`} below${part === 6 ? ', then the fenced json block' : ''} — no title, no preface, no other section. Start ${one ? 'it' : 'each'} with its exact "## " heading line, write ${one ? 'it' : 'every one of them'} in full, then stop.\n\n${F.specFor(P.spec, { original })}${part === 3 || part === 4 ? '\n\n' + CLINICIAN_CHECK : ''}`;
   content.push({ type: 'text', text: ask });
 
   const ctrl = new AbortController();
@@ -556,7 +566,7 @@ module.exports = async (req, res) => {
     const norm = normalizeSections(raw, part);
     const post = postProcess(norm.text, { part, safety, known: [denial, extra, decode].join('\n'), attachments: !!(denialFile || recordsFile), records: !!recordsFile });
     const routed = part > 1 ? oneRoute(post.text, funding) : post.text;
-    const built = part === 6 ? fixMeta(routed, decodeFacts(decode), fallbackFacts(decode)) : part === 1 ? expeditedFirst(twoRequests(post.text), post.level) : routed;
+    const built = part === 6 ? fixMeta(routed, decodeFacts(decode), fallbackFacts(decode)) : part === 1 ? expeditedFirst(twoRequests(post.text, fundingOf(post.text, denial)), post.level) : routed;
     const text = stateFacts(built, part, { denial, extra, decode, files: !!(denialFile || recordsFile), level: post.level });
     const missing = P.slots.filter((alts) => !alts.some((h) => text.includes(h))).map((alts) => alts[0]);
     const usage = data.usage ? { in: data.usage.input_tokens, out: data.usage.output_tokens, cache_read: data.usage.cache_read_input_tokens || 0, cache_write: data.usage.cache_creation_input_tokens || 0 } : null;

@@ -88,7 +88,7 @@ WARN:
 
 FAIL:
 - ❌ §5 maps criteria and prepares for push-back
-- ❌ never: (re-audit I-4) the records go to the family and in with the appeal: never sent to Medicare separately, as additional documentation, or as a corrected claim — ask the ambulance company and the hospital to submit them to Medicare
+- ❌ never: (re-audit I-4; extended 30 Oct 2026 to the provider's own offer, "submit additional documentation or appeal", which the first form missed in runs 16, 18, 20, 21 and 24) the records go to the family and in with the appeal: never sent to Medicare separately, as additional documentation, or as a corrected claim — ask the ambulance company and the hospital to submit them to Medicare
 
 WARN:
 - ⚠️ §1 long — 778 words (target 560)

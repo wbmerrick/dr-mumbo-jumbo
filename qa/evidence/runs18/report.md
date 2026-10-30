@@ -10,10 +10,11 @@ WARN:
 - ⚠️ §10 long — 414 words (target 260)
 
 ## I-original-medicare-ambulance — Held-out (round 2): Original Medicare MSN — emergency ambulance denied, daughter filing
-**106 pass · 2 fail · 2 warn** · 3574 words · 46 placeholders · wall 55s · deadline {"truth":"2027-02-11","served":["2027-02-11"]}
+**105 pass · 3 fail · 2 warn** · 3574 words · 46 placeholders · wall 55s · deadline {"truth":"2027-02-11","served":["2027-02-11"]}
 
 FAIL:
 - ❌ never: (audit2) the family was told only "very slow": severity words come from the chart, in brackets — marked bradycardi
+- ❌ never: (re-audit I-4; extended 30 Oct 2026 to the provider's own offer, "submit additional documentation or appeal", which the first form missed in runs 16, 18, 20, 21 and 24) the records go to the family and in with the appeal: never sent to Medicare separately, as additional documentation, or as a corrected claim — will your company submit additional documentation to Medicare
 - ❌ never: (audit2) Original Medicare has no peer-to-peer or medical-director step at redetermination — peer-to-peer
 
 WARN:
@@ -36,5 +37,5 @@ WARN:
 - ⚠️ §9 long — 487 words (target 400)
 - ⚠️ §10 long — 354 words (target 260)
 
-**TOTAL: 314 pass · 5 fail across 3 cases** (development set 105 pass · 0 fail; held-out 209 pass · 5 fail)
+**TOTAL: 313 pass · 6 fail across 3 cases** (development set 105 pass · 0 fail; held-out 208 pass · 6 fail)
 

@@ -1,0 +1,10 @@
+# Vercel auto-deploys main. Only the site itself is deployed; everything else in the repo (qa/, docs/,
+# scripts/, supabase/, README.md) stays on GitHub and is never served from dr-mumbo-jumbo.com.
+# Ignore everything at the root, then allow the site back in:
+/*
+!api
+!lib
+!*.html
+!fightpack.js
+!robots.txt
+!vercel.json

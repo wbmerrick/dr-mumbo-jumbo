@@ -25,7 +25,7 @@ for (const c of fs.readdirSync(to).filter((d) => /^[A-J]-/.test(d))) {
     const funding = H.fundingOf ? H.fundingOf(decode, m.denial || '') : null;
     const routed = p > 1 && H.oneRoute ? H.oneRoute(r.text, funding) : r.text;
     const built = p === 6 ? H.fixMeta(routed, H.decodeFacts(decode), H.fallbackFacts ? H.fallbackFacts(decode) : undefined)
-      : p === 1 && H.expeditedFirst ? H.expeditedFirst(H.twoRequests(routed), r.level || G.safetyOf(routed)) : routed; // a stored decode is already rendered
+      : p === 1 && H.expeditedFirst ? H.expeditedFirst(H.twoRequests(routed, H.fundingOf(routed, m.denial || "")), r.level || G.safetyOf(routed)) : routed; // a stored decode is already rendered
     // v9.10: the facts code states itself
     const out = H.stateFacts ? H.stateFacts(built, p, { denial: m.denial || '', extra: m.extra || '', decode, files: !!(m.file || m.records), level: r.level || (p === 1 ? G.safetyOf(routed) : null) }) : built;
     j.data.text = out; fs.writeFileSync(f, JSON.stringify(j, null, 2)); parts[p] = out;

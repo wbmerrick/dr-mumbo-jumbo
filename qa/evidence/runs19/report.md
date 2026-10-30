@@ -101,7 +101,7 @@ WARN:
 
 FAIL:
 - ❌ depth: the transport went to the closest hospital — /closest|nearest/ in §2,§3
-- ❌ never: (re-audit I-4) the records go to the family and in with the appeal: never sent to Medicare separately, as additional documentation, or as a corrected claim — corrected claim
+- ❌ never: (re-audit I-4; extended 30 Oct 2026 to the provider's own offer, "submit additional documentation or appeal", which the first form missed in runs 16, 18, 20, 21 and 24) the records go to the family and in with the appeal: never sent to Medicare separately, as additional documentation, or as a corrected claim — prefer to send it directly to Medicare
 - ❌ never: (audit2) the test is that other transport was contraindicated; "not validated" garbles it — not validated
 
 WARN:
