@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How the Fight Pack is tested | Dr Mumbo Jumbo</title>
+<meta name="description" content="Deadlines and identifiers are computed, not guessed. 173 of 173 deadlines and 638 of 638 identifiers right across 24 measured test runs, three independent audits, and what still needs a clinician's eye.">
+<link rel="canonical" href="https://dr-mumbo-jumbo.com/how-its-tested">
+<meta property="og:site_name" content="Dr Mumbo Jumbo">
+<meta property="og:title" content="How the Fight Pack is tested | Dr Mumbo Jumbo">
+<meta property="og:description" content="Deadlines and identifiers are computed, not guessed. 173 of 173 deadlines and 638 of 638 identifiers right across 24 measured test runs, three independent audits, and what still needs a clinician's eye.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://dr-mumbo-jumbo.com/how-its-tested">
+<meta property="og:image" content="https://dr-mumbo-jumbo.com/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#161826">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Crect%20x='4'%20y='4'%20width='92'%20height='92'%20rx='24'%20fill='%23161826'%20stroke='%239184d9'%20stroke-width='6'/%3E%3Ctext%20x='50'%20y='66'%20font-size='44'%20text-anchor='middle'%20font-family='Inter%2CArial%2Csans-serif'%20font-weight='600'%20fill='%239184d9'%3E%3F!%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/nocturne.css">
+<style>
+
+  .article{margin-top:6px}
+  .article .prose{font-size:16px}
+  .article .prose h2{margin-top:34px;font-size:1.3rem}
+  .article .prose h2:first-child{margin-top:0}
+  .toc{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+  .proof{margin-top:18px}
+
+</style>
+</head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+<symbol id="i-cr" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+<symbol id="i-checkcircle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 5-5"/></symbol>
+<symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+<symbol id="i-firstaid" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M12 8v8M8 12h8"/></symbol>
+</svg>
+<header class="site-header">
+  <div class="wrap bar">
+    <a class="brand" href="/"><span class="mark">?!</span>Dr Mumbo Jumbo</a>
+    <nav class="nav" aria-label="Main">
+      <a href="/" class="xl">Translator</a>
+      <a href="/appeal">Appeal<span class="xl"> letter</span></a>
+      <a href="/denials">Playbook</a>
+      <a href="/codes/">Codes</a>
+      <a class="btn btn-primary btn-sm" href="/fightpack">Fight Pack</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="wrap wrap-narrow">
+    <section class="hero">
+      <span class="kicker">How it's tested</span>
+      <h1>We measure it, so you don't have to trust us.</h1>
+      <p class="lead">Every version of the Fight Pack is run against a fixed set of real-world denial cases, scored by about a hundred automatic checks per kit, and read by an independent reviewer using a physician's rubric. Here is what that shows, and what it doesn't.</p>
+    </section>
+    <article class="article">
+      <div class="stats proof">
+  <div class="stat"><span class="stat-value">173 / 173</span><span class="stat-label">appeal deadlines computed correctly</span><span class="stat-sub">every kit, every run since testing began</span></div>
+  <div class="stat"><span class="stat-value">638 / 638</span><span class="stat-label">member and claim numbers copied exactly</span><span class="stat-sub">including from photographed and PDF letters</span></div>
+  <div class="stat"><span class="stat-value">24</span><span class="stat-label">measured runs of the engine</span><span class="stat-sub">ten cases each, re-scored with the same checker</span></div>
+  <div class="stat"><span class="stat-value">3</span><span class="stat-label">independent audit rounds</span><span class="stat-sub">plus four earlier audits of the first versions</span></div>
+</div>
+<div class="prose mt-4">
+  <h2>What is decided by code, not by the AI</h2>
+  <p>The parts of a denial fight that have a right answer are not left to the language model. The appeal deadline, the plan type and its clocks, whether the case is urgent, the member and claim identifiers, and the emergency instruction when a situation sounds dangerous are all computed by ordinary code from the letter and checked against the rules. The model writes the prose; the code decides the facts and brackets anything it cannot verify for you and your doctor to confirm.</p>
+
+  <h2>How a version is tested before it ships</h2>
+  <p>The test set is ten cases written to cover the kinds of denials people actually get: a sleep study refused as not medically necessary, an inpatient stay downgraded, a biologic blocked by step therapy, an out-of-network emergency bill, a bundled claim, a Medicare Advantage wheelchair, an urgent MRI on Medicaid, out-of-network anesthesia, an Original Medicare ambulance, and an urgent transfer to inpatient rehabilitation after a stroke. Four of them were written only after the engine was tuned, so they could catch what the tuning hid. Two arrive as photographs or PDFs with records attached, the way real letters do.</p>
+  <p>Each version builds every kit live on this site, and about a hundred checks score each one: is the deadline right, is every identifier exact, does the letter go to the right address, does the kit tell an Original Medicare family where records actually go, does it never tell someone with a possible emergency to call the office first. Defects per kit fell from about 13 in the first measured version to roughly one today. Every change is also replayed over every stored kit before it goes live, so a fix for one case cannot quietly break another.</p>
+
+  <h2>Independent audits</h2>
+  <p>A separate reviewer, with no access to how the kit was made, reads the finished kits against a physician's rubric: would a doctor sign this letter, does it overstate what the records show, does it get the rules right. Three audit rounds on the hardest cases found no remaining critical problems; every critical finding from earlier rounds was fixed, and the stubborn ones were fixed in code rather than by asking the model nicely. The audits' remaining findings are the kind only a human can judge: a sentence in the doctor's letter that reads a little stronger than the chart supports.</p>
+
+  <h2>What this does not prove</h2>
+  <ul>
+    <li>The test cases are realistic but invented. Your letter may be phrased in a way the engine has never seen.</li>
+    <li>The auditor is an AI reviewer with a physician's rubric, not a licensed reviewer. A physician should still read a sample of real kits before relying on them at scale.</li>
+    <li>The rules checked are the federal ones. State external-review processes and state laws are verified only as far as your notice prints them.</li>
+    <li>Most of what remains is wording. A letter of medical necessity is a draft in your doctor's voice; your doctor must read it and change what the chart does not support before signing.</li>
+  </ul>
+
+  <h2>Why we publish this</h2>
+  <p>A tool that drafts letters to insurers should be able to show its work. The full methodology, every run's scores and every audit are kept with the code, and the numbers on this page are updated when the engine changes.</p>
+  <p class="small">Numbers as of October 30, 2026 (engine v9.13).</p>
+</div>
+    </article>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="hr full"></div>
+    <div class="cols">
+      <div><h4>Tools</h4><ul><li><a href="/">Translator</a></li><li><a href="/appeal">Appeal letter</a></li><li><a href="/fightpack">Fight Pack</a></li></ul></div>
+      <div><h4>Learn</h4><ul><li><a href="/denials">Denial Playbook</a></li><li><a href="/codes/">Code library</a></li><li><a href="/how-its-tested">How it's tested</a></li></ul></div>
+      <div class="about"><h4>About</h4><p>Built by a practicing physician.</p><p>Nothing you paste or upload is stored.</p><p><a href="mailto:hello@dr-mumbo-jumbo.com">hello@dr-mumbo-jumbo.com</a></p></div>
+      <div><h4>Legal</h4><ul><li><a href="/privacy">Privacy</a></li><li><a href="/terms">Terms</a></li></ul></div>
+    </div>
+    <p class="legal">Dr Mumbo Jumbo is an educational self-advocacy tool, not medical, legal or financial advice, and it does not create a doctor–patient relationship. Letters and kits are drafts for you and your clinician to review, complete and send yourselves; they are written by AI and can contain mistakes, so read every line before you send it. Appeal rights and deadlines vary by plan and state; your denial letter and plan documents control. In an emergency, call 911.</p>
+    <p class="copy"><span class="mark" style="width:22px;height:22px;font-size:9px;border-radius:6px">?!</span>© 2026 Dr Mumbo Jumbo</p>
+  </div>
+</footer>
+</body>
+</html>

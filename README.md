@@ -13,10 +13,14 @@ Live at https://dr-mumbo-jumbo.com (hosted on Vercel; the domain is registered a
 | `/denials` | The Denial Playbook: the six moves for overturning a denial, with deadlines. | `denials.html` |
 | `/fightpack` | **The Fight Pack (free for now):** the complete kit — appeal letter, Letter of Medical Necessity for the treating doctor to sign, phone scripts, records request, external-review request, deadline tracker with calendar download. | `fightpack.html` → `POST /api/checkout`, `/api/unlock`, `/api/fightpack` |
 | `/codes/` | Plain-English code library (~190 CPT, ICD-10, and denial-reason codes), one page per code. | `api/codelibrary.js`, `api/codepage.js`, data in `lib/` |
+| `/how-its-tested` | How the Fight Pack is tested, with the bottom-line numbers from `docs/fightpack-qa.md`. | `how-its-tested.html` |
+| `/privacy`, `/terms` | Privacy and terms, in plain words. | `privacy.html`, `terms.html` |
 | `/sitemap.xml` | Generated sitemap for every page above. | `api/sitemap.js` |
 | `POST /api/lead` | Fight Pack waitlist signup (email + what they're fighting). | `api/lead.js` → Supabase |
 
 Routing lives in `vercel.json` (clean URLs, function timeouts, security headers).
+
+Every page shares one stylesheet, `nocturne.css`: the Nocturne design system of the Dr Mumbo Jumbo app (dark theme, Inter, violet accent, outline buttons). The server-rendered code pages link it too, so a change there restyles the whole site. `og.png` is the image shown when a link is shared.
 
 ## How the AI endpoints work
 
@@ -66,7 +70,7 @@ The site is plain static HTML plus Node serverless functions — no build step, 
 
 - **From this repo:** import it into the Vercel project (Vercel → Project → Settings → Git) and every push to `main` deploys.
 - **Without Git:** `npx vercel --prod` from the project folder does the same thing.
-- **What gets deployed:** `.vercelignore` allows only the site itself (`api/`, `lib/`, the `.html` pages, `fightpack.js`, `robots.txt`, `vercel.json`). The QA harness, evidence, docs, scripts and SQL stay in the repo and are never served from the website. Add any new top-level site file to that list.
+- **What gets deployed:** `.vercelignore` allows only the site itself (`api/`, `lib/`, the `.html` pages, `fightpack.js`, `nocturne.css`, `og.png`, `robots.txt`, `vercel.json`). The QA harness, evidence, docs, scripts and SQL stay in the repo and are never served from the website. Add any new top-level site file to that list.
 
 ## Repo layout
 
@@ -76,6 +80,10 @@ appeal.html         free appeal-letter generator
 fightpack.html      the Fight Pack (free unlock or checkout, six-pass kit builder, deadline tracker)
 fightpack.js        the Fight Pack page's client code (passes, retries, kit renderer, tracker)
 denials.html        the Denial Playbook
+how-its-tested.html, privacy.html, terms.html
+                    the trust pages
+nocturne.css        the shared design system (tokens, components, print styles)
+og.png              the share image
 api/                serverless functions (translate, appeal, fightpack, checkout, unlock, lead, codelibrary, codepage, sitemap)
 api/_lib/           the Fight Pack engine, kept out of the public site (Vercel serves neither functions nor `_` folders under api/)
                     fightpack-preamble.js / -sections.js / -rules.js / -prompts.js — the kit writer's rules, as prose

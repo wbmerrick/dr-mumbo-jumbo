@@ -29,8 +29,8 @@
       if(t){ denial.value = t.denial || ''; extra.value = t.extra || ''; }
       var f = JSON.parse(sessionStorage.getItem('dmj_fp_files') || 'null');
       if(f){
-        if(f.file){ attached = f.file; filename.textContent = '📎 ' + attached.name; filechip.classList.add('on'); }
-        if(f.records){ records = f.records; recname.textContent = '📎 ' + records.name; recchip.classList.add('on'); }
+        if(f.file){ attached = f.file; filename.textContent = attached.name; filechip.classList.add('on'); }
+        if(f.records){ records = f.records; recname.textContent = records.name; recchip.classList.add('on'); }
       } else if(t && (t.fileName || t.recName)){
         showNotice('Your text is back. Browser storage couldn\'t hold the attachment across checkout — please add the ' + (t.fileName ? 'photo/PDF of the denial' : 'records file') + ' again, then click Rebuild.');
       }
@@ -71,7 +71,7 @@
       var f = input.files && input.files[0];
       if(!f) return;
       hideError();
-      prepFile(f, function(res){ setter(res); nameEl.textContent = '📎 ' + res.name; chip.classList.add('on'); }, function(msg){ setter(null); input.value=''; chip.classList.remove('on'); showError(msg); });
+      prepFile(f, function(res){ setter(res); nameEl.textContent = res.name; chip.classList.add('on'); }, function(msg){ setter(null); input.value=''; chip.classList.remove('on'); showError(msg); });
     });
   }
   hookFile(attachBtn, fileInput, filechip, filename, fileclear, function(v){ attached = v; });
@@ -84,8 +84,8 @@
   function hideError(){ errbox.classList.remove('on'); }
   function showNotice(msg){ notice.textContent = msg; notice.classList.add('on'); }
   function hideNotice(){ notice.classList.remove('on'); }
-  function setStep(n, state){ var el = $('st'+n); el.className = state; el.querySelector('.ic').textContent = state==='done' ? '✓' : state==='doing' ? '' : String(n); }
-  function resetSteps(){ for(var i=1;i<=4;i++){ var el=$('st'+i); el.className=''; el.querySelector('.ic').textContent = String(i); } }
+  function setStep(n, state){ var el = $('st'+n); el.className = state; el.querySelector('.pic').textContent = state==='done' ? '✓' : state==='doing' ? '' : String(n); }
+  function resetSteps(){ for(var i=1;i<=4;i++){ var el=$('st'+i); el.className=''; el.querySelector('.pic').textContent = String(i); } }
   // Which progress step each generator part belongs to (part 1 = decode; 2–3 = letters; 4–5 = scripts; 6 = round two).
   var STEP_OF = { 1:1, 2:2, 3:2, 4:3, 5:3, 6:4 };
   var PART_LABEL = { 2:'Your appeal letter', 3:"Your doctor's letter and the note for the office", 4:'Peer-to-peer brief and the insurer phone script', 5:'Billing-office script and records request', 6:'Round two and your deadlines' };
@@ -150,15 +150,15 @@
     // Parts render in kit order; a part that hasn't arrived yet shows a placeholder in its slot.
     [1,2,3,4,5,6].forEach(function(p){
       if(!parts[p]){
-        if(p > 1 && building){ var ph = document.createElement('div'); ph.className = 'doc'; ph.innerHTML = '<p class="pending">' + escapeHtml(PART_LABEL[p] || 'More') + ' — on the way…</p>'; docsEl.appendChild(ph); }
+        if(p > 1 && building){ var ph = document.createElement('div'); ph.className = 'doc panel'; ph.innerHTML = '<p class="pending">' + escapeHtml(PART_LABEL[p] || 'More') + ' — on the way…</p>'; docsEl.appendChild(ph); }
         return;
       }
       splitSections(parts[p]).forEach(function(sec){
         var tag = /medical necessity|emergency attestation/i.test(sec.title) ? 'For your doctor' : /corrected-claim/i.test(sec.title) ? 'For the billing office' : /coverage facts/i.test(sec.title) ? 'For HR / benefits' : '';
         var isStar = !!tag;
         var card = document.createElement('div');
-        card.className = 'doc' + (isStar ? ' star' : '');
-        var h = '<div class="doc-top"><h3>' + escapeHtml(sec.title) + (isStar ? '<span class="tag">' + tag + '</span>' : '') + '</h3><button class="copy-btn" type="button">Copy</button></div><div class="doc-body">' + renderBody(sec.body) + '</div>';
+        card.className = 'doc panel' + (isStar ? ' star' : '');
+        var h = '<div class="doc-top"><h3>' + escapeHtml(sec.title) + (isStar ? '<span class="tag tag-accent">' + tag + '</span>' : '') + '</h3><button class="btn btn-secondary btn-sm copy-btn" type="button">Copy</button></div><div class="doc-body prose">' + renderBody(sec.body) + '</div>';
         card.innerHTML = h;
         var btn = card.querySelector('.copy-btn');
         btn.addEventListener('click', function(){ copyText(plain(sec.title + '\n\n' + sec.body), btn); });
@@ -169,7 +169,7 @@
     kitout.classList.add('on');
   }
   function copyText(text, btn){
-    function done(){ if(btn){ var old = btn.textContent; btn.textContent = 'Copied!'; setTimeout(function(){ btn.textContent = old; }, 1600); } }
+    function done(){ if(btn){ var lbl = btn.querySelector('span') || btn; var old = lbl.textContent; lbl.textContent = 'Copied'; setTimeout(function(){ lbl.textContent = old; }, 1600); } }
     function fallback(){ var ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); done(); }catch(e){} document.body.removeChild(ta); }
     if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(done).catch(fallback); } else { fallback(); }
   }
@@ -270,8 +270,8 @@
     var chip = $('strength'), cs = strengthFromDecode() || (meta && meta.case_strength);
     if(cs === 'strong' || cs === 'good' || cs === 'needs-evidence'){
       chip.textContent = 'Case strength: ' + (cs === 'strong' ? 'Strong' : cs === 'good' ? 'Good — one thing missing' : 'Needs evidence');
-      chip.className = 'strength ' + (cs === 'strong' ? 'strong' : cs === 'good' ? '' : 'needs');
-      chip.style.display = 'inline-block';
+      chip.className = 'tag ' + (cs === 'strong' ? 'tag-ok' : cs === 'good' ? 'tag-accent' : 'tag-warn');
+      chip.style.display = 'inline-flex';
     }
     if(!dlFiled.value) dlFiled.value = today;
     computeDeadlines();
@@ -368,8 +368,8 @@
   }
   function keepToken(tok){ token = tok; save('dmj_fp_token', { token: tok, exp: Date.now() + 71*3600*1000 }); refreshBuyLabel(); }
   function refreshBuyLabel(){
-    if(free){ buy.textContent = 'Build my Fight Pack — free →'; $('pricenote').textContent = 'Free. Rebuild it as often as you need.'; return; }
-    if(haveToken()){ buy.textContent = 'Build my Fight Pack →'; $('pricenote').textContent = 'Unlocked — rebuild as often as you need for 3 days.'; }
+    if(free){ buy.textContent = 'Build my Fight Pack'; $('pricenote').textContent = 'Free. Rebuild it as often as you need.'; return; }
+    if(haveToken()){ buy.textContent = 'Build my Fight Pack'; $('pricenote').textContent = 'Unlocked — rebuild as often as you need for 3 days.'; }
   }
   function tryAgain(){ return free ? 'Click "Rebuild with edits" to try again.' : 'Your unlock is still valid — click "Rebuild with edits" to try again.'; }
   // Free mode: the server hands out a token per visitor, a few an hour.
@@ -391,7 +391,7 @@
     if(free) return;
     $('eyebrow').textContent = 'One denial · built by a practicing physician';
     $('codelink').hidden = false;
-    if(!haveToken()){ buy.textContent = 'Get my Fight Pack →'; $('pricenote').textContent = 'One-time. Use it for this denial as often as you need for 3 days.'; }
+    if(!haveToken()){ buy.textContent = 'Get my Fight Pack'; $('pricenote').textContent = 'One-time. Use it for this denial as often as you need for 3 days.'; }
     refreshBuyLabel();
   }
 
@@ -433,7 +433,7 @@
     stashInputs();
     postJSON('/api/checkout', {}, 30000).then(function(res){
       if(res.ok && res.data.url){ location.href = res.data.url; return; }
-      buy.disabled = false; buy.textContent = 'Get my Fight Pack →';
+      buy.disabled = false; buy.textContent = 'Get my Fight Pack';
       if(res.status === 503){ configured = false; wait.classList.add('on'); wait.scrollIntoView({behavior:'smooth', block:'center'}); return; }
       showError(res.data.message || "Couldn't start checkout. Try again in a moment.");
     });
@@ -445,7 +445,7 @@
     ev.preventDefault();
     leadmsg.className = 'wait-msg'; leadbtn.disabled = true; leadbtn.textContent = 'Saving…';
     postJSON('/api/lead', { email: leademail.value, fighting: 'denied-claim' }, 20000).then(function(res){
-      leadbtn.disabled = false; leadbtn.textContent = 'Reserve the founding price →';
+      leadbtn.disabled = false; leadbtn.textContent = 'Reserve the founding price';
       leadmsg.className = 'wait-msg ' + (res.ok ? 'ok' : 'err');
       leadmsg.textContent = (res.data && res.data.message) || (res.ok ? "You're on the list." : "Couldn't save your spot — try again in a minute.");
       if(res.ok) leadform.reset();

@@ -4,235 +4,136 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Dr Mumbo Jumbo — Your doctor said what?</title>
-<meta name="description" content="Paste the medical mumbo jumbo — visit notes, lab results, discharge papers, bills — and get it back in plain English. A free patient-education translator.">
-<meta property="og:title" content="Dr Mumbo Jumbo">
-<meta property="og:description" content="Your doctor said what? Paste the jargon, get plain English back.">
+<meta name="description" content="Paste a visit note, lab result, discharge summary, bill or denial letter and get it back in plain English. Free, built by a practicing physician, nothing stored.">
+<link rel="canonical" href="https://dr-mumbo-jumbo.com/">
+<meta property="og:site_name" content="Dr Mumbo Jumbo">
+<meta property="og:title" content="Dr Mumbo Jumbo — Your doctor said what?">
+<meta property="og:description" content="Paste a visit note, lab result, discharge summary, bill or denial letter and get it back in plain English. Free, built by a practicing physician, nothing stored.">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://dr-mumbo-jumbo.com">
-<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Crect%20width='100'%20height='100'%20rx='22'%20fill='%236C3BFF'/%3E%3Ctext%20x='50'%20y='70'%20font-size='54'%20text-anchor='middle'%20font-family='Arial,Helvetica,sans-serif'%20font-weight='900'%20fill='%23FAF3E7'%3E%3F!%3C/text%3E%3C/svg%3E">
+<meta property="og:url" content="https://dr-mumbo-jumbo.com/">
+<meta property="og:image" content="https://dr-mumbo-jumbo.com/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#161826">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Crect%20x='4'%20y='4'%20width='92'%20height='92'%20rx='24'%20fill='%23161826'%20stroke='%239184d9'%20stroke-width='6'/%3E%3Ctext%20x='50'%20y='66'%20font-size='44'%20text-anchor='middle'%20font-family='Inter%2CArial%2Csans-serif'%20font-weight='600'%20fill='%239184d9'%3E%3F!%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/nocturne.css">
 <style>
-  :root{
-    --paper:#FAF3E7;
-    --ink:#1D1033;
-    --ink-soft:#4A3D66;
-    --violet:#6C3BFF;
-    --coral:#FF5A3C;
-    --teal:#0FB5AE;
-    --yellow:#FFC838;
-    --card:#FFFDF7;
-    --border:3px solid var(--ink);
-    --shadow:7px 7px 0 var(--ink);
-    --shadow-sm:4px 4px 0 var(--ink);
-    --radius:18px;
-    --display:"Bricolage Grotesque",system-ui,sans-serif;
-    --body:"Inter",system-ui,sans-serif;
-  }
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{
-    font-family:var(--body);
-    background:var(--paper);
-    color:var(--ink);
-    line-height:1.5;
-    -webkit-font-smoothing:antialiased;
-    background-image:radial-gradient(rgba(29,16,51,.055) 1.2px, transparent 1.2px);
-    background-size:26px 26px;
-    min-height:100vh;min-height:100dvh;
-    display:flex;flex-direction:column;
-  }
-  .wrap{width:100%;max-width:960px;margin:0 auto;padding:0 20px}
 
-  /* ---------- header ---------- */
-  header{padding:16px 0 6px}
-  .bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-  .wordmark{
-    font-family:var(--display);font-weight:800;font-size:1.25rem;letter-spacing:.02em;
-    display:inline-flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);
-  }
-  .wordmark .glyph{
-    width:36px;height:36px;border-radius:11px;background:var(--violet);color:var(--paper);
-    display:inline-flex;align-items:center;justify-content:center;
-    font-size:1rem;font-weight:800;border:var(--border);box-shadow:var(--shadow-sm);
-  }
-  nav{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-  .pill{
-    font-size:.74rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
-    background:var(--card);color:var(--ink);text-decoration:none;
-    border:var(--border);border-radius:999px;padding:6px 13px;box-shadow:var(--shadow-sm);
-  }
-  .pill.hot{background:var(--coral);color:#fff}
-
-  /* ---------- main ---------- */
-  main{flex:1;display:flex;flex-direction:column;justify-content:center;padding:10px 0 14px}
-  .hero{text-align:center;margin-bottom:18px}
-  h1{
-    font-family:var(--display);font-weight:800;
-    font-size:clamp(2.1rem,5.2vw,3.6rem);
-    line-height:1.02;letter-spacing:-.015em;
-  }
-  h1 .zing{
-    color:var(--coral);
-    text-decoration:underline wavy var(--violet);
-    text-decoration-thickness:4px;text-underline-offset:8px;
-    white-space:nowrap;
-  }
-  .sub{
-    max-width:640px;margin:14px auto 0;font-size:clamp(.98rem,1.6vw,1.1rem);
-    color:var(--ink-soft);font-weight:500;
-  }
-
-  /* ---------- translator ---------- */
-  .machine{
-    background:var(--card);border:var(--border);border-radius:var(--radius);
-    box-shadow:var(--shadow);padding:18px 20px 16px;margin-bottom:10px;
-  }
-  .modes{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
-  .mode{font-family:var(--display);font-weight:800;font-size:.86rem;border:var(--border);border-radius:999px;padding:8px 16px;background:var(--paper);cursor:pointer;box-shadow:var(--shadow-sm)}
-  .mode.on{background:var(--ink);color:var(--paper)}
-  textarea{
-    width:100%;height:clamp(130px,26vh,300px);resize:vertical;
-    font-family:var(--body);font-size:1rem;line-height:1.5;color:var(--ink);
-    background:var(--paper);border:var(--border);border-radius:14px;padding:14px;
-  }
-  textarea:focus{outline:3px solid var(--violet);outline-offset:2px}
-  textarea::placeholder{color:#8d82a8}
-  .controls{display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap}
-  .btn{
-    font-family:var(--display);font-weight:800;font-size:1rem;letter-spacing:.02em;
-    border:var(--border);border-radius:14px;padding:12px 22px;cursor:pointer;
-    box-shadow:var(--shadow-sm);transition:transform .12s ease,box-shadow .12s ease;
-  }
-  .btn:hover{transform:translate(-2px,-2px);box-shadow:6px 6px 0 var(--ink)}
-  .btn:active{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--ink)}
-  .btn:focus-visible{outline:3px solid var(--coral);outline-offset:3px}
-  .btn-primary{background:var(--violet);color:#fff}
-  .btn-primary:disabled{background:#9d85e0;cursor:wait;transform:none;box-shadow:var(--shadow-sm)}
-  .btn-ghost{background:var(--card);color:var(--ink);font-size:.92rem;padding:11px 16px}
-  .filechip{display:none;margin-top:10px;align-items:center;gap:10px;font-weight:700;font-size:.82rem;background:var(--paper);border:2px solid var(--ink);border-radius:999px;padding:7px 12px;width:max-content;max-width:100%;box-shadow:3px 3px 0 var(--ink)}
-  .filechip.on{display:inline-flex}
-  .filechip .x{cursor:pointer;border:none;background:var(--ink);color:var(--paper);border-radius:50%;width:20px;height:20px;line-height:1;font-weight:800;font-size:.72rem;flex:none}
-  .whisper{font-size:.78rem;color:var(--ink-soft);margin-top:10px}
-
-  /* loading */
-  .loading{display:none;align-items:center;gap:12px;margin-top:12px;font-weight:600}
-  .loading.on{display:flex}
-  .spinner{
-    width:22px;height:22px;border-radius:50%;flex:none;
-    border:3px solid var(--ink);border-top-color:var(--coral);
-    animation:spin .8s linear infinite;
-  }
-  @keyframes spin{to{transform:rotate(360deg)}}
-
-  /* error */
-  .error{
-    display:none;margin-top:12px;padding:14px 16px;border:3px solid var(--coral);
-    border-radius:14px;background:#FFF1ED;font-weight:600;color:#A32B14;
-  }
-  .error.on{display:block}
-
-  /* result (appears after translating) */
-  .result{display:none;margin-top:22px}
+  .hero{padding-top:30px}
+  .controls{margin-top:14px}
+  .result{display:none;margin-top:16px}
   .result.on{display:block}
-  .result-card{
-    background:var(--ink);color:var(--paper);border:var(--border);border-radius:var(--radius);
-    box-shadow:7px 7px 0 var(--violet);padding:28px;
+  #translator textarea.input{height:clamp(150px,28vh,320px)}
+  .whisper{margin-top:12px}
+  @media (max-width:640px){
+    .hero{padding:20px 0 14px}
+    #translator .controls .btn-lg{flex:1 1 100%}
+    #translator textarea.input{height:clamp(130px,24vh,240px)}
   }
-  .result-top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
-  .result-label{
-    font-family:var(--display);font-weight:800;font-size:.95rem;letter-spacing:.09em;text-transform:uppercase;color:var(--yellow);
-  }
-  .copy-btn{
-    font-family:var(--body);font-weight:700;font-size:.8rem;cursor:pointer;
-    background:transparent;color:var(--paper);border:2px solid var(--paper);border-radius:999px;padding:6px 14px;
-  }
-  .copy-btn:hover{background:var(--paper);color:var(--ink)}
-  .result-body h3{
-    font-family:var(--display);font-weight:800;font-size:1.25rem;color:var(--yellow);
-    margin:22px 0 8px;
-  }
-  .result-body h3:first-child{margin-top:10px}
-  .result-body p{margin:10px 0;color:#EDE6F6}
-  .result-body ul,.result-body ol{margin:10px 0 10px 22px;color:#EDE6F6}
-  .result-body li{margin:7px 0}
-  .result-body strong{color:#fff}
-  .result-note{
-    margin-top:22px;padding-top:16px;border-top:2px dashed rgba(250,243,231,.35);
-    font-size:.82rem;color:#C9BEE0;
-  }
-  .result-note a{color:var(--yellow);font-weight:700}
 
-  /* ---------- footer ---------- */
-  footer{padding:8px 0 14px;text-align:center;font-size:.76rem;color:var(--ink-soft);line-height:1.55}
-  footer a{color:var(--violet);font-weight:700;text-decoration:none}
-  footer .links{margin-top:3px;font-weight:600}
-
-  @media (max-width:600px){
-    header{padding:12px 0 4px}
-    main{padding:6px 0 10px}
-    .hero{margin-bottom:12px}
-    .sub{font-size:.95rem;margin-top:10px}
-    .machine{padding:14px}
-    .controls{margin-top:10px;gap:8px}
-    .btn{padding:11px 18px}
-    .btn-primary{width:100%}
-    .btn-ghost{flex:1;padding:11px 8px;font-size:.88rem;white-space:nowrap}
-    textarea{height:clamp(110px,20vh,220px)}
-    .whisper{margin-top:8px}
-    .result-card{padding:20px}
-    footer{padding:6px 0 12px}
-  }
 </style>
 </head>
 <body>
-
-<header class="wrap">
-  <div class="bar">
-    <a class="wordmark" href="/"><span class="glyph">?!</span> DR MUMBO JUMBO</a>
-    <nav><a class="pill hot" href="/appeal">Fight a denial →</a><a class="pill" href="/codes/">Code library</a></nav>
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+<symbol id="i-receipt" viewBox="0 0 24 24"><path d="M4 2v20l2-1.5L8 22l2-1.5L12 22l2-1.5L16 22l2-1.5L20 22V2l-2 1.5L16 2l-2 1.5L12 2l-2 1.5L8 2 6 3.5 4 2z"/><path d="M8 8h8M8 12h8M8 16h5"/></symbol>
+<symbol id="i-steth" viewBox="0 0 24 24"><path d="M4.5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-.5"/><path d="M8 15v2a5 5 0 0 0 10 0v-3"/><circle cx="18" cy="11" r="2.2"/></symbol>
+<symbol id="i-camera" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></symbol>
+<symbol id="i-clip" viewBox="0 0 24 24"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+<symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+<symbol id="i-filex" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="m9.5 12.5 5 5M14.5 12.5l-5 5"/></symbol>
+<symbol id="i-firstaid" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M12 8v8M8 12h8"/></symbol>
+<symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+<symbol id="i-checkcircle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 5-5"/></symbol>
+<symbol id="i-cr" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+</svg>
+<header class="site-header">
+  <div class="wrap bar">
+    <a class="brand" href="/"><span class="mark">?!</span>Dr Mumbo Jumbo</a>
+    <nav class="nav" aria-label="Main">
+      <a href="/" class="xl" aria-current="page">Translator</a>
+      <a href="/appeal">Appeal<span class="xl"> letter</span></a>
+      <a href="/denials">Playbook</a>
+      <a href="/codes/">Codes</a>
+      <a class="btn btn-primary btn-sm" href="/fightpack">Fight Pack</a>
+    </nav>
   </div>
 </header>
 
-<main class="wrap">
-  <div class="hero">
-    <h1>Your doctor said <span class="zing">what?</span></h1>
-    <p class="sub">Paste visit notes, lab results, discharge papers, or a bill — get it back in plain English. Free, and built by a practicing physician.</p>
-  </div>
+<main>
+  <div class="wrap">
+    <section class="hero">
+      <span class="kicker">Built by a practicing physician</span>
+      <h1>Your doctor said what?</h1>
+      <p class="lead">Paste a visit note, lab result, discharge summary, bill or denial letter and get it back in plain English. Free, and nothing you paste is stored.</p>
+    </section>
 
-  <div class="machine" id="translator">
-    <div class="modes">
-      <button type="button" class="mode on" id="mode-bill">📄 Bill or denial</button>
-      <button type="button" class="mode" id="mode-jargon">🩺 Doctor-speak</button>
-    </div>
-    <textarea id="input" maxlength="6000" spellcheck="false" aria-label="Paste medical text to translate" placeholder="Paste the bill, EOB, or denial letter here — e.g. &quot;CPT 99284 ER visit $1,842 … CO-45 adjustment … DENIED CO-50: not medically necessary. Patient responsibility: $638. Appeal within 180 days.&quot;"></textarea>
-    <div class="controls">
-      <button class="btn btn-primary" id="go">Translate it →</button>
-      <button class="btn btn-ghost" id="attach" type="button">＋ Photo / PDF</button>
-      <button class="btn btn-ghost" id="example" type="button">Try an example</button>
-    </div>
-    <input type="file" id="file" accept="image/*,application/pdf,.pdf" hidden>
-    <div class="filechip" id="filechip"><span id="filename"></span><button class="x" id="fileclear" type="button" aria-label="Remove file">✕</button></div>
-    <p class="whisper">Paste the text, or add a photo or PDF with ＋. Leave out names and ID numbers — nothing is stored.</p>
-    <div class="loading" id="loading" role="status"><span class="spinner"></span><span id="loadmsg">Decoding the hieroglyphics…</span></div>
-    <div class="error" id="error" role="alert"></div>
-  </div>
-
-  <div class="result" id="result" aria-live="polite">
-    <div class="result-card">
-      <div class="result-top">
-        <span class="result-label">The plain English</span>
-        <button class="copy-btn" id="copy" type="button">Copy</button>
+    <section class="panel hi" id="translator" aria-label="Translator">
+      <div class="row" style="justify-content:space-between">
+        <div class="seg" role="group" aria-label="What are you translating?">
+          <button type="button" class="on" id="mode-bill"><svg class="ic" style="width:16px;height:16px" aria-hidden="true"><use href="#i-receipt"/></svg> Bill or denial</button>
+          <button type="button" id="mode-jargon"><svg class="ic" style="width:16px;height:16px" aria-hidden="true"><use href="#i-steth"/></svg> Doctor-speak</button>
+        </div>
+        <span class="small">Up to 6,000 characters, or one photo or PDF</span>
       </div>
-      <div class="result-body" id="output"></div>
-      <p class="result-note">This is education, not medical advice — your care team makes the calls. Spot something urgent-sounding? Call them today. Fighting a denial? <a href="/appeal">Draft your appeal letter free →</a> Full strategy: <a href="/denials">the Denial Playbook</a>.</p>
-    </div>
+      <textarea class="input mt-2" id="input" maxlength="6000" spellcheck="false" aria-label="Paste medical text to translate" placeholder="Paste the bill, EOB or denial letter here. For example: CPT 99284 ER visit $1,842 … CO-45 adjustment … DENIED CO-50: not medically necessary. Patient responsibility: $638. Appeal within 180 days."></textarea>
+      <div class="row controls">
+        <button class="btn btn-primary btn-lg btn-glow" id="go">Translate</button>
+        <button class="btn btn-secondary btn-lg" id="attach" type="button"><svg class="ic" style="width:18px;height:18px" aria-hidden="true"><use href="#i-camera"/></svg> Add a photo or PDF</button>
+        <button class="btn btn-ghost btn-lg" id="example" type="button">Try an example</button>
+      </div>
+      <input type="file" id="file" accept="image/*,application/pdf,.pdf" hidden>
+      <div class="filechip mt-2" id="filechip"><svg class="ic" style="width:15px;height:15px" aria-hidden="true"><use href="#i-clip"/></svg><span id="filename"></span><button class="x" id="fileclear" type="button" aria-label="Remove file"><svg class="ic" style="width:14px;height:14px" aria-hidden="true"><use href="#i-x"/></svg></button></div>
+      <p class="small whisper">Leave out names, birthdates and ID numbers. Your text goes to the AI model once and is not stored.</p>
+      <div class="loading" id="loading" role="status"><span class="spin"></span><span id="loadmsg">Reading the denial reason…</span></div>
+      <div class="alert err" id="error" role="alert"></div>
+    </section>
+
+    <section class="result" id="result" aria-live="polite">
+      <div class="panel">
+        <div class="panel-top">
+          <span class="kicker">The plain English</span>
+          <button class="btn btn-secondary btn-sm" id="copy" type="button"><svg class="ic" style="width:15px;height:15px" aria-hidden="true"><use href="#i-copy"/></svg><span>Copy</span></button>
+        </div>
+        <div class="prose" id="output"></div>
+        <div class="hr mt-3"></div>
+        <p class="small mt-2">Education, not medical advice: your care team makes the calls. If something here sounds urgent, call them today. Fighting a denial? <a href="/appeal">Draft the appeal letter</a>, or read <a href="/denials">the Denial Playbook</a>.</p>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="what-sent">
+      <div class="section-head"><span class="ovl" id="what-sent">What did they send you?</span></div>
+      <div class="grid-3">
+        <a class="card link" href="/appeal"><svg class="ic" style="width:22px;height:22px" aria-hidden="true"><use href="#i-filex"/></svg><h3>A claim was denied</h3><p>Decode the reason and draft the appeal, free. The Fight Pack adds the letter your doctor signs.</p></a>
+        <a class="card link" href="/codes/"><svg class="ic" style="width:22px;height:22px" aria-hidden="true"><use href="#i-receipt"/></svg><h3>A bill I don't understand</h3><p>Paste the EOB above, or look up any code. CPT, ICD-10 and denial codes in plain English.</p></a>
+        <a class="card link" href="/?mode=jargon#translator" id="card-jargon"><svg class="ic" style="width:22px;height:22px" aria-hidden="true"><use href="#i-steth"/></svg><h3>Doctor-speak in my notes</h3><p>Visit notes, labs and discharge papers, translated without adding anything that isn't there.</p></a>
+      </div>
+    </section>
+
+    <section class="section" aria-label="Why you can trust it">
+      <div class="grid-3">
+        <div class="card"><svg class="ic" style="width:22px;height:22px" aria-hidden="true"><use href="#i-firstaid"/></svg><h3>Built by a practicing physician</h3><p>Written by a hospitalist who reads these notes and fights these denials every week.</p></div>
+        <div class="card"><svg class="ic" style="width:22px;height:22px" aria-hidden="true"><use href="#i-lock"/></svg><h3>Nothing is stored</h3><p>Your text goes to the AI model once and is discarded. No account, no cookies, no tracking.</p></div>
+        <div class="card"><svg class="ic" style="width:22px;height:22px" aria-hidden="true"><use href="#i-checkcircle"/></svg><h3>Checked against the rules</h3><p>Deadlines and identifiers are computed, not guessed: 173 of 173 and 638 of 638 right in testing. <a href="/how-its-tested">How it's tested</a></p></div>
+      </div>
+    </section>
   </div>
 </main>
 
-<footer class="wrap">
-  <p>Education, not medical advice — your care team makes the calls. AI can make mistakes. Emergency? Call 911.</p>
-  <p class="links"><a href="/fightpack">Fight Pack — free</a> · <a href="/denials">Denial Playbook</a> · <a href="/codes/">Code library</a> · © 2026 Dr Mumbo Jumbo</p>
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="hr full"></div>
+    <div class="cols">
+      <div><h4>Tools</h4><ul><li><a href="/">Translator</a></li><li><a href="/appeal">Appeal letter</a></li><li><a href="/fightpack">Fight Pack</a></li></ul></div>
+      <div><h4>Learn</h4><ul><li><a href="/denials">Denial Playbook</a></li><li><a href="/codes/">Code library</a></li><li><a href="/how-its-tested">How it's tested</a></li></ul></div>
+      <div class="about"><h4>About</h4><p>Built by a practicing physician.</p><p>Nothing you paste or upload is stored.</p><p><a href="mailto:hello@dr-mumbo-jumbo.com">hello@dr-mumbo-jumbo.com</a></p></div>
+      <div><h4>Legal</h4><ul><li><a href="/privacy">Privacy</a></li><li><a href="/terms">Terms</a></li></ul></div>
+    </div>
+    <p class="legal">Dr Mumbo Jumbo is an educational self-advocacy tool, not medical, legal or financial advice, and it does not create a doctor–patient relationship. Letters and kits are drafts for you and your clinician to review, complete and send yourselves; they are written by AI and can contain mistakes, so read every line before you send it. Appeal rights and deadlines vary by plan and state; your denial letter and plan documents control. In an emergency, call 911.</p>
+    <p class="copy"><span class="mark" style="width:22px;height:22px;font-size:9px;border-radius:6px">?!</span>© 2026 Dr Mumbo Jumbo</p>
+  </div>
 </footer>
 
 <script>
@@ -256,13 +157,10 @@
   var attached = null;
   var modeJargon = document.getElementById('mode-jargon');
   var modeBill = document.getElementById('mode-bill');
-  var phrases = [
-    'Decoding the hieroglyphics…',
-    'Expanding the abbreviations…',
-    'Translating the ten-dollar words…',
-    'Asking the jargon to speak up…',
-    'Almost there — polishing the plain English…'
-  ];
+  var PHRASES = {
+    bill: ['Reading the denial reason…', 'Finding the codes…', 'Translating the ten-dollar words…', 'Almost there…'],
+    jargon: ['Reading the note…', 'Expanding the abbreviations…', 'Translating the ten-dollar words…', 'Almost there…']
+  };
   var phraseTimer = null;
 
   var EXAMPLES = {
@@ -270,21 +168,28 @@
     bill: 'EXAMPLE CLAIM SUMMARY — Provider: Example Medical Center. CPT 99284 Emergency dept visit: $1,842.00. CPT 71046 Chest X-ray 2 views: $412.00. CPT 85025 CBC: $98.00. Adjustment CO-45: -$1,214.00. CPT 71046 DENIED, reason CO-50: not medically necessary. Patient responsibility: $638.00. Appeals must be submitted within 180 days of this notice.'
   };
   var PLACEHOLDER = {
-    jargon: 'Paste the mumbo jumbo here — e.g. "Acute on chronic systolic heart failure, EF 35%, BNP 1840. Started IV diuresis, strict I/Os, holding ACE-I for AKI…"',
-    bill: 'Paste the bill, EOB, or denial letter here — e.g. "CPT 99284 ER visit $1,842 … CO-45 adjustment … DENIED CO-50: not medically necessary. Patient responsibility: $638. Appeal within 180 days."'
+    jargon: 'Paste the note here. For example: Acute on chronic systolic heart failure, EF 35%, BNP 1840. Started IV diuresis, strict I/Os, holding ACE-I for AKI…',
+    bill: 'Paste the bill, EOB or denial letter here. For example: CPT 99284 ER visit $1,842 … CO-45 adjustment … DENIED CO-50: not medically necessary. Patient responsibility: $638. Appeal within 180 days.'
   };
   function setMode(m){
     mode = m;
     modeJargon.classList.toggle('on', m === 'jargon');
     modeBill.classList.toggle('on', m === 'bill');
+    modeJargon.setAttribute('aria-pressed', m === 'jargon' ? 'true' : 'false');
+    modeBill.setAttribute('aria-pressed', m === 'bill' ? 'true' : 'false');
     input.placeholder = PLACEHOLDER[m];
   }
   modeJargon.addEventListener('click', function(){ setMode('jargon'); });
   modeBill.addEventListener('click', function(){ setMode('bill'); });
   try {
     var q = new URLSearchParams(location.search).get('mode');
-    if (q === 'jargon' || q === 'bill') setMode(q);
-  } catch(e){}
+    if (q === 'jargon' || q === 'bill') setMode(q); else setMode('bill');
+  } catch(e){ setMode('bill'); }
+  document.getElementById('card-jargon').addEventListener('click', function(ev){
+    ev.preventDefault(); setMode('jargon');
+    document.getElementById('translator').scrollIntoView({ behavior:'smooth', block:'start' });
+    setTimeout(function(){ input.focus(); }, 350);
+  });
 
   function clearFile(){ attached = null; fileInput.value = ''; filechip.classList.remove('on'); }
   fileclear.addEventListener('click', clearFile);
@@ -295,17 +200,17 @@
     errbox.classList.remove('on');
     prepFile(f, function(res){
       attached = res;
-      filename.textContent = '📎 ' + res.name;
+      filename.textContent = res.name;
       filechip.classList.add('on');
     }, function(msg){ clearFile(); showError(msg); });
   });
   function prepFile(f, ok, fail){
     var MAX = 3 * 1024 * 1024;
     if (f.type === 'application/pdf' || /\.pdf$/i.test(f.name)) {
-      if (f.size > MAX) { fail('That PDF is over 3 MB — export just the pages you need and try again.'); return; }
+      if (f.size > MAX) { fail('That PDF is over 3 MB. Export just the pages you need and try again.'); return; }
       var r = new FileReader();
       r.onload = function(){ ok({ kind:'pdf', media_type:'application/pdf', data: String(r.result).split(',')[1], name: f.name }); };
-      r.onerror = function(){ fail("Couldn't read that file — try again."); };
+      r.onerror = function(){ fail("Couldn't read that file. Try again."); };
       r.readAsDataURL(f);
       return;
     }
@@ -318,12 +223,12 @@
       c.getContext('2d').drawImage(img, 0, 0, w, h);
       URL.revokeObjectURL(url);
       var data = c.toDataURL('image/jpeg', 0.82).split(',')[1];
-      if (data.length > 4200000) { fail('That image is huge even after compression — try a tighter crop.'); return; }
+      if (data.length > 4200000) { fail('That image is huge even after compression. Try a tighter crop.'); return; }
       ok({ kind:'image', media_type:'image/jpeg', data: data, name: f.name });
     };
     img.onerror = function(){
       URL.revokeObjectURL(url);
-      fail("Couldn't read that image — JPG, PNG, or PDF work best. (iPhone HEIC photo? Take a screenshot of it and upload that.)");
+      fail("Couldn't read that image. JPG, PNG or PDF work best. (iPhone HEIC photo? Take a screenshot of it and upload that.)");
     };
     img.src = url;
   }
@@ -366,9 +271,9 @@
   function setLoading(on){
     loading.classList.toggle('on', on);
     go.disabled = on;
-    go.textContent = on ? 'Translating…' : 'Translate it →';
+    go.textContent = on ? 'Translating…' : 'Translate';
     if(on){
-      var i = 0;
+      var i = 0, phrases = PHRASES[mode];
       loadmsg.textContent = phrases[0];
       phraseTimer = setInterval(function(){ i = (i+1) % phrases.length; loadmsg.textContent = phrases[i]; }, 1800);
     } else if(phraseTimer){
@@ -383,7 +288,7 @@
   go.addEventListener('click', function(){
     var text = input.value.trim();
     errbox.classList.remove('on');
-    if(!text && !attached){ showError('Paste some medical text — or tap ＋ and add a photo or PDF. That box up there is hungry.'); return; }
+    if(!text && !attached){ showError('Paste some medical text, or add a photo or PDF, first.'); input.focus(); return; }
     result.classList.remove('on');
     setLoading(true);
 
@@ -421,16 +326,17 @@
 
   copyBtn.addEventListener('click', function(){
     if(!rawText) return;
-    function done(){ copyBtn.textContent = 'Copied!'; setTimeout(function(){ copyBtn.textContent = 'Copy'; }, 1600); }
-    if(navigator.clipboard && navigator.clipboard.writeText){
-      navigator.clipboard.writeText(rawText).then(done).catch(function(){ fallback(); });
-    } else { fallback(); }
+    var label = copyBtn.querySelector('span');
+    function done(){ label.textContent = 'Copied'; setTimeout(function(){ label.textContent = 'Copy'; }, 1600); }
     function fallback(){
       var ta = document.createElement('textarea');
       ta.value = rawText; document.body.appendChild(ta); ta.select();
       try{ document.execCommand('copy'); done(); }catch(e){}
       document.body.removeChild(ta);
     }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(rawText).then(done).catch(function(){ fallback(); });
+    } else { fallback(); }
   });
 })();
 </script>

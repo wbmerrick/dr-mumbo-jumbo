@@ -1,31 +1,89 @@
 {
   "functions": {
-    "api/translate.js": { "maxDuration": 60 },
-    "api/appeal.js": { "maxDuration": 60 },
-    "api/fightpack.js": { "maxDuration": 120 },
-    "api/checkout.js": { "maxDuration": 30 },
-    "api/unlock.js": { "maxDuration": 30 },
-    "api/lead.js": { "maxDuration": 30 }
+    "api/translate.js": {
+      "maxDuration": 60
+    },
+    "api/appeal.js": {
+      "maxDuration": 60
+    },
+    "api/fightpack.js": {
+      "maxDuration": 120
+    },
+    "api/checkout.js": {
+      "maxDuration": 30
+    },
+    "api/unlock.js": {
+      "maxDuration": 30
+    },
+    "api/lead.js": {
+      "maxDuration": 30
+    }
   },
   "redirects": [
-    { "source": "/lib/:path*", "destination": "/", "permanent": false }
+    {
+      "source": "/lib/:path*",
+      "destination": "/",
+      "permanent": false
+    }
   ],
   "rewrites": [
-    { "source": "/appeal", "destination": "/appeal.html" },
-    { "source": "/fightpack", "destination": "/fightpack.html" },
-    { "source": "/denials", "destination": "/denials.html" },
-    { "source": "/codes", "destination": "/api/codelibrary" },
-    { "source": "/codes/", "destination": "/api/codelibrary" },
-    { "source": "/codes/:slug", "destination": "/api/codepage?slug=:slug" },
-    { "source": "/sitemap.xml", "destination": "/api/sitemap" }
+    {
+      "source": "/appeal",
+      "destination": "/appeal.html"
+    },
+    {
+      "source": "/fightpack",
+      "destination": "/fightpack.html"
+    },
+    {
+      "source": "/denials",
+      "destination": "/denials.html"
+    },
+    {
+      "source": "/privacy",
+      "destination": "/privacy.html"
+    },
+    {
+      "source": "/terms",
+      "destination": "/terms.html"
+    },
+    {
+      "source": "/how-its-tested",
+      "destination": "/how-its-tested.html"
+    },
+    {
+      "source": "/codes",
+      "destination": "/api/codelibrary"
+    },
+    {
+      "source": "/codes/",
+      "destination": "/api/codelibrary"
+    },
+    {
+      "source": "/codes/:slug",
+      "destination": "/api/codepage?slug=:slug"
+    },
+    {
+      "source": "/sitemap.xml",
+      "destination": "/api/sitemap"
+    }
   ],
   "headers": [
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        }
       ]
     }
   ]

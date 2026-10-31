@@ -6,5 +6,7 @@
 !lib
 !*.html
 !fightpack.js
+!nocturne.css
+!og.png
 !robots.txt
 !vercel.json
