@@ -156,8 +156,10 @@
       splitSections(parts[p]).forEach(function(sec){
         var tag = /medical necessity|emergency attestation/i.test(sec.title) ? 'For your doctor' : /corrected-claim/i.test(sec.title) ? 'For the billing office' : /coverage facts/i.test(sec.title) ? 'For HR / benefits' : '';
         var isStar = !!tag;
+        // Documents a person sends (letters and requests) render on paper; the decode, scripts and notes stay on the dark surface.
+        var isPaper = /appeal letter|medical necessity|emergency attestation|records and itemized|external review request|corrected-claim request|coverage facts/i.test(sec.title);
         var card = document.createElement('div');
-        card.className = 'doc panel' + (isStar ? ' star' : '');
+        card.className = 'doc panel' + (isStar ? ' star' : '') + (isPaper ? ' paper' : '');
         var h = '<div class="doc-top"><h3>' + escapeHtml(sec.title) + (isStar ? '<span class="tag tag-accent">' + tag + '</span>' : '') + '</h3><button class="btn btn-secondary btn-sm copy-btn" type="button">Copy</button></div><div class="doc-body prose">' + renderBody(sec.body) + '</div>';
         card.innerHTML = h;
         var btn = card.querySelector('.copy-btn');

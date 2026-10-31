@@ -20,7 +20,7 @@ Live at https://dr-mumbo-jumbo.com (hosted on Vercel; the domain is registered a
 
 Routing lives in `vercel.json` (clean URLs, function timeouts, security headers).
 
-Every page shares one stylesheet, `nocturne.css`: the layout and components of the Dr Mumbo Jumbo app (the Nocturne design system) in the iSpry.ai palette (near-black, warm off-white text, electric-lime accent, lime pill buttons). The server-rendered code pages link it too, so a change there restyles the whole site. `og.png` is the image shown when a link is shared.
+Every page shares one stylesheet, `nocturne.css`: the layout and components of the Dr Mumbo Jumbo app (the Nocturne design system) in the iSpry.ai palette (near-black, warm off-white text, electric-lime accent, lime pill buttons). Headlines are set in Bricolage Grotesque with the closing punctuation in lime; the documents a person sends (appeal letter, doctor's letter, records and external-review requests) render on off-white paper in a serif, with the brackets to fill highlighted. The server-rendered code pages link it too, so a change there restyles the whole site. `og.png` is the image shown when a link is shared.
 
 ## How the AI endpoints work
 

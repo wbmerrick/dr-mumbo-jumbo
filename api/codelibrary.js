@@ -71,7 +71,7 @@ function render() {
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Crect%20width='100'%20height='100'%20rx='26'%20fill='%23D7FF3F'/%3E%3Ctext%20x='50'%20y='68'%20font-size='48'%20text-anchor='middle'%20font-family='Inter%2CArial%2Csans-serif'%20font-weight='700'%20fill='%230B0D12'%3E%3F!%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/nocturne.css">
 <style>
 .search-wrap{position:relative;max-width:560px;margin-top:6px}
@@ -113,7 +113,7 @@ function render() {
   <div class="wrap">
     <section class="hero">
       <span class="kicker">The code library</span>
-      <h1>Every code on your bill, in plain English.</h1>
+      <h1>Every code on your bill, in plain English<span class="lime">.</span></h1>
       <p class="lead">Every code on a medical bill, EOB or denial letter means something specific. Here they are, in plain English, with what's worth double-checking on each one.</p>
       <div class="search-wrap"><svg class="ic" style="width:18px;height:18px" aria-hidden="true"><use href="#i-search"/></svg><input class="input" id="q" type="search" placeholder="Search a code or a word: 99214, colonoscopy, CO-50…" aria-label="Search codes"></div>
       <p class="small count-note">${ALL.length} codes decoded so far. More are added all the time.</p>

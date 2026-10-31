@@ -63,7 +63,7 @@ function shell(title, desc, pathname, body) {
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Crect%20width='100'%20height='100'%20rx='26'%20fill='%23D7FF3F'/%3E%3Ctext%20x='50'%20y='68'%20font-size='48'%20text-anchor='middle'%20font-family='Inter%2CArial%2Csans-serif'%20font-weight='700'%20fill='%230B0D12'%3E%3F!%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/nocturne.css">
 <style>
 .crumb{font-size:13px;color:var(--muted);margin-top:28px}
@@ -106,7 +106,7 @@ function page(entry) {
   const body = `
     <nav class="crumb" aria-label="Breadcrumb"><a href="/codes/">Code library</a> &nbsp;/&nbsp; ${esc(entry.code)}</nav>
     <div class="chips"><span class="tag tag-neutral">${esc(entry.system)}</span><span class="tag tag-accent">${esc(entry.category)}</span></div>
-    <h1>${esc(entry.code)}, in plain English</h1>
+    <h1>${esc(entry.code)}, in plain English<span class="lime">.</span></h1>
     <p class="codename">${esc(entry.name)}</p>
 
     <div class="cards">
