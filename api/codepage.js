@@ -2,6 +2,7 @@
 const cpt = [...require('../lib/codes-cpt-a.js'), ...require('../lib/codes-cpt-b.js'), ...require('../lib/codes-cpt-c.js')];
 const icd = require('../lib/codes-icd.js');
 const denial = require('../lib/codes-denial.js');
+const schema = require('../lib/schema.js');
 
 const ALL = [...cpt, ...icd, ...denial];
 const BY_SLUG = new Map(ALL.map((e) => [e.slug, e]));
@@ -43,7 +44,7 @@ const FOOTER = `<footer class="site-footer">
   </div>
 </footer>`;
 
-function shell(title, desc, pathname, body) {
+function shell(title, desc, pathname, body, jsonld) {
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -65,6 +66,7 @@ function shell(title, desc, pathname, body) {
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/nocturne.css">
+${jsonld || ''}
 <style>
 .crumb{font-size:13px;color:var(--muted);margin-top:28px}
 .crumb a{color:var(--muted)}
@@ -103,6 +105,7 @@ function page(entry) {
   const desc = `${entry.code} explained in plain English: ${entry.what}`.slice(0, 155);
   const isCpt = entry.system === 'CPT';
   const isDenial = entry.system === 'Denial code';
+  const qa = schema.questions(entry);
   const body = `
     <nav class="crumb" aria-label="Breadcrumb"><a href="/codes/">Code library</a> &nbsp;/&nbsp; ${esc(entry.code)}</nav>
     <div class="chips"><span class="tag tag-neutral">${esc(entry.system)}</span><span class="tag tag-accent">${esc(entry.category)}</span></div>
@@ -110,9 +113,9 @@ function page(entry) {
     <p class="codename">${esc(entry.name)}</p>
 
     <div class="cards">
-      <div class="card"><h2>What it means</h2><p>${esc(entry.what)}</p></div>
-      <div class="card"><h2>Where you'll see it</h2><p>${esc(entry.seen)}</p></div>
-      <div class="card tint"><h2>Worth checking</h2><p>${esc(entry.watch)}</p></div>
+      <div class="card"><h2>${esc(qa[0].q)}</h2><p>${esc(qa[0].a)}</p></div>
+      <div class="card"><h2>${esc(qa[1].q)}</h2><p>${esc(qa[1].a)}</p></div>
+      <div class="card tint"><h2>${esc(qa[2].q)}</h2><p>${esc(qa[2].a)}</p></div>
     </div>
 
     ${isDenial ? `<section class="panel tint cta">
@@ -135,7 +138,7 @@ function page(entry) {
 
     ${related.length ? `<div class="rel"><h2>Related codes</h2><div class="relgrid">${related.map((r) => `<a href="/codes/${esc(r.slug)}">${esc(r.code)} · ${esc(r.name.length > 42 ? r.name.slice(0, 40) + '…' : r.name)}</a>`).join('')}</div></div>` : ''}
     <p class="small mt-4">Original plain-language education, not medical, billing or legal advice, and not an official code descriptor. Codes get combined, modified and occasionally mistyped; your itemized bill, your plan documents and your care team are the source of truth.${isCpt ? ' CPT® is a registered trademark of the American Medical Association.' : ''}</p>`;
-  return shell(title, desc, '/codes/' + entry.slug, body);
+  return shell(title, desc, '/codes/' + entry.slug, body, schema.codePage(entry, title, desc));
 }
 
 function notFound() {
