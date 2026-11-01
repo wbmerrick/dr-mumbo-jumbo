@@ -2,6 +2,7 @@
 const cpt = [...require('../lib/codes-cpt-a.js'), ...require('../lib/codes-cpt-b.js'), ...require('../lib/codes-cpt-c.js')];
 const icd = require('../lib/codes-icd.js');
 const denial = require('../lib/codes-denial.js');
+const schema = require('../lib/schema.js');
 
 const ALL = [...cpt, ...icd, ...denial];
 
@@ -73,6 +74,7 @@ function render() {
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/nocturne.css">
+${schema.libraryPage(ALL, TITLE, DESC)}
 <style>
 .search-wrap{position:relative;max-width:560px;margin-top:6px}
 .search-wrap .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted)}
