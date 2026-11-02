@@ -35,13 +35,13 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/dmj_fight_pack_waitlist?on_conflict=email`, {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/dmj_fight_pack_waitlist`, {
       method: 'POST',
       headers: {
         apikey: SUPABASE_ANON_KEY,
         Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
         'Content-Type': 'application/json',
-        Prefer: 'resolution=ignore-duplicates,return=minimal'
+        Prefer: 'return=minimal'
       },
       body: JSON.stringify([{ email, fighting, source: 'dr-mumbo-jumbo.com' }])
     });
