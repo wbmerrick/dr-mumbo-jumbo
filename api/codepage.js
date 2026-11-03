@@ -2,6 +2,7 @@
 const cpt = [...require('../lib/codes-cpt-a.js'), ...require('../lib/codes-cpt-b.js'), ...require('../lib/codes-cpt-c.js')];
 const icd = require('../lib/codes-icd.js');
 const denial = require('../lib/codes-denial.js');
+const schema = require('../lib/schema.js');
 
 const ALL = [...cpt, ...icd, ...denial];
 const BY_SLUG = new Map(ALL.map((e) => [e.slug, e]));
@@ -19,7 +20,7 @@ const SPRITE = `<svg xmlns="http://www.w3.org/2000/svg" style="display:none" ari
 </svg>`;
 const HEADER = `<header class="site-header">
   <div class="wrap bar">
-    <a class="brand" href="/" aria-label="Dr Mumbo Jumbo, home"><span class="mark">?!</span><span class="wm">Dr Mumbo <span class="lime">Jumbo</span></span></a>
+    <a class="brand" href="/" aria-label="Dr Mumbo Jumbo, home"><span class="mark" aria-hidden="true"><svg viewBox="0 0 64 48" width="38" height="29"><g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M10 34C12 20 16 10 20 10c3 0 2 14 4 20 2 6 5-12 9-14 3-1 3 10 7 11 4 1 8-3 14-5" stroke="currentColor" stroke-width="3.2"/><path d="M7 41h50" stroke="var(--accent)" stroke-width="3.6"/></g></svg></span><span class="wm">Dr Mumbo <span class="lime">Jumbo</span></span></a>
     <nav class="nav" aria-label="Main">
       <a href="/" class="xl">Translator</a>
       <a href="/appeal">Appeal<span class="xl"> letter</span></a>
@@ -39,11 +40,11 @@ const FOOTER = `<footer class="site-footer">
       <div><h4>Legal</h4><ul><li><a href="/privacy">Privacy</a></li><li><a href="/terms">Terms</a></li></ul></div>
     </div>
     <p class="legal">Dr Mumbo Jumbo is an educational self-advocacy tool, not medical, legal or financial advice, and it does not create a doctor–patient relationship. Letters and kits are drafts for you and your clinician to review, complete and send yourselves; they are written by AI and can contain mistakes, so read every line before you send it. Appeal rights and deadlines vary by plan and state; your denial letter and plan documents control. In an emergency, call 911.</p>
-    <p class="copy"><span class="mark">?!</span>© 2026 Dr Mumbo Jumbo</p>
+    <p class="copy"><span class="mark" aria-hidden="true"><svg viewBox="0 0 64 48" width="38" height="29"><g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M10 34C12 20 16 10 20 10c3 0 2 14 4 20 2 6 5-12 9-14 3-1 3 10 7 11 4 1 8-3 14-5" stroke="currentColor" stroke-width="3.2"/><path d="M7 41h50" stroke="var(--accent)" stroke-width="3.6"/></g></svg></span>© 2026 Dr Mumbo Jumbo</p>
   </div>
 </footer>`;
 
-function shell(title, desc, pathname, body) {
+function shell(title, desc, pathname, body, jsonld) {
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -60,11 +61,13 @@ function shell(title, desc, pathname, body) {
 <meta property="og:image" content="https://dr-mumbo-jumbo.com/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#07080C">
-<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Crect%20width='100'%20height='100'%20rx='26'%20fill='%23D7FF3F'/%3E%3Ctext%20x='50'%20y='68'%20font-size='48'%20text-anchor='middle'%20font-family='Inter%2CArial%2Csans-serif'%20font-weight='700'%20fill='%230B0D12'%3E%3F!%3C/text%3E%3C/svg%3E">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/nocturne.css">
+${jsonld || ''}
 <style>
 .crumb{font-size:13px;color:var(--muted);margin-top:28px}
 .crumb a{color:var(--muted)}
@@ -73,7 +76,7 @@ function shell(title, desc, pathname, body) {
 .codename{font-size:clamp(1.05rem,2.2vw,1.25rem);color:var(--soft);margin:8px 0 24px}
 .cards{display:flex;flex-direction:column;border-bottom:1px solid var(--divider)}
 .cblock{display:flex;flex-direction:column;gap:8px;padding:22px 0 24px;border-top:1px solid var(--divider)}
-.cblock h2{font-family:var(--font);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.cblock h2{font-family:var(--display);font-size:1.2rem;font-weight:600;letter-spacing:-.015em;color:var(--text)}
 .cblock p{font-size:17px;color:var(--text);line-height:1.6}
 .cblock.callout{padding:20px 22px;margin:2px 0 22px;border-top:0;border-left:2px solid var(--accent);background:rgba(215,255,63,.05);border-radius:0 var(--r-md) var(--r-md) 0}
 .cblock.callout h2{color:var(--accent)}
@@ -104,6 +107,7 @@ function page(entry) {
   const desc = `${entry.code} explained in plain English: ${entry.what}`.slice(0, 155);
   const isCpt = entry.system === 'CPT';
   const isDenial = entry.system === 'Denial code';
+  const qa = schema.questions(entry);
   const body = `
     <nav class="crumb" aria-label="Breadcrumb"><a href="/codes/">Code library</a> &nbsp;/&nbsp; ${esc(entry.code)}</nav>
     <div class="chips"><span class="tag tag-neutral">${esc(entry.system)}</span><span class="tag tag-accent">${esc(entry.category)}</span></div>
@@ -111,9 +115,9 @@ function page(entry) {
     <p class="codename">${esc(entry.name)}</p>
 
     <div class="cards">
-      <div class="cblock"><h2>What it means</h2><p>${esc(entry.what)}</p></div>
-      <div class="cblock"><h2>Where you'll see it</h2><p>${esc(entry.seen)}</p></div>
-      <div class="cblock callout"><h2>Worth checking</h2><p>${esc(entry.watch)}</p></div>
+      <div class="cblock"><h2>${esc(qa[0].q)}</h2><p>${esc(qa[0].a)}</p></div>
+      <div class="cblock"><h2>${esc(qa[1].q)}</h2><p>${esc(qa[1].a)}</p></div>
+      <div class="cblock callout"><h2>${esc(qa[2].q)}</h2><p>${esc(qa[2].a)}</p></div>
     </div>
 
     ${isDenial ? `<section class="panel tint cta">
@@ -136,7 +140,7 @@ function page(entry) {
 
     ${related.length ? `<div class="rel"><h2>Related codes</h2><div class="relgrid">${related.map((r) => `<a href="/codes/${esc(r.slug)}">${esc(r.code)} · ${esc(r.name.length > 42 ? r.name.slice(0, 40) + '…' : r.name)}</a>`).join('')}</div></div>` : ''}
     <p class="small mt-4">Original plain-language education, not medical, billing or legal advice, and not an official code descriptor. Codes get combined, modified and occasionally mistyped; your itemized bill, your plan documents and your care team are the source of truth.${isCpt ? ' CPT® is a registered trademark of the American Medical Association.' : ''}</p>`;
-  return shell(title, desc, '/codes/' + entry.slug, body);
+  return shell(title, desc, '/codes/' + entry.slug, body, schema.codePage(entry, title, desc));
 }
 
 function notFound() {

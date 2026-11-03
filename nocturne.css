@@ -95,8 +95,9 @@ img,svg{max-width:100%}
 .brand{display:inline-flex;align-items:center;gap:10px;color:var(--text);font-weight:500;font-size:16px;text-decoration:none}
 .brand:hover{text-decoration:none}
 .brand .wm{font-family:var(--display);font-weight:700;font-size:19px;letter-spacing:-.025em;line-height:1}
-.mark{width:32px;height:32px;border-radius:9px;background:var(--accent);border:0;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--accent-ink);flex:none;letter-spacing:0}
-.mark.lg{width:56px;height:56px;font-size:22px;border-radius:16px;box-shadow:0 0 32px rgba(215,255,63,.35)}
+.mark{width:38px;height:29px;background:none;border:0;border-radius:0;display:inline-flex;align-items:center;justify-content:center;color:var(--text);flex:none}
+.mark svg{width:100%;height:100%;display:block;overflow:visible}
+.mark.lg{width:68px;height:51px}
 .nav{display:flex;align-items:center;gap:2px;flex-wrap:wrap}
 .nav a{color:var(--soft);font-size:14px;font-weight:500;padding:8px 10px;border-radius:var(--r-pill);text-decoration:none;white-space:nowrap}
 .nav a:hover{color:var(--text);background:var(--surface-2)}
@@ -282,7 +283,7 @@ a.tag:hover{text-decoration:none;filter:brightness(1.1)}
 .site-footer .about p{margin:0 0 7px}
 .site-footer .legal{font-size:12.5px;color:var(--muted);line-height:1.6;max-width:820px;padding-top:18px}
 .site-footer .copy{display:flex;align-items:center;gap:10px;margin-top:14px;font-size:13px;color:var(--muted)}
-.site-footer .copy .mark{width:22px;height:22px;font-size:9px;border-radius:6px}
+.site-footer .copy .mark{width:28px;height:21px;border-radius:0}
 
 /* ——— paper: documents a person actually sends render on off-white, in a serif ——— */
 .paper{background:var(--paper);color:var(--paper-ink);border:0;box-shadow:0 20px 50px rgba(0,0,0,.45)}
@@ -378,7 +379,8 @@ body::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none
   .prose .ph{background:#eee;color:#000}
   .prose strong,.prose b,strong,b,.lead strong{color:#000}
   .tag{background:#fff;color:#000;border:1px solid #000}
-  .mark{background:#000;color:#fff}
+  .mark{background:none;color:#000}
+  .mark svg path{stroke:#000 !important}
   .stat-value,.dl-list li .d,.dl-list li b{color:#000}
   .dl-list li{border-bottom:1px solid #999}
   a{color:#000;text-decoration:underline}
