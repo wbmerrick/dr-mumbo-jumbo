@@ -81,8 +81,8 @@ const indexHtml = `<!doctype html>
 <title>Medical billing codes in plain English — the code library | Dr Mumbo Jumbo</title>
 <meta name="description" content="CPT codes, ICD-10 diagnoses, and insurance denial codes explained in plain English. Find out what the codes on your medical bill and EOB actually mean.">
 <link rel="canonical" href="${BASE}/codes/">
-<link rel="icon" href="/favicon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="icon" href="/favicon.svg?v=2" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
