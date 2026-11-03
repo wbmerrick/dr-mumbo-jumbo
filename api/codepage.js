@@ -20,7 +20,7 @@ const SPRITE = `<svg xmlns="http://www.w3.org/2000/svg" style="display:none" ari
 </svg>`;
 const HEADER = `<header class="site-header">
   <div class="wrap bar">
-    <a class="brand" href="/"><span class="mark" aria-hidden="true"><svg viewBox="0 0 64 48" width="38" height="29"><g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M10 34C12 20 16 10 20 10c3 0 2 14 4 20 2 6 5-12 9-14 3-1 3 10 7 11 4 1 8-3 14-5" stroke="currentColor" stroke-width="3.2"/><path d="M7 41h50" stroke="var(--accent)" stroke-width="3.6"/></g></svg></span>Dr Mumbo Jumbo</a>
+    <a class="brand" href="/" aria-label="Dr Mumbo Jumbo, home"><span class="mark" aria-hidden="true"><svg viewBox="0 0 64 48" width="38" height="29"><g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M10 34C12 20 16 10 20 10c3 0 2 14 4 20 2 6 5-12 9-14 3-1 3 10 7 11 4 1 8-3 14-5" stroke="currentColor" stroke-width="3.2"/><path d="M7 41h50" stroke="var(--accent)" stroke-width="3.6"/></g></svg></span><span class="wm">Dr Mumbo <span class="lime">Jumbo</span></span></a>
     <nav class="nav" aria-label="Main">
       <a href="/" class="xl">Translator</a>
       <a href="/appeal">Appeal<span class="xl"> letter</span></a>
@@ -74,11 +74,12 @@ ${jsonld || ''}
 .crumb a:hover{color:var(--text)}
 .chips{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0 6px}
 .codename{font-size:clamp(1.05rem,2.2vw,1.25rem);color:var(--soft);margin:8px 0 24px}
-.cards{display:flex;flex-direction:column;gap:12px}
-.cards .card{padding:20px}
-.cards .card h2{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:500}
-.cards .card p{font-size:16px;color:var(--text);line-height:1.6}
-.cards .card.tint h2{color:var(--accent)}
+.cards{display:flex;flex-direction:column;border-bottom:1px solid var(--divider)}
+.cblock{display:flex;flex-direction:column;gap:8px;padding:22px 0 24px;border-top:1px solid var(--divider)}
+.cblock h2{font-family:var(--display);font-size:1.2rem;font-weight:600;letter-spacing:-.015em;color:var(--text)}
+.cblock p{font-size:17px;color:var(--text);line-height:1.6}
+.cblock.callout{padding:20px 22px;margin:2px 0 22px;border-top:0;border-left:2px solid var(--accent);background:rgba(215,255,63,.05);border-radius:0 var(--r-md) var(--r-md) 0}
+.cblock.callout h2{color:var(--accent)}
 .rel{margin-top:34px}
 .rel h2{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:500;margin-bottom:12px}
 .relgrid{display:flex;gap:8px;flex-wrap:wrap}
@@ -114,9 +115,9 @@ function page(entry) {
     <p class="codename">${esc(entry.name)}</p>
 
     <div class="cards">
-      <div class="card"><h2>${esc(qa[0].q)}</h2><p>${esc(qa[0].a)}</p></div>
-      <div class="card"><h2>${esc(qa[1].q)}</h2><p>${esc(qa[1].a)}</p></div>
-      <div class="card tint"><h2>${esc(qa[2].q)}</h2><p>${esc(qa[2].a)}</p></div>
+      <div class="cblock"><h2>${esc(qa[0].q)}</h2><p>${esc(qa[0].a)}</p></div>
+      <div class="cblock"><h2>${esc(qa[1].q)}</h2><p>${esc(qa[1].a)}</p></div>
+      <div class="cblock callout"><h2>${esc(qa[2].q)}</h2><p>${esc(qa[2].a)}</p></div>
     </div>
 
     ${isDenial ? `<section class="panel tint cta">

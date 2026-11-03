@@ -22,9 +22,10 @@
 <link rel="stylesheet" href="/nocturne.css">
 <style>
 
-  .kit{margin-top:10px}
-  .kit .card .kicker{margin-bottom:-2px}
-  .kit .card.star{border:1px solid var(--a700);box-shadow:var(--glow)}
+  .kit{margin-top:6px}
+  .kit .ti .icon-circle{margin-bottom:2px}
+  .progress .morph-line{margin:12px 0 8px;min-height:2.2rem}
+  .progress .morph{font-size:clamp(1.35rem,2.8vw,1.8rem);letter-spacing:-.02em}
   .attachrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
   .controls{margin-top:16px}
   #tool textarea.input{min-height:170px}
@@ -105,11 +106,12 @@
 <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></symbol>
 <symbol id="i-wand" viewBox="0 0 24 24"><path d="m15 4 1 2 2 1-2 1-1 2-1-2-2-1 2-1z"/><path d="m3 21 11-11"/><path d="M19 15l.6 1.4L21 17l-1.4.6L19 19l-.6-1.4L17 17l1.4-.6z"/></symbol>
 <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
 <symbol id="i-cr" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
 </svg>
 <header class="site-header">
   <div class="wrap bar">
-    <a class="brand" href="/"><span class="mark" aria-hidden="true"><svg viewBox="0 0 64 48" width="38" height="29"><g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M10 34C12 20 16 10 20 10c3 0 2 14 4 20 2 6 5-12 9-14 3-1 3 10 7 11 4 1 8-3 14-5" stroke="currentColor" stroke-width="3.2"/><path d="M7 41h50" stroke="var(--accent)" stroke-width="3.6"/></g></svg></span>Dr Mumbo Jumbo</a>
+    <a class="brand" href="/" aria-label="Dr Mumbo Jumbo, home"><span class="mark" aria-hidden="true"><svg viewBox="0 0 64 48" width="38" height="29"><g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M10 34C12 20 16 10 20 10c3 0 2 14 4 20 2 6 5-12 9-14 3-1 3 10 7 11 4 1 8-3 14-5" stroke="currentColor" stroke-width="3.2"/><path d="M7 41h50" stroke="var(--accent)" stroke-width="3.6"/></g></svg></span><span class="wm">Dr Mumbo <span class="lime">Jumbo</span></span></a>
     <nav class="nav" aria-label="Main">
       <a href="/" class="xl">Translator</a>
       <a href="/appeal">Appeal<span class="xl"> letter</span></a>
@@ -128,13 +130,13 @@
       <p class="lead">Most appeals are won or lost on one document: the treating doctor's <strong>letter of medical necessity</strong>. Doctors rarely have time to write it. The Fight Pack writes it for them, in the language insurers approve, alongside everything else you need to overturn the denial.</p>
     </section>
 
-    <section class="grid-3 kit" aria-label="What is in the kit">
-      <div class="card star"><svg class="ic" style="width:22px;height:22px" aria-hidden="true"><use href="#i-sig"/></svg><span class="kicker">01 · The difference-maker</span><h3>Letter of medical necessity</h3><p>Written in your doctor's voice, answering the insurer's exact reason. They review, edit, sign. Five minutes.</p></div>
-      <div class="card"><svg class="ic" style="width:22px;height:22px" aria-hidden="true"><use href="#i-scan"/></svg><span class="kicker">02</span><h3>Your denial, decoded</h3><p>What type of denial it is, what the insurer has to show, how strong your case is, and the exact documents that would make it decisive.</p></div>
-      <div class="card"><svg class="ic" style="width:22px;height:22px" aria-hidden="true"><use href="#i-pen"/></svg><span class="kicker">03</span><h3>Your appeal letter</h3><p>A formal internal appeal that answers the insurer's criteria point by point and asks for the policy, the reviewer's credentials and a written decision.</p></div>
-      <div class="card"><svg class="ic" style="width:22px;height:22px" aria-hidden="true"><use href="#i-phone"/></svg><span class="kicker">04</span><h3>Peer-to-peer brief and phone scripts</h3><p>Talking points for your doctor's call with the medical director, plus word-for-word scripts for the insurer and the billing office.</p></div>
-      <div class="card"><svg class="ic" style="width:22px;height:22px" aria-hidden="true"><use href="#i-folder"/></svg><span class="kicker">05</span><h3>Records request and round two</h3><p>The letter that gets your chart and a coded bill, and the external-review request already written for when they say no again.</p></div>
-      <div class="card"><svg class="ic" style="width:22px;height:22px" aria-hidden="true"><use href="#i-calcheck"/></svg><span class="kicker">06</span><h3>Every deadline, on your calendar</h3><p>Filing dates, decision-due dates, the external-review window: computed from your letter, downloadable to your calendar.</p></div>
+    <section class="tlist three kit" aria-label="What is in the kit">
+      <div class="ti star"><span class="icon-circle solid"><svg class="ic" aria-hidden="true"><use href="#i-sig"/></svg></span><span class="kicker">01 · The difference-maker</span><h3>Letter of medical necessity</h3><p>Written in your doctor's voice, answering the insurer's exact reason. They review, edit, sign. Five minutes.</p></div>
+      <div class="ti"><span class="icon-circle"><svg class="ic" aria-hidden="true"><use href="#i-scan"/></svg></span><span class="ovl">02</span><h3>Your denial, decoded</h3><p>What type of denial it is, what the insurer has to show, how strong your case is, and the exact documents that would make it decisive.</p></div>
+      <div class="ti"><span class="icon-circle"><svg class="ic" aria-hidden="true"><use href="#i-pen"/></svg></span><span class="ovl">03</span><h3>Your appeal letter</h3><p>A formal internal appeal that answers the insurer's criteria point by point and asks for the policy, the reviewer's credentials and a written decision.</p></div>
+      <div class="ti"><span class="icon-circle"><svg class="ic" aria-hidden="true"><use href="#i-phone"/></svg></span><span class="ovl">04</span><h3>Peer-to-peer brief and phone scripts</h3><p>Talking points for your doctor's call with the medical director, plus word-for-word scripts for the insurer and the billing office.</p></div>
+      <div class="ti"><span class="icon-circle"><svg class="ic" aria-hidden="true"><use href="#i-folder"/></svg></span><span class="ovl">05</span><h3>Records request and round two</h3><p>The letter that gets your chart and a coded bill, and the external-review request already written for when they say no again.</p></div>
+      <div class="ti"><span class="icon-circle"><svg class="ic" aria-hidden="true"><use href="#i-calcheck"/></svg></span><span class="ovl">06</span><h3>Every deadline, on your calendar</h3><p>Filing dates, decision-due dates, the external-review window: computed from your letter, downloadable to your calendar.</p></div>
     </section>
 
     <section class="panel hi mt-4" id="tool" aria-label="Build your Fight Pack">
@@ -171,6 +173,7 @@
 
     <section class="progress panel" id="progress" aria-live="polite">
       <span class="kicker">Building your Fight Pack</span>
+      <div class="morph-line"><span class="morph" aria-hidden="true"><span class="from"></span><span class="to"></span></span></div>
       <ul class="plist">
         <li id="st1"><span class="pic">1</span>Decoding the denial and sizing up your case</li>
         <li id="st2"><span class="pic">2</span>Drafting your appeal letter and your doctor's letter</li>
@@ -219,12 +222,12 @@
     </section>
 
     <section class="section" aria-labelledby="faq-title">
-      <div class="section-head"><span class="ovl">Straight answers</span><h2 id="faq-title">Questions people ask before they build one</h2></div>
-      <div class="grid-2 faq">
-        <div class="card lg"><h3>Will my doctor actually sign it?</h3><p>Usually, yes. The hard part was never willingness, it was the 45 minutes nobody has. You hand over a letter that already answers the insurer's reason in their language; the office corrects what's wrong, adds specifics in the brackets, and signs. The kit includes a half-page note for the office explaining exactly that.</p></div>
-        <div class="card lg"><h3>Why not just the one-page appeal letter?</h3><p>The one-page appeal letter is a good round one. The Fight Pack adds the document that carries the most weight (the doctor's letter), the scripts that get you the insurer's own criteria, the records request, the round-two external-review filing, and the deadlines: the parts people skip and then lose on.</p></div>
-        <div class="card lg"><h3>Does it work for any denial?</h3><p>It reads the denial first and fights it on its own terms: medical-necessity and prior-authorization denials get the doctor's letter of medical necessity; an out-of-network emergency bill gets a clinician's emergency attestation and the surprise-billing argument; a coding or bundling denial gets a corrected-claim request for the billing office, because that is who actually fixes it. Medicare Advantage, Original Medicare and Medicaid use different clocks; the kit flags that and uses the deadline on your letter.</p></div>
-        <div class="card lg"><h3>What do you keep?</h3><p>Nothing. Your documents go to the AI model once to write the kit and are not stored. The finished kit stays in your browser only; print it or copy it somewhere safe. <a href="/how-its-tested">How the kit is tested.</a></p></div>
+      <div class="section-head"><span class="kicker">Straight answers</span><h2 id="faq-title">Questions people ask before they build one<span class="lime">.</span></h2></div>
+      <div class="tlist faq">
+        <div class="ti"><h3>Will my doctor actually sign it?</h3><p>Usually, yes. The hard part was never willingness, it was the 45 minutes nobody has. You hand over a letter that already answers the insurer's reason in their language; the office corrects what's wrong, adds specifics in the brackets, and signs. The kit includes a half-page note for the office explaining exactly that.</p></div>
+        <div class="ti"><h3>Why not just the one-page appeal letter?</h3><p>The one-page appeal letter is a good round one. The Fight Pack adds the document that carries the most weight (the doctor's letter), the scripts that get you the insurer's own criteria, the records request, the round-two external-review filing, and the deadlines: the parts people skip and then lose on.</p></div>
+        <div class="ti"><h3>Does it work for any denial?</h3><p>It reads the denial first and fights it on its own terms: medical-necessity and prior-authorization denials get the doctor's letter of medical necessity; an out-of-network emergency bill gets a clinician's emergency attestation and the surprise-billing argument; a coding or bundling denial gets a corrected-claim request for the billing office, because that is who actually fixes it. Medicare Advantage, Original Medicare and Medicaid use different clocks; the kit flags that and uses the deadline on your letter.</p></div>
+        <div class="ti"><h3>What do you keep?</h3><p>Nothing. Your documents go to the AI model once to write the kit and are not stored. The finished kit stays in your browser only; print it or copy it somewhere safe. <a href="/how-its-tested">How the kit is tested.</a></p></div>
       </div>
     </section>
   </div>
