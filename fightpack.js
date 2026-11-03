@@ -79,6 +79,31 @@
 
   example.addEventListener('click', function(){ denial.value = EXAMPLE_DENIAL; extra.value = EXAMPLE_EXTRA; denial.focus(); });
 
+  // ---------- motion: jargon dissolving into plain English while the kit is written; a copy toast ----------
+  var MORPH = [['adverse benefit determination', 'denial'], ['letter of medical necessity', "your doctor's letter"], ['CO-50', 'not medically necessary'], ['peer-to-peer', 'a doctor-to-doctor call'], ['internal appeal', 'asking them to look again'], ['external review', 'an independent referee'], ['authorized representative', 'someone helping you']];
+  function startMorph(el, pairs){
+    if(!el) return; stopMorph(el);
+    var from = el.querySelector('.from'), to = el.querySelector('.to'), i = 0;
+    function set(){ from.textContent = pairs[i][0]; to.textContent = pairs[i][1]; i = (i + 1) % pairs.length; }
+    set();
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if(reduce){ el._t = setInterval(set, 1800); } else { el._h = set; to.addEventListener('animationiteration', set); }
+  }
+  function stopMorph(el){
+    if(!el) return;
+    if(el._t){ clearInterval(el._t); el._t = null; }
+    if(el._h){ el.querySelector('.to').removeEventListener('animationiteration', el._h); el._h = null; }
+  }
+  var morphEl = progress.querySelector('.morph');
+  var toastEl = null, toastT = null;
+  function toast(msg){
+    if(!toastEl){ toastEl = document.createElement('div'); toastEl.className = 'toast'; toastEl.setAttribute('role', 'status'); document.body.appendChild(toastEl); }
+    toastEl.innerHTML = '<svg class="ic" aria-hidden="true"><use href="#i-check"/></svg><span></span>';
+    toastEl.querySelector('span').textContent = msg;
+    toastEl.classList.add('on'); clearTimeout(toastT);
+    toastT = setTimeout(function(){ toastEl.classList.remove('on'); }, 1800);
+  }
+
   // ---------- ui helpers ----------
   function showError(msg){ errbox.textContent = msg; errbox.classList.add('on'); }
   function hideError(){ errbox.classList.remove('on'); }
@@ -171,7 +196,7 @@
     kitout.classList.add('on');
   }
   function copyText(text, btn){
-    function done(){ if(btn){ var lbl = btn.querySelector('span') || btn; var old = lbl.textContent; lbl.textContent = 'Copied'; setTimeout(function(){ lbl.textContent = old; }, 1600); } }
+    function done(){ toast('Copied to clipboard'); if(btn){ var lbl = btn.querySelector('span') || btn; var old = lbl.textContent; lbl.textContent = 'Copied'; setTimeout(function(){ lbl.textContent = old; }, 1600); } }
     function fallback(){ var ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); done(); }catch(e){} document.body.removeChild(ta); }
     if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(done).catch(fallback); } else { fallback(); }
   }
@@ -205,6 +230,7 @@
     save('dmj_fp_kit', { parts: parts, meta: meta, ts: Date.now() });
     renderKit(); // the deadline tracker keeps whatever the reader has set
     fixmsg.textContent = 'Replaced ' + count + (count === 1 ? ' time' : ' times') + ' across your kit.';
+    toast('Replaced in every section');
     fixfrom.value = ''; fixto.value = '';
   });
   $('forget').addEventListener('click', function(){ drop('dmj_fp_kit'); drop('dmj_fp_token'); parts = {}; meta = null; kitout.classList.remove('on'); showNotice('Cleared from this browser.'); });
@@ -305,7 +331,7 @@
     if(!inp.denial && !inp.file){ showError('Paste the denial letter — or add a photo or PDF of it — then rebuild.'); return; }
     building = true; hideError(); hideNotice();
     parts = {}; meta = null;
-    resetSteps(); progress.classList.add('on'); kitout.classList.remove('on');
+    resetSteps(); progress.classList.add('on'); startMorph(morphEl, MORPH); kitout.classList.remove('on');
     progress.scrollIntoView({ behavior:'smooth', block:'start' });
     buy.disabled = true;
     var done = {};
@@ -349,7 +375,7 @@
       }));
     }).then(function(){
       building = false; buy.disabled = false;
-      progress.classList.remove('on');
+      progress.classList.remove('on'); stopMorph(morphEl);
       renderKit();
       save('dmj_fp_kit', { parts: parts, meta: meta, ts: Date.now() });
       clearStash();
@@ -357,7 +383,7 @@
       kitout.scrollIntoView({ behavior:'smooth', block:'start' });
     }).catch(function(e){
       building = false; buy.disabled = false;
-      progress.classList.remove('on');
+      progress.classList.remove('on'); stopMorph(morphEl);
       showError((e && e.message ? e.message : 'Something went wrong.') + ' ' + tryAgain());
       if(parts[1]) kitout.classList.add('on');
       $('tool').scrollIntoView({ behavior:'smooth', block:'start' });

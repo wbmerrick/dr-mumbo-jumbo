@@ -19,7 +19,7 @@ const SPRITE = `<svg xmlns="http://www.w3.org/2000/svg" style="display:none" ari
 </svg>`;
 const HEADER = `<header class="site-header">
   <div class="wrap bar">
-    <a class="brand" href="/"><span class="mark">?!</span>Dr Mumbo Jumbo</a>
+    <a class="brand" href="/" aria-label="Dr Mumbo Jumbo, home"><span class="mark">?!</span><span class="wm">Dr Mumbo <span class="lime">Jumbo</span></span></a>
     <nav class="nav" aria-label="Main">
       <a href="/" class="xl">Translator</a>
       <a href="/appeal">Appeal<span class="xl"> letter</span></a>
@@ -71,11 +71,12 @@ function shell(title, desc, pathname, body) {
 .crumb a:hover{color:var(--text)}
 .chips{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0 6px}
 .codename{font-size:clamp(1.05rem,2.2vw,1.25rem);color:var(--soft);margin:8px 0 24px}
-.cards{display:flex;flex-direction:column;gap:12px}
-.cards .card{padding:20px}
-.cards .card h2{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:500}
-.cards .card p{font-size:16px;color:var(--text);line-height:1.6}
-.cards .card.tint h2{color:var(--accent)}
+.cards{display:flex;flex-direction:column;border-bottom:1px solid var(--divider)}
+.cblock{display:flex;flex-direction:column;gap:8px;padding:22px 0 24px;border-top:1px solid var(--divider)}
+.cblock h2{font-family:var(--font);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.cblock p{font-size:17px;color:var(--text);line-height:1.6}
+.cblock.callout{padding:20px 22px;margin:2px 0 22px;border-top:0;border-left:2px solid var(--accent);background:rgba(215,255,63,.05);border-radius:0 var(--r-md) var(--r-md) 0}
+.cblock.callout h2{color:var(--accent)}
 .rel{margin-top:34px}
 .rel h2{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:500;margin-bottom:12px}
 .relgrid{display:flex;gap:8px;flex-wrap:wrap}
@@ -110,9 +111,9 @@ function page(entry) {
     <p class="codename">${esc(entry.name)}</p>
 
     <div class="cards">
-      <div class="card"><h2>What it means</h2><p>${esc(entry.what)}</p></div>
-      <div class="card"><h2>Where you'll see it</h2><p>${esc(entry.seen)}</p></div>
-      <div class="card tint"><h2>Worth checking</h2><p>${esc(entry.watch)}</p></div>
+      <div class="cblock"><h2>What it means</h2><p>${esc(entry.what)}</p></div>
+      <div class="cblock"><h2>Where you'll see it</h2><p>${esc(entry.seen)}</p></div>
+      <div class="cblock callout"><h2>Worth checking</h2><p>${esc(entry.watch)}</p></div>
     </div>
 
     ${isDenial ? `<section class="panel tint cta">

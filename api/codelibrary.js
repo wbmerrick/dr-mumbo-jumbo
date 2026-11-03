@@ -78,14 +78,15 @@ function render() {
 .search-wrap .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted)}
 .search-wrap .input{padding-left:38px;min-height:46px;font-size:16px}
 .count-note{margin-top:10px}
-.sys{margin-top:34px}
-.sys h2{font-size:1.3rem;padding-top:22px;border-top:1px solid var(--divider)}
-.sys h3{margin:20px 0 10px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:8px}
-.code-link{display:flex;gap:10px;align-items:baseline;padding:10px 12px;border-radius:var(--r-md);background:var(--surface);color:var(--text);text-decoration:none;border:1px solid transparent;transition:border-color .12s ease}
-.code-link:hover{border-color:var(--a700);text-decoration:none}
-.cc{font-weight:500;color:var(--a300);white-space:nowrap;font-variant-numeric:tabular-nums}
-.cn{font-size:13.5px;color:var(--soft)}
+.sys{margin-top:64px}
+.sys h2{font-size:clamp(1.4rem,2.8vw,1.8rem)}
+.sys h3{margin:28px 0 4px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));column-gap:36px}
+.code-link{display:flex;gap:12px;align-items:baseline;padding:11px 2px;border-bottom:1px solid var(--divider);color:var(--text);text-decoration:none;transition:background .12s ease}
+.code-link:hover{text-decoration:none;background:rgba(215,255,63,.04)}
+.code-link:hover .cn{color:var(--text)}
+.cc{font-family:var(--display);font-weight:600;color:var(--accent);white-space:nowrap;font-variant-numeric:tabular-nums;min-width:4.6em}
+.cn{font-size:14px;color:var(--soft)}
 .cta{margin:40px 0 0}
 </style>
 </head>
@@ -99,7 +100,7 @@ function render() {
 </svg>
 <header class="site-header">
   <div class="wrap bar">
-    <a class="brand" href="/"><span class="mark">?!</span>Dr Mumbo Jumbo</a>
+    <a class="brand" href="/" aria-label="Dr Mumbo Jumbo, home"><span class="mark">?!</span><span class="wm">Dr Mumbo <span class="lime">Jumbo</span></span></a>
     <nav class="nav" aria-label="Main">
       <a href="/" class="xl">Translator</a>
       <a href="/appeal">Appeal<span class="xl"> letter</span></a>

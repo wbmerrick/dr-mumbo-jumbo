@@ -27,7 +27,6 @@
   .result.on{display:block}
   #tool textarea.input{min-height:190px}
   .whisper{margin-top:12px}
-  .mkstick .card{padding:20px}
   @media (max-width:640px){
     #tool .controls .btn-lg{flex:1 1 100%}
   }
@@ -41,13 +40,12 @@
 <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
 <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
 <symbol id="i-sig" viewBox="0 0 24 24"><path d="M3 16.5c2.5-5 4.3-7.5 5.4-7.5 1.6 0 .2 5.5-.7 7.2-.5 1 .2 1.3 1 .5 1.5-1.5 2.6-4 3.6-4 .9 0 .5 2.3 1.5 2.3.8 0 1.6-.8 2.2-1.5"/><path d="M3 21h18"/></symbol>
-<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></symbol>
-<symbol id="i-send" viewBox="0 0 24 24"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7z"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
 <symbol id="i-cr" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
 </svg>
 <header class="site-header">
   <div class="wrap bar">
-    <a class="brand" href="/"><span class="mark">?!</span>Dr Mumbo Jumbo</a>
+    <a class="brand" href="/" aria-label="Dr Mumbo Jumbo, home"><span class="mark">?!</span><span class="wm">Dr Mumbo <span class="lime">Jumbo</span></span></a>
     <nav class="nav" aria-label="Main">
       <a href="/" class="xl">Translator</a>
       <a href="/appeal" aria-current="page">Appeal<span class="xl"> letter</span></a>
@@ -64,10 +62,10 @@
       <span class="kicker">Free, because almost nobody appeals</span>
       <h1>Turn that denial into an appeal<span class="lime">.</span></h1>
       <p class="lead">Paste the denial letter. Get back a <strong>ready-to-edit appeal letter</strong>: the denial reason answered point by point, the records request included, the deadline flagged. Finish the brackets, attach your records, send it.</p>
-      <div class="stats">
-        <div class="stat"><span class="stat-value">~1 in 5</span><span class="stat-label">in-network claims are denied</span></div>
-        <div class="stat"><span class="stat-value">&lt;1%</span><span class="stat-label">of denials are ever appealed</span></div>
-        <div class="stat"><span class="stat-value">Many</span><span class="stat-label">appeals win; insurers reverse themselves often</span></div>
+      <div class="proof-strip mt-2">
+        <div><span class="pv">~1 in 5</span><span class="pl">in-network claims are denied</span></div>
+        <div><span class="pv">&lt;1%</span><span class="pl">of denials are ever appealed</span></div>
+        <div><span class="pv">Many</span><span class="pl">appeals win; insurers reverse themselves often</span></div>
       </div>
     </section>
 
@@ -84,7 +82,7 @@
       <input type="file" id="file" accept="image/*,application/pdf,.pdf" hidden>
       <div class="filechip mt-2" id="filechip"><svg class="ic" style="width:15px;height:15px" aria-hidden="true"><use href="#i-clip"/></svg><span id="filename"></span><button class="x" id="fileclear" type="button" aria-label="Remove file"><svg class="ic" style="width:14px;height:14px" aria-hidden="true"><use href="#i-x"/></svg></button></div>
       <p class="small whisper">Snap a photo of the letter, upload the PDF, or paste the text. Leave out names, birthdates and ID numbers where you can; the letter uses [brackets] you fill in privately. Nothing you paste or upload is stored.</p>
-      <div class="loading" id="loading" role="status"><span class="spin"></span><span id="loadmsg">Reading the denial reason…</span></div>
+      <div class="loading" id="loading" role="status"><span class="morph" aria-hidden="true"><span class="from"></span><span class="to"></span></span><span id="loadmsg" class="small">Reading the denial reason…</span></div>
       <div class="alert err" id="error" role="alert"></div>
     </section>
 
@@ -100,18 +98,18 @@
       </div>
     </section>
 
-    <section class="section mkstick" aria-labelledby="stick">
-      <div class="section-head"><span class="ovl">Make it stick</span><h2 id="stick">Three things that decide most appeals</h2></div>
-      <div class="grid-3">
-        <div class="card">
+    <section class="section" aria-labelledby="stick">
+      <div class="section-head"><span class="kicker">Make it stick</span><h2 id="stick">Three things that decide most appeals<span class="lime">.</span></h2></div>
+      <div class="tlist three">
+        <div class="ti">
           <div class="row"><span class="num-badge">1</span><h3>Beat the clock</h3></div>
           <p>Your denial letter states an appeal deadline, often 180 days, sometimes far less. Find it, write it down, and file well before it. Miss it and even a winning argument loses.</p>
         </div>
-        <div class="card">
+        <div class="ti">
           <div class="row"><span class="num-badge">2</span><h3>Arm the letter</h3></div>
           <p>A doctor's brief letter of medical necessity is the single strongest attachment. Add visit notes and test results that back the story. The draft tells you exactly where they plug in.</p>
         </div>
-        <div class="card">
+        <div class="ti">
           <div class="row"><span class="num-badge">3</span><h3>Send it on the record</h3></div>
           <p>Use the insurer's member portal or certified mail, keep copies of everything, and calendar the date their written decision is due. If they uphold the denial, <a href="/denials">external review</a> is your next move.</p>
         </div>
@@ -260,6 +258,28 @@
     return html;
   }
 
+  var morph = loading.querySelector('.morph');
+  var MORPH = [["adverse benefit determination","denial"],["CO-50","not medically necessary"],["internal appeal","asking them to look again"],["authorized representative","someone helping you"],["external review","an independent referee"],["medical necessity","whether you needed it"]];
+  function startMorph(el, pairs){
+    stopMorph(el);
+    var from = el.querySelector('.from'), to = el.querySelector('.to'), i = 0;
+    function set(){ from.textContent = pairs[i][0]; to.textContent = pairs[i][1]; i = (i + 1) % pairs.length; }
+    set();
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if(reduce){ el._t = setInterval(set, 1800); } else { el._h = set; to.addEventListener('animationiteration', set); }
+  }
+  function stopMorph(el){
+    if(el._t){ clearInterval(el._t); el._t = null; }
+    if(el._h){ el.querySelector('.to').removeEventListener('animationiteration', el._h); el._h = null; }
+  }
+  var toastEl = null, toastT = null;
+  function toast(msg){
+    if(!toastEl){ toastEl = document.createElement('div'); toastEl.className = 'toast'; toastEl.setAttribute('role', 'status'); document.body.appendChild(toastEl); }
+    toastEl.innerHTML = '<svg class="ic" aria-hidden="true"><use href="#i-check"/></svg><span></span>';
+    toastEl.querySelector('span').textContent = msg;
+    toastEl.classList.add('on'); clearTimeout(toastT);
+    toastT = setTimeout(function(){ toastEl.classList.remove('on'); }, 1800);
+  }
   function setLoading(on){
     loading.classList.toggle('on', on);
     go.disabled = on;
@@ -267,9 +287,11 @@
     if(on){
       var i = 0;
       loadmsg.textContent = phrases[0];
+      startMorph(morph, MORPH);
       phraseTimer = setInterval(function(){ i = (i+1) % phrases.length; loadmsg.textContent = phrases[i]; }, 1800);
-    } else if(phraseTimer){
-      clearInterval(phraseTimer); phraseTimer = null;
+    } else {
+      stopMorph(morph);
+      if(phraseTimer){ clearInterval(phraseTimer); phraseTimer = null; }
     }
   }
   function showError(msg){
@@ -319,7 +341,7 @@
   copyBtn.addEventListener('click', function(){
     if(!rawText) return;
     var label = copyBtn.querySelector('span');
-    function done(){ label.textContent = 'Copied'; setTimeout(function(){ label.textContent = 'Copy'; }, 1600); }
+    function done(){ label.textContent = 'Copied'; toast('Copied to clipboard'); setTimeout(function(){ label.textContent = 'Copy'; }, 1600); }
     function fallback(){
       var ta = document.createElement('textarea');
       ta.value = rawText; document.body.appendChild(ta); ta.select();

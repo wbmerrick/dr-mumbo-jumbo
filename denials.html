@@ -21,16 +21,16 @@
 <link rel="stylesheet" href="/nocturne.css">
 <style>
 
-  .moves{display:flex;flex-direction:column;gap:14px;margin-top:10px}
-  .move{display:flex;gap:16px;align-items:flex-start}
-  .move .num-badge{margin-top:4px;width:32px;height:32px;font-size:13px}
+  .moves{display:flex;flex-direction:column;margin-top:18px;border-bottom:1px solid var(--divider)}
+  .move{display:flex;gap:22px;align-items:flex-start;padding:34px 0 30px;border-top:1px solid var(--divider)}
+  .move .num-badge{margin-top:2px;width:40px;height:40px;font-family:var(--display);font-size:17px;font-weight:600}
   .move .body{flex:1;min-width:0}
-  .move h2{font-size:1.3rem;margin-bottom:6px}
-  .move .prose{font-size:15px}
-  .script{margin:12px 0;padding:14px 16px;border-left:2px solid var(--a700);background:var(--bg);border-radius:0 var(--r-md) var(--r-md) 0;font-size:15px;color:var(--soft)}
+  .move h2{font-size:clamp(1.3rem,2.6vw,1.6rem);margin-bottom:8px}
+  .move .prose{font-size:15.5px}
+  .script{margin:14px 0;padding:14px 18px;border-left:2px solid var(--accent);background:rgba(215,255,63,.05);border-radius:0 var(--r-md) var(--r-md) 0;font-size:15px;color:var(--soft)}
   .script .who{display:block;margin-bottom:4px}
   .clock .prose table{margin:0}
-  @media (max-width:560px){.move{gap:12px}.move .num-badge{width:28px;height:28px;font-size:12px}}
+  @media (max-width:560px){.move{gap:14px;padding:26px 0 24px}.move .num-badge{width:32px;height:32px;font-size:14px}}
 
 </style>
 </head>
@@ -42,7 +42,7 @@
 </svg>
 <header class="site-header">
   <div class="wrap bar">
-    <a class="brand" href="/"><span class="mark">?!</span>Dr Mumbo Jumbo</a>
+    <a class="brand" href="/" aria-label="Dr Mumbo Jumbo, home"><span class="mark">?!</span><span class="wm">Dr Mumbo <span class="lime">Jumbo</span></span></a>
     <nav class="nav" aria-label="Main">
       <a href="/" class="xl">Translator</a>
       <a href="/appeal">Appeal<span class="xl"> letter</span></a>
@@ -62,7 +62,7 @@
     </section>
 
     <div class="moves">
-      <section class="panel move">
+      <section class="move">
         <span class="num-badge">1</span>
         <div class="body">
           <h2>Don't pay. Don't panic. Decode.</h2>
@@ -77,7 +77,7 @@
         </div>
       </section>
 
-      <section class="panel move">
+      <section class="move">
         <span class="num-badge">2</span>
         <div class="body">
           <h2>Make one phone call, on the record</h2>
@@ -92,7 +92,7 @@
         </div>
       </section>
 
-      <section class="panel move">
+      <section class="move">
         <span class="num-badge">3</span>
         <div class="body">
           <h2>Collect your evidence</h2>
@@ -107,7 +107,7 @@
         </div>
       </section>
 
-      <section class="panel move">
+      <section class="move">
         <span class="num-badge">4</span>
         <div class="body">
           <h2>File the internal appeal, in writing</h2>
@@ -123,7 +123,7 @@
         </div>
       </section>
 
-      <section class="panel move">
+      <section class="move">
         <span class="num-badge">5</span>
         <div class="body">
           <h2>Lost round one? Go external.</h2>
@@ -138,7 +138,7 @@
         </div>
       </section>
 
-      <section class="panel move">
+      <section class="move">
         <span class="num-badge">6</span>
         <div class="body">
           <h2>Escalate sideways while you wait</h2>
