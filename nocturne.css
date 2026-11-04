@@ -368,6 +368,23 @@ body::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none
 .flex-1{flex:1}
 
 /* ——— print: kits and letters come out black on white ——— */
+/* ——— curb appeal: compact hero on phones, readable proof strip ——— */
+.proof-strip .of{font-size:.5em;font-weight:500;color:var(--muted);letter-spacing:0;margin:0 .1em;vertical-align:.25em}
+@media (max-width:640px){
+  .hero-grid{gap:18px;padding:12px 0 22px}
+  .hero{gap:10px}
+  .hero .lead{font-size:1rem;line-height:1.5}
+  .hero-art{height:auto;max-width:none;margin:0}
+  .art-letter{display:none}
+  .art-plain{position:static;width:100%;transform:none;padding:16px}
+  .hero-art::before{inset:-14% -8% -14% -8%}
+}
+@media (max-width:560px){
+  .proof-strip{grid-template-columns:1fr}
+  .proof-strip>div{padding:16px 0;gap:4px}
+  .proof-strip>div:not(:first-child){border-left:0}
+}
+
 @media print{
   :root{color-scheme:light}
   body{background:#fff;color:#000;font-size:12pt;display:block}
