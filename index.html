@@ -25,11 +25,12 @@
   .controls{margin-top:14px}
   .result{display:none;margin-top:16px}
   .result.on{display:block}
-  #translator textarea.input{height:clamp(150px,28vh,320px)}
+  #translator textarea.input{height:108px;min-height:108px;max-height:320px;resize:none;transition:height .18s ease;overflow-y:auto}
+  #translator .whisper{font-size:13.5px;color:var(--soft)}
   .whisper{margin-top:12px}
   @media (max-width:640px){
     #translator .controls .btn-lg{flex:1 1 100%}
-    #translator textarea.input{height:clamp(130px,24vh,240px)}
+    #translator textarea.input{height:96px;min-height:96px}
   }
 
 </style>
@@ -95,8 +96,8 @@
       <textarea class="input mt-2" id="input" maxlength="6000" spellcheck="false" aria-label="Paste medical text to translate" placeholder="Paste the bill, EOB or denial letter here. For example: CPT 99284 ER visit $1,842 … CO-45 adjustment … DENIED CO-50: not medically necessary. Patient responsibility: $638. Appeal within 180 days."></textarea>
       <div class="row controls">
         <button class="btn btn-primary btn-lg btn-glow" id="go">Translate</button>
+        <button class="btn btn-secondary btn-lg" id="example" type="button">Try an example</button>
         <button class="btn btn-secondary btn-lg" id="attach" type="button"><svg class="ic" style="width:18px;height:18px" aria-hidden="true"><use href="#i-camera"/></svg> Add a photo or PDF</button>
-        <button class="btn btn-ghost btn-lg" id="example" type="button">Try an example</button>
       </div>
       <input type="file" id="file" accept="image/*,application/pdf,.pdf" hidden>
       <div class="filechip mt-2" id="filechip"><svg class="ic" style="width:15px;height:15px" aria-hidden="true"><use href="#i-clip"/></svg><span id="filename"></span><button class="x" id="fileclear" type="button" aria-label="Remove file"><svg class="ic" style="width:14px;height:14px" aria-hidden="true"><use href="#i-x"/></svg></button></div>
@@ -119,11 +120,11 @@
 
     <section class="section" aria-label="Why you can trust it">
       <div class="proof-strip">
-        <div><span class="pv">173 / 173</span><span class="pl">appeal deadlines computed correctly in testing</span></div>
-        <div><span class="pv">638 / 638</span><span class="pl">member and claim numbers copied exactly</span></div>
         <div><span class="pv">0</span><span class="pl">documents stored: what you paste goes to the model once and is gone</span></div>
+        <div><span class="pv">173 <span class="of">of</span> 173</span><span class="pl">appeal deadlines computed correctly in testing</span></div>
+        <div><span class="pv">638 <span class="of">of</span> 638</span><span class="pl">member and claim numbers copied exactly</span></div>
       </div>
-      <p class="small mt-2">Built by a practicing physician who reads these notes and fights these denials. <a href="/how-its-tested">How it's tested</a></p>
+      <p class="small mt-2"><a href="/how-its-tested">How these numbers are tested</a></p>
     </section>
 
     <section class="section" aria-labelledby="what-sent">
@@ -250,8 +251,16 @@
 
   example.addEventListener('click', function(){
     input.value = EXAMPLES[mode];
+    input.dispatchEvent(new Event('input'));
     input.focus();
   });
+  (function(){
+    var min = window.matchMedia('(max-width:640px)').matches ? 96 : 108, max = 320;
+    function fit(){ input.style.height = 'auto'; input.style.height = Math.min(max, Math.max(min, input.scrollHeight)) + 'px'; }
+    input.addEventListener('input', fit);
+    input.addEventListener('focus', fit);
+    fit();
+  })();
 
   function escapeHtml(s){
     return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
