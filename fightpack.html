@@ -34,6 +34,11 @@
   .codelink a{cursor:pointer}
   /* waitlist fallback (paid mode only) */
   .wait{display:none;margin-top:16px}
+  .mailkit{margin-top:16px;display:flex;flex-direction:column;gap:10px}
+  .mailkit .mailform{display:flex;gap:8px;flex-wrap:wrap}
+  .mailkit .mailform .input{flex:1 1 240px;min-width:0}
+  .mailkit .mailkit-note{margin:0}
+  @media (max-width:640px){ .mailkit .mailform .btn{flex:1 1 100%} }
   .wait.on{display:block}
   .wait form{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
   .wait .input{flex:1;min-width:200px;width:auto}
@@ -80,7 +85,7 @@
   @media (max-width:640px){#tool .controls .btn-lg{flex:1 1 100%}}
   @media (max-width:480px){.dl-grid{grid-template-columns:1fr}}
   @media print{
-    .kit,.kit-top .kit-actions,.whisper,.codelink{display:none !important}
+    .kit,.kit-top .kit-actions,.whisper,.codelink,.mailkit{display:none !important}
     .kit-top{margin:0 0 12pt}
     .doc-top{border-bottom:1px solid #000}
     .doc-top .btn{display:none}
@@ -194,6 +199,12 @@
         </div>
       </div>
       <p class="alert note on checkline">Before you send anything, check every number under <strong>“Read from your letter”</strong> against your actual letter, especially if you uploaded a photo. If one is off, fix it once with <strong>Fix a detail everywhere</strong>.</p>
+      <div class="panel tint mailkit" id="mailkit">
+        <div><strong>Keep this kit.</strong> It lives only in this browser — email yourself a copy.</div>
+        <form class="mailform" id="mailform"><input class="input" type="email" id="mailemail" required autocomplete="email" placeholder="you@email.com" aria-label="Email address"><button class="btn btn-primary btn-sm" type="submit" id="mailbtn">Email me my kit</button></form>
+        <p class="small mailkit-note">Sent once from hello@dr-mumbo-jumbo.com. We keep your address for launch news only; the kit itself isn't stored.</p>
+        <div class="wait-msg" id="mailmsg" role="status"></div>
+      </div>
       <form class="fixform" id="fixform" hidden>
         <label for="fixfrom">Replace</label><input class="input" id="fixfrom" type="text" autocomplete="off" spellcheck="false" placeholder="e.g. GPH471820">
         <label for="fixto">with</label><input class="input" id="fixto" type="text" autocomplete="off" spellcheck="false" placeholder="e.g. GPH4471820">

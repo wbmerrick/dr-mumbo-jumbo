@@ -201,8 +201,7 @@
     if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(done).catch(fallback); } else { fallback(); }
   }
   $('copyall').addEventListener('click', function(){
-    var all = sectionOrder.map(function(s){ return plain(s.title + '\n\n' + s.body); }).join('\n\n\n');
-    copyText(all + '\n\n\n' + deadlinesText(), $('copyall'));
+    copyText(kitText(), $('copyall'));
   });
   $('printbtn').addEventListener('click', function(){ window.print(); });
 
@@ -464,6 +463,20 @@
       buy.disabled = false; buy.textContent = 'Get my Fight Pack';
       if(res.status === 503){ configured = false; wait.classList.add('on'); wait.scrollIntoView({behavior:'smooth', block:'center'}); return; }
       showError(res.data.message || "Couldn't start checkout. Try again in a moment.");
+    });
+  });
+
+  // email me my kit
+  var mailform = $('mailform'), mailemail = $('mailemail'), mailbtn = $('mailbtn'), mailmsg = $('mailmsg');
+  function kitText(){ return sectionOrder.map(function(s){ return plain(s.title + '\n\n' + s.body); }).join('\n\n\n') + '\n\n\n' + deadlinesText(); }
+  mailform.addEventListener('submit', function(ev){
+    ev.preventDefault();
+    mailmsg.className = 'wait-msg'; mailbtn.disabled = true; mailbtn.textContent = 'Sending…';
+    postJSON('/api/email-kit', { email: mailemail.value, kit: kitText(), token: token }, 30000).then(function(res){
+      mailbtn.disabled = false; mailbtn.textContent = 'Email me my kit';
+      mailmsg.className = 'wait-msg ' + (res.ok ? 'ok' : 'err');
+      mailmsg.textContent = (res.data && res.data.message) || (res.ok ? 'Sent. Check your inbox.' : "Couldn't send it — try again in a minute.");
+      if(res.ok) mailform.reset();
     });
   });
 
