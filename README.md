@@ -103,4 +103,4 @@ robots.txt
 
 ## Privacy posture
 
-Nothing a visitor pastes or uploads is stored. The only data kept is the waitlist (email + category). Pages ask visitors to leave out names, birthdates, and ID numbers, and the prompts instruct the model not to repeat them.
+Nothing a visitor pastes or uploads is stored. The only data kept is the waitlist table (email + category), which also holds the addresses of people who asked to have a kit emailed to them (source `kit-email`). An emailed kit transits Mailgun once and is not stored on our side; set Mailgun's message retention to the minimum and do not store bodies. Pages ask visitors to leave out names, birthdates, and ID numbers, and the prompts instruct the model not to repeat them.
