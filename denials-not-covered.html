@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Denied as "not a covered benefit"? What actually works | Dr Mumbo Jumbo</title>
+<meta name="description" content="CO-204, PR-204 and CO-96 denials claim the service isn’t in your plan. Make them cite the exclusion, rule out a miscode, find the medical-judgment angle, and know when to switch to price.">
+<link rel="canonical" href="https://dr-mumbo-jumbo.com/denials/not-covered">
+<meta property="og:site_name" content="Dr Mumbo Jumbo">
+<meta property="og:title" content="Denied as "not a covered benefit"? What actually works | Dr Mumbo Jumbo">
+<meta property="og:description" content="CO-204, PR-204 and CO-96 denials claim the service isn’t in your plan. Make them cite the exclusion, rule out a miscode, find the medical-judgment angle, and know when to switch to price.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://dr-mumbo-jumbo.com/denials/not-covered">
+<meta property="og:image" content="https://dr-mumbo-jumbo.com/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#07080C">
+<link rel="icon" href="/favicon.svg?v=2" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/nocturne.css">
+<style>
+
+  .moves{display:flex;flex-direction:column;margin-top:18px;border-bottom:1px solid var(--divider)}
+  .move{display:flex;gap:22px;align-items:flex-start;padding:34px 0 30px;border-top:1px solid var(--divider)}
+  .move .num-badge{margin-top:2px;width:40px;height:40px;font-family:var(--display);font-size:17px;font-weight:600}
+  .move .body{flex:1;min-width:0}
+  .move h2{font-size:clamp(1.3rem,2.6vw,1.6rem);margin-bottom:8px}
+  .move .prose{font-size:15.5px}
+  .script{margin:14px 0;padding:14px 18px;border-left:2px solid var(--accent);background:rgba(215,255,63,.05);border-radius:0 var(--r-md) var(--r-md) 0;font-size:15px;color:var(--soft)}
+  .script .who{display:block;margin-bottom:4px}
+  .clock .prose table{margin:0}
+  @media (max-width:560px){.move{gap:14px;padding:26px 0 24px}.move .num-badge{width:32px;height:32px;font-size:14px}}
+
+  .reasons{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));margin-top:18px}
+  .reason{display:block;padding:16px 18px;border:1px solid var(--divider);border-radius:var(--r-md);text-decoration:none}
+  .reason:hover{border-color:var(--accent)}
+  .reason b{display:block;font-family:var(--display);font-size:16px;margin-bottom:4px}
+  .reason span{display:block;font-size:14px;color:var(--soft)}
+
+</style>
+</head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+<symbol id="i-pen" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></symbol>
+<symbol id="i-sig" viewBox="0 0 24 24"><path d="M3 16.5c2.5-5 4.3-7.5 5.4-7.5 1.6 0 .2 5.5-.7 7.2-.5 1 .2 1.3 1 .5 1.5-1.5 2.6-4 3.6-4 .9 0 .5 2.3 1.5 2.3.8 0 1.6-.8 2.2-1.5"/><path d="M3 21h18"/></symbol>
+<symbol id="i-cr" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+</svg>
+<header class="site-header">
+  <div class="wrap bar">
+    <a class="brand" href="/" aria-label="Dr Mumbo Jumbo, home"><span class="mark" aria-hidden="true"><svg viewBox="0 0 64 48" width="38" height="29"><g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M10 34C12 20 16 10 20 10c3 0 2 14 4 20 2 6 5-12 9-14 3-1 3 10 7 11 4 1 8-3 14-5" stroke="currentColor" stroke-width="3.2"/><path d="M7 41h50" stroke="var(--accent)" stroke-width="3.6"/></g></svg></span><span class="wm">Dr Mumbo <span class="lime">Jumbo</span></span></a>
+    <nav class="nav" aria-label="Main">
+      <a href="/" class="xl">Translator</a>
+      <a href="/appeal">Appeal<span class="xl"> letter</span></a>
+      <a href="/denials" aria-current="page">Playbook</a>
+      <a href="/codes/">Codes</a>
+      <a class="btn btn-primary btn-sm" href="/fightpack">Fight Pack</a>
+    </nav>
+  </div>
+</header>
+<main>
+  <div class="wrap wrap-narrow">
+    <section class="hero">
+      <span class="kicker">Denial Playbook</span>
+      <h1>They said it isn’t a covered benefit<span class="lime">.</span></h1>
+      <p class="lead">Printed as <a href="/codes/denial-co-204">CO-204</a>, <a href="/codes/denial-pr-204">PR-204</a> or <a href="/codes/denial-co-96">CO-96</a>. This is the hardest category to overturn, and the one where knowing the rules saves you the most wasted effort — including knowing when to stop appealing and start negotiating.</p>
+    </section>
+
+    <div class="moves">
+      <section class="move">
+        <span class="num-badge">1</span>
+        <div class="body">
+          <h2>Make them point at the words</h2>
+          <div class="prose">
+            <p>"Not covered" is a claim about your plan document, so ask for the sentence.</p>
+            <div class="script"><span class="who kicker">You, to the insurer</span>"Claim [number] was denied as not a covered benefit. Please identify the exact exclusion in my plan document by section and page, and send me that page. I’d also like the remark codes that explain the decision."</div>
+            <ul>
+              <li>Then read it yourself in your Summary Plan Description or evidence of coverage.</li>
+              <li>Exclusions are often narrower than the denial implies, and they frequently carry exceptions the reviewer skipped.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+      <section class="move">
+        <span class="num-badge">2</span>
+        <div class="body">
+          <h2>Check whether it is really a coding problem</h2>
+          <div class="prose">
+            <p>A large share of "not covered" denials are miscodes wearing a policy’s clothes.</p>
+            <ul>
+              <li>The classic is a <strong>preventive service</strong> billed with a diagnostic code, which flips a no-cost screening into an uncovered charge.</li>
+              <li>Compare the codes on the itemized bill against what actually happened in the room.</li>
+              <li>If they don’t match, this is a corrected claim from the provider, not an appeal from you. That path is faster.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+      <section class="move">
+        <span class="num-badge">3</span>
+        <div class="body">
+          <h2>Look for the medical-judgment angle</h2>
+          <div class="prose">
+            <p>Be clear-eyed here, because this is the category where people waste the most time: a denial that turns <em>only</em> on contract language or eligibility, with no clinical question in it, generally falls <strong>outside</strong> federal external review. The independent reviewer is there to second-guess medical judgment, not to rewrite your policy.</p>
+            <ul>
+              <li>So the question that decides your odds is whether a clinical question exists: is the service excluded outright, or excluded <em>unless</em> criteria are met?</li>
+              <li>"Covered only when medically necessary," "covered for certain diagnoses," "non-experimental" — any of those puts medical judgment back in play, and the external door back on the latch.</li>
+              <li>If there is a clinical hook, appeal it as a necessity case and say so explicitly in the letter.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+      <section class="move">
+        <span class="num-badge">4</span>
+        <div class="body">
+          <h2>Ask for an exception, not just a reversal</h2>
+          <div class="prose">
+            <p>Plans have exception machinery that lives outside the appeal ladder, and it is often the better route for a true exclusion.</p>
+            <ul>
+              <li><strong>Formulary or benefit exceptions</strong> for drugs and devices, where the clinician certifies the alternatives failed or are unsuitable.</li>
+              <li><strong>Network adequacy exceptions</strong>, if nobody in network can actually deliver the service in a reasonable time or distance.</li>
+              <li>On an employer plan, the employer sometimes has discretion the call-centre does not. Your HR benefits team can ask.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+      <section class="move">
+        <span class="num-badge">5</span>
+        <div class="body">
+          <h2>Were you warned beforehand?</h2>
+          <div class="prose">
+            <p>If the denial came back as <a href="/codes/denial-pr-204">PR-204</a> — the patient-responsibility version — the question of advance notice becomes the argument.</p>
+            <ul>
+              <li>Nobody told you it wasn’t covered before you agreed to it? Say that in writing to the provider.</li>
+              <li>On Medicare, that warning has a specific form, the <strong>Advance Beneficiary Notice</strong>. No signed ABN is a real position, not a complaint.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+      <section class="move">
+        <span class="num-badge">6</span>
+        <div class="body">
+          <h2>If the exclusion holds, change the conversation</h2>
+          <div class="prose">
+            <p>When the service genuinely is not a benefit, the fight stops being about coverage and starts being about price — and that fight you can still win.</p>
+            <ul>
+              <li>Ask the provider for the <strong>self-pay or cash price</strong>. It is often far below the billed charge.</li>
+              <li>Nonprofit hospitals must maintain <strong>financial assistance policies</strong>. Ask for the application in writing whatever you earn.</li>
+              <li>Ask for an interest-free payment plan before anything goes to collections.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <section class="section" aria-labelledby="sib-title">
+      <div class="panel">
+        <span class="kicker">Other reasons</span>
+        <h2 id="sib-title" class="mt-1">A different code on your letter?</h2>
+        <p class="small mt-1">Each reason has its own winning counter. The <a href="/denials">full playbook</a> covers the sequence that applies to all of them.</p>
+        <div class="reasons">
+          <a class="reason" href="/denials/medical-necessity"><b>Not medically necessary</b><span>CO-50 — the most appealable denial there is.</span></a>
+          <a class="reason" href="/denials/prior-auth"><b>No prior authorization</b><span>CO-197 — often the office’s miss, not your bill.</span></a>
+          <a class="reason" href="/denials/out-of-network"><b>Out of network</b><span>Surprise bills, the ER, and the No Surprises Act.</span></a>
+          <a class="reason" href="/denials/experimental"><b>Experimental or investigational</b><span>Newer treatments, and the review built for them.</span></a>
+          <a class="reason" href="/denials/missing-info"><b>Claim lacks information</b><span>CO-16 — a billing-office to-do, not a denial.</span></a>
+        </div>
+      </div>
+    </section>
+    <section class="section" aria-labelledby="cta-title">
+      <div class="panel tint">
+        <span class="kicker">Don’t write it from scratch</span>
+        <h2 id="cta-title" class="mt-1">Paste the letter. Walk away with the appeal drafted.</h2>
+        <p class="lead mt-2">Argument matched to your reason code, records request included, the deadline pulled off your notice. Free. The <a href="/fightpack">Fight Pack</a> adds the letter your doctor signs.</p>
+        <div class="row mt-3">
+          <a class="btn btn-primary btn-lg" href="/appeal"><svg class="ic" style="width:18px;height:18px" aria-hidden="true"><use href="#i-pen"/></svg> Draft my appeal letter</a>
+          <a class="btn btn-secondary btn-lg" href="/fightpack"><svg class="ic" style="width:18px;height:18px" aria-hidden="true"><use href="#i-sig"/></svg> Get the Fight Pack</a>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="hr full"></div>
+    <div class="cols">
+      <div><h4>Tools</h4><ul><li><a href="/">Translator</a></li><li><a href="/appeal">Appeal letter</a></li><li><a href="/fightpack">Fight Pack</a></li></ul></div>
+      <div><h4>Learn</h4><ul><li><a href="/denials">Denial Playbook</a></li><li><a href="/codes/">Code library</a></li><li><a href="/how-its-tested">How it's tested</a></li></ul></div>
+      <div class="about"><h4>About</h4><p>Built by a practicing physician.</p><p>Nothing you paste or upload is stored.</p><p><a href="mailto:hello@dr-mumbo-jumbo.com">hello@dr-mumbo-jumbo.com</a></p></div>
+      <div><h4>Legal</h4><ul><li><a href="/privacy">Privacy</a></li><li><a href="/terms">Terms</a></li></ul></div>
+    </div>
+    <p class="legal">Dr Mumbo Jumbo is an educational self-advocacy tool, not medical, legal or financial advice, and it does not create a doctor–patient relationship. Letters and kits are drafts for you and your clinician to review, complete and send yourselves; they are written by AI and can contain mistakes, so read every line before you send it. Appeal rights and deadlines vary by plan and state; your denial letter and plan documents control. In an emergency, call 911.</p>
+    <p class="copy"><span class="mark" aria-hidden="true"><svg viewBox="0 0 64 48" width="38" height="29"><g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M10 34C12 20 16 10 20 10c3 0 2 14 4 20 2 6 5-12 9-14 3-1 3 10 7 11 4 1 8-3 14-5" stroke="currentColor" stroke-width="3.2"/><path d="M7 41h50" stroke="var(--accent)" stroke-width="3.6"/></g></svg></span>© 2026 Dr Mumbo Jumbo</p>
+  </div>
+</footer>
+</body>
+</html>

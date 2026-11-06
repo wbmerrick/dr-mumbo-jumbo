@@ -31,6 +31,11 @@
   .script{margin:14px 0;padding:14px 18px;border-left:2px solid var(--accent);background:rgba(215,255,63,.05);border-radius:0 var(--r-md) var(--r-md) 0;font-size:15px;color:var(--soft)}
   .script .who{display:block;margin-bottom:4px}
   .clock .prose table{margin:0}
+  .reasons{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));margin-top:18px}
+  .reason{display:block;padding:16px 18px;border:1px solid var(--divider);border-radius:var(--r-md);text-decoration:none}
+  .reason:hover{border-color:var(--accent)}
+  .reason b{display:block;font-family:var(--display);font-size:16px;margin-bottom:4px}
+  .reason span{display:block;font-size:14px;color:var(--soft)}
   @media (max-width:560px){.move{gap:14px;padding:26px 0 24px}.move .num-badge{width:32px;height:32px;font-size:14px}}
 
 </style>
@@ -60,6 +65,23 @@
       <span class="kicker">The Denial Playbook</span>
       <h1>They said no<span class="lime">.</span> Here's how to make them look again.</h1>
       <p class="lead">Roughly <strong>1 in 5 in-network claims is denied</strong>, and fewer than 1 in 100 denials is ever appealed, so insurers almost never have to defend the no. When people do push back, a large share of denials are reversed. This is the playbook, move by move.</p>
+    </section>
+
+
+    <section class="section" aria-labelledby="pick-title">
+      <div class="panel">
+        <span class="kicker">Start with your reason</span>
+        <h2 id="pick-title" class="mt-1">What does your letter actually say?</h2>
+        <p class="small mt-1">The six moves below apply to every denial. These pages cover what changes for each reason — the argument that wins it, and the one that wastes your time.</p>
+        <div class="reasons">
+          <a class="reason" href="/denials/medical-necessity"><b>Not medically necessary</b><span>CO-50 — the most appealable denial there is.</span></a>
+          <a class="reason" href="/denials/prior-auth"><b>No prior authorization</b><span>CO-197 — often the office’s miss, not your bill.</span></a>
+          <a class="reason" href="/denials/out-of-network"><b>Out of network</b><span>Surprise bills, the ER, and the No Surprises Act.</span></a>
+          <a class="reason" href="/denials/not-covered"><b>Not a covered benefit</b><span>CO-204, PR-204, CO-96 — the hardest category.</span></a>
+          <a class="reason" href="/denials/experimental"><b>Experimental or investigational</b><span>Newer treatments, and the review built for them.</span></a>
+          <a class="reason" href="/denials/missing-info"><b>Claim lacks information</b><span>CO-16 — a billing-office to-do, not a denial.</span></a>
+        </div>
+      </div>
     </section>
 
     <div class="moves">
