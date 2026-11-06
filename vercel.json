@@ -43,6 +43,30 @@
       "destination": "/denials.html"
     },
     {
+      "source": "/denials/medical-necessity",
+      "destination": "/denials-medical-necessity.html"
+    },
+    {
+      "source": "/denials/prior-auth",
+      "destination": "/denials-prior-auth.html"
+    },
+    {
+      "source": "/denials/out-of-network",
+      "destination": "/denials-out-of-network.html"
+    },
+    {
+      "source": "/denials/not-covered",
+      "destination": "/denials-not-covered.html"
+    },
+    {
+      "source": "/denials/experimental",
+      "destination": "/denials-experimental.html"
+    },
+    {
+      "source": "/denials/missing-info",
+      "destination": "/denials-missing-info.html"
+    },
+    {
       "source": "/privacy",
       "destination": "/privacy.html"
     },
