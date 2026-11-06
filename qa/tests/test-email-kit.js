@@ -13,7 +13,7 @@ let calls = [];
 let mailgunOk = true, supabaseStatus = 201;
 global.fetch = async (url, opts) => {
   calls.push({ url: String(url), opts });
-  if (String(url).includes('mailgun')) return { ok: mailgunOk, status: mailgunOk ? 200 : 401 };
+  if (String(url).includes('mailgun')) return { ok: mailgunOk, status: mailgunOk ? 200 : 403, json: async () => ({ message: 'Domain dr-mumbo-jumbo.com is not allowed to send: Free accounts are for test purposes only.' }) };
   if (String(url).includes('supabase')) return { ok: supabaseStatus < 300, status: supabaseStatus };
   throw new Error('unexpected fetch ' + url);
 };
@@ -33,6 +33,8 @@ global.fetch = async (url, opts) => {
   mailgunOk = false; calls = [];
   res = mockRes(); await handler({ method:'POST', body:{ email:'a@b.co', kit:KIT, token } }, res);
   assert.strictEqual(res.code, 502, 'send failure 502');
+  assert.strictEqual(res.body.upstream.status, 403, 'upstream status surfaced');
+  assert(/not allowed to send/.test(res.body.upstream.detail), 'upstream detail surfaced');
   assert.strictEqual(calls.filter(c => c.url.includes('supabase')).length, 0, 'no address kept when send failed');
 
   // success -> 200, mailgun called correctly, address kept with source kit-email

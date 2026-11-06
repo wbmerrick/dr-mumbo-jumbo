@@ -50,7 +50,11 @@ async function sendKit(cfg, to, kit) {
     headers: { Authorization: 'Basic ' + Buffer.from('api:' + cfg.key).toString('base64') },
     body: form
   });
-  return r.ok;
+  if (r.ok) return { ok: true };
+  // Mailgun's reason, so a refusal can be diagnosed from the response rather than from logs we may not have.
+  let detail = '';
+  try { const j = await r.json(); detail = String(j.message || j.error || '').slice(0, 300); } catch { try { detail = String(await r.text()).slice(0, 300); } catch {} }
+  return { ok: false, status: r.status, detail };
 }
 
 async function keepAddress(email) {
@@ -109,10 +113,11 @@ module.exports = async (req, res) => {
     return;
   }
 
-  let sent = false;
-  try { sent = await sendKit(cfg, email, kit); } catch { sent = false; }
-  if (!sent) {
-    res.status(502).json({ error: 'send', message: "Couldn't send it just now — try again in a minute, or use Copy everything." });
+  let sent;
+  try { sent = await sendKit(cfg, email, kit); } catch (e) { sent = { ok: false, status: 0, detail: String(e && e.message || e).slice(0, 300) }; }
+  if (!sent.ok) {
+    console.error('email-kit: mailgun refused', sent.status, sent.detail);
+    res.status(502).json({ error: 'send', message: "Couldn't send it just now — try again in a minute, or use Copy everything.", upstream: { status: sent.status, detail: sent.detail } });
     return;
   }
 
