@@ -366,7 +366,6 @@
       renderKit();
       track('kit_built', { outcome: failures.length ? 'partial' : 'complete' });
       save('dmj_fp_kit', { parts: parts, meta: meta, ts: Date.now() });
-      clearStash();
       if(failures.length){ showError('Most of your kit is below, but these sections did not finish: ' + failures.join('; ') + '. ' + tryAgain()); }
       kitout.scrollIntoView({ behavior:'smooth', block:'start' });
     }).catch(function(e){
@@ -403,6 +402,20 @@
     return renewing;
   }
   function freeToken(){ return haveToken() ? Promise.resolve(token) : renewFree(); }
+  // ---------- build ----------
+  buy.addEventListener('click', function(){
+    hideError();
+    var inp = inputs();
+    if(!inp.denial && !inp.file){ showError('Paste the denial letter — or add a photo or PDF of it — first.'); denial.focus(); return; }
+    buy.disabled = true;
+    freeToken().then(function(t){ buy.disabled = false; build(t); }).catch(function(e){ buy.disabled = false; showError(e.message); });
+  });
+
+  $('regen').addEventListener('click', function(){
+    hideError();
+    freeToken().then(function(t){ build(t); }).catch(function(e){ showError(e.message); });
+  });
+
   // email me my kit
   var mailform = $('mailform'), mailemail = $('mailemail'), mailbtn = $('mailbtn'), mailmsg = $('mailmsg');
   function kitText(){ return sectionOrder.map(function(s){ return plain(s.title + '\n\n' + s.body); }).join('\n\n\n') + '\n\n\n' + deadlinesText(); }
