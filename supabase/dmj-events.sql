@@ -4,10 +4,14 @@
 -- alters nothing that already exists. Safe to re-run.
 --
 -- Why a function instead of an insert policy: this project also holds the patient
--- tables, so the site is never given a key that can do more than add a count. RLS is
--- on with NO policies, which makes dmj_events unreachable through the REST API
--- entirely; dmj_count() is the only way in and it can do nothing but insert.
+-- tables, so the site is never given a key that can do more than add a count. RLS is on
+-- with NO policies, so no anon request through PostgREST can read or write the table;
+-- dmj_count() is the intended way in and it can do nothing but insert.
 -- (Same choice as supabase/waitlist.sql, for the same reason.)
+--
+-- NOTE: RLS is doing that work on its own. Supabase's default privileges still grant anon
+-- and authenticated full table DML on any new table in public, so this file alone leaves
+-- those grants in place - run supabase/dmj-events-harden.sql to revoke them.
 --
 -- WHAT GOES IN HERE: counts and flags only — which action happened, which part of a
 -- kit, a severity label, a random per-build tag. Never submitted text, never an email
