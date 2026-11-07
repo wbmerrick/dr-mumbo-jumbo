@@ -445,6 +445,11 @@ module.exports = async (req, res) => {
     return;
   }
 
+  // Which kit this call belongs to. The browser mints one throwaway tag per build and
+  // sends it with all six parts, so the log can tell one kit's six calls from six kits,
+  // and a retried part from a second kit. Not a visitor id: random, per build, never reused.
+  const kid = String(body.kid || '').replace(/[^A-Za-z0-9]/g, '').slice(0, 24) || 'untagged';
+
   const auth = verify(body.token);
   if (!auth) {
     res.status(401).json({ error: 'locked', message: isFree()
@@ -571,8 +576,11 @@ module.exports = async (req, res) => {
     const text = stateFacts(built, part, { denial, extra, decode, files: !!(denialFile || recordsFile), level: post.level });
     const missing = P.slots.filter((alts) => !alts.some((h) => text.includes(h))).map((alts) => alts[0]);
     const usage = data.usage ? { in: data.usage.input_tokens, out: data.usage.output_tokens, cache_read: data.usage.cache_read_input_tokens || 0, cache_write: data.usage.cache_creation_input_tokens || 0 } : null;
-    // A kit is six calls, not one: part 1 is a kit started, part 6 is a kit finished.
-    count(part === 6 ? 'kit_done' : 'kit_part', { part, safety: post.level, urgent: urgent === true, missing: missing.length });
+    // One line per part that actually succeeded, tagged with its kit.
+    // Kits built = distinct kid with all 6 parts; part 6 alone does NOT mean a whole kit
+    // (parts 2-6 run in parallel, so 6 can land while 3 fails) and part 6 is re-asked
+    // when sections come back missing, which would double-count a single kit.
+    count('kit_part', { kid, part, safety: post.level, urgent: urgent === true, missing: missing.length });
     res.status(200).json({ part, text, sid: auth.sid === 'preview' || auth.sid === 'free' ? auth.sid : 'paid', stop: data.stop_reason || null, missing, trimmed: norm.trimmed, safety: post.level, ...post.counts, usage, deadline: deadline ? isoOf(deadline.date) : null, urgent, clock });
   } catch (e) {
     clearTimeout(timer);
