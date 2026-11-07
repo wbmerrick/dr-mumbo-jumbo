@@ -38,6 +38,35 @@ function toHtml(text) {
     + '</body></html>';
 }
 
+// Mailgun's error bodies can quote the recipient address back at us, and we never put an
+// address in a log line. Strip anything that looks like one, plus anything key-shaped.
+function scrub(s) {
+  return String(s)
+    .replace(/[^\s@<>"']+@[^\s@<>"']+\.[A-Za-z]{2,}/g, '<email>')
+    .replace(/\b[A-Za-z0-9_-]{32,}\b/g, '<redacted>')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 200);
+}
+
+// Turn Mailgun's HTTP status into the one thing worth knowing: what to go and fix.
+// Without this a 502 on the site is unexplainable from the outside, which is how the
+// email button sat broken from the evening it was switched on.
+function diagnose(status, detail) {
+  const d = String(detail || '');
+  if (status === 0) return { why: 'network_or_timeout', fix: 'Mailgun unreachable or slower than the timeout' };
+  if (status === 401) return { why: 'key_rejected', fix: 'MAILGUN_API_KEY wrong, or the account is EU-region and needs MAILGUN_API_BASE=https://api.eu.mailgun.net' };
+  if (status === 404) return { why: 'domain_not_found', fix: 'MAILGUN_DOMAIN is not a domain in this Mailgun account/region - check it is added exactly as spelled' };
+  if (status === 403) return { why: 'domain_not_verified', fix: 'Domain added but not verified: add Mailgun DNS records at the registrar and wait for verification' };
+  if (status === 400 && /authorized recipient|not allowed to send|sandbox/i.test(d)) return { why: 'recipient_not_authorized', fix: 'Sandbox domain only sends to authorized recipients - use a verified sending domain' };
+  if (status === 400) return { why: 'bad_request', fix: 'Mailgun rejected the message itself' };
+  if (status === 429) return { why: 'rate_limited', fix: 'Mailgun rate limit' };
+  if (status >= 500) return { why: 'mailgun_down', fix: 'Mailgun server error - retry' };
+  return { why: 'http_' + status, fix: 'Unmapped Mailgun status' };
+}
+
+const SEND_TIMEOUT_MS = 15000;
+
 async function sendKit(cfg, to, kit) {
   const form = new URLSearchParams();
   form.set('from', FROM);
@@ -45,12 +74,23 @@ async function sendKit(cfg, to, kit) {
   form.set('subject', SUBJECT);
   form.set('text', kit + FOOTER);
   form.set('html', toHtml(kit + FOOTER));
-  const r = await fetch(cfg.base + '/v3/' + cfg.domain + '/messages', {
-    method: 'POST',
-    headers: { Authorization: 'Basic ' + Buffer.from('api:' + cfg.key).toString('base64') },
-    body: form
-  });
-  return r.ok;
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), SEND_TIMEOUT_MS);
+  try {
+    const r = await fetch(cfg.base + '/v3/' + cfg.domain + '/messages', {
+      method: 'POST',
+      headers: { Authorization: 'Basic ' + Buffer.from('api:' + cfg.key).toString('base64') },
+      body: form,
+      signal: ctrl.signal
+    });
+    if (r.ok) return { ok: true };
+    // The body is why it failed. Keep it (scrubbed) instead of throwing it away.
+    let detail = '';
+    try { detail = await r.text(); } catch (e) { detail = ''; }
+    return { ok: false, status: r.status, detail: scrub(detail) };
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 async function keepAddress(email) {
@@ -109,9 +149,16 @@ module.exports = async (req, res) => {
     return;
   }
 
-  let sent = false;
-  try { sent = await sendKit(cfg, email, kit); } catch { sent = false; }
-  if (!sent) {
+  let sent;
+  try {
+    sent = await sendKit(cfg, email, kit);
+  } catch (e) {
+    sent = { ok: false, status: 0, detail: e && e.name === 'AbortError' ? 'aborted after ' + SEND_TIMEOUT_MS + 'ms' : scrub(e && e.message) };
+  }
+  if (!sent.ok) {
+    // Why it failed, in the counter, so the next failure is one query away instead of a guess.
+    const d = diagnose(sent.status, sent.detail);
+    await count('kit_email_failed', { status: sent.status, why: d.why, fix: d.fix, detail: sent.detail || null });
     res.status(502).json({ error: 'send', message: "Couldn't send it just now — try again in a minute, or use Copy everything." });
     return;
   }

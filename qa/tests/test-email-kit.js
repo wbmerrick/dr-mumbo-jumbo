@@ -11,12 +11,23 @@ const KIT = 'LETTER OF MEDICAL NECESSITY\n\nDear reviewer, ...\n\n\nYOUR DEADLIN
 // fetch stub: records calls, answers by host
 let calls = [];
 let mailgunOk = true, supabaseStatus = 201;
+let mailgunStatus = 401, mailgunBody = '';   // used when mailgunOk is false
+let mailgunHang = false;                      // never answers: the timeout must cut it
+
+// what the counter wrote, so the diagnosis can be asserted
+const counted = [];
+const realLog = console.log;
+console.log = (s) => { if (typeof s === 'string' && s.startsWith('[dmj] ')) counted.push(JSON.parse(s.slice(6))); else realLog(s); };
 global.fetch = async (url, opts) => {
   // the funnel count is its own endpoint; keep it out of `calls` so the mailgun and
   // waitlist assertions below still see exactly the calls they are about
   if (String(url).includes('/rpc/dmj_count')) return { ok: true, status: 204 };
   calls.push({ url: String(url), opts });
-  if (String(url).includes('mailgun')) return { ok: mailgunOk, status: mailgunOk ? 200 : 401 };
+  if (String(url).includes('mailgun')) {
+    if (mailgunHang) return new Promise((_, rej) => opts.signal.addEventListener('abort', () => rej(Object.assign(new Error('aborted'), { name: 'AbortError' }))));
+    if (mailgunOk) return { ok: true, status: 200, text: async () => '' };
+    return { ok: false, status: mailgunStatus, text: async () => mailgunBody };
+  }
   if (String(url).includes('supabase')) return { ok: supabaseStatus < 300, status: supabaseStatus };
   throw new Error('unexpected fetch ' + url);
 };
@@ -75,5 +86,50 @@ global.fetch = async (url, opts) => {
   const h = calls.find(c => c.url.includes('mailgun')).opts.body.get('html');
   assert(h.includes('&lt;script&gt;') && h.includes('&amp;') && h.includes('&quot;q&quot;'), 'html escaped');
 
-  console.log('test-email-kit: ok');
+  // ---------- the 502 now explains itself ----------
+  // Each case is a real Mailgun refusal mode for a domain that was added but never finished.
+  const cases = [
+    [401, '{"message":"Invalid private key"}',                              'key_rejected',            /EU-region|MAILGUN_API_KEY/],
+    [404, '{"message":"Domain not found: dr-mumbo-jumbo.com"}',             'domain_not_found',        /not a domain in this Mailgun account/],
+    [403, '{"message":"Domain dr-mumbo-jumbo.com is not verified"}',        'domain_not_verified',     /DNS records at the registrar/],
+    [400, '{"message":"Sandbox subdomains are for test purposes only. Please add your own domain or add the address to authorized recipients"}', 'recipient_not_authorized', /authorized recipients|verified sending domain/],
+    [429, '{"message":"Too many requests"}',                                'rate_limited',            /rate limit/i],
+    [503, '{"message":"upstream"}',                                         'mailgun_down',            /retry/i]
+  ];
+  for (const [status, body, why, fixRe] of cases) {
+    mailgunOk = false; mailgunStatus = status; mailgunBody = body; counted.length = 0; calls = [];
+    res = mockRes();
+    await handler({ method:'POST', body:{ email:'will@example.com', kit:KIT, token } }, res);
+    assert.strictEqual(res.code, 502, status + ' -> still a 502 to the visitor');
+    const f = counted.find(c => c.evt === 'kit_email_failed');
+    assert(f, status + ' -> failure was counted');
+    assert.strictEqual(f.status, status, status + ' -> status recorded');
+    assert.strictEqual(f.why, why, status + ' -> diagnosed as ' + why);
+    assert(fixRe.test(f.fix), status + ' -> fix names the thing to change');
+    // the visitor's address must never reach a log line, even though Mailgun echoed it
+    const blob = JSON.stringify(f);
+    assert(!/will@example\.com/.test(blob), status + ' -> address not logged');
+    assert(!/dr-mumbo-jumbo\.com@|@example/.test(blob), status + ' -> no address at all');
+    assert.strictEqual(calls.filter(c => c.url.includes('supabase')).length, 0, status + ' -> address not kept on failure');
+  }
+
+  // Mailgun echoing the recipient back is scrubbed, not stored
+  mailgunOk = false; mailgunStatus = 400; mailgunBody = '{"message":"will@example.com is not an authorized recipient"}';
+  counted.length = 0;
+  res = mockRes(); await handler({ method:'POST', body:{ email:'will@example.com', kit:KIT, token } }, res);
+  const scrubbed = counted.find(c => c.evt === 'kit_email_failed');
+  assert(/<email>/.test(scrubbed.detail), 'echoed address replaced with a placeholder');
+  assert(!/will@example/.test(scrubbed.detail), 'echoed address gone');
+
+  // a hanging Mailgun is cut off, not left to burn the function's 30s
+  mailgunHang = true; counted.length = 0;
+  const t0 = Date.now();
+  res = mockRes(); await handler({ method:'POST', body:{ email:'a@b.co', kit:KIT, token } }, res);
+  assert.strictEqual(res.code, 502, 'hanging send -> 502');
+  assert(Date.now() - t0 < 20000, 'hanging send is cut off by the timeout');
+  assert.strictEqual(counted.find(c => c.evt === 'kit_email_failed').why, 'network_or_timeout', 'hang diagnosed as timeout');
+  mailgunHang = false;
+
+  console.log = realLog;
+  console.log('test-email-kit: ok (including 502 diagnosis)');
 })().catch(e => { console.error(e); process.exit(1); });
