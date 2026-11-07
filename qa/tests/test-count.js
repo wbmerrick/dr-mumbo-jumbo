@@ -15,7 +15,19 @@ const realLog = console.log;
 console.log = (s) => { if (typeof s === 'string' && s.startsWith('[dmj] ')) lines.push(JSON.parse(s.slice(6))); else realLog(s); };
 
 let reply = '';
-global.fetch = async () => ({ ok: true, status: 200, json: async () => ({ content: [{ type: 'text', text: reply }], stop_reason: 'end_turn', usage: { input_tokens: 1, output_tokens: 1 } }) });
+const rpc = [];              // durable writes the handler attempted
+let rpcMode = 'ok';          // 'ok' | 'error' | 'throw' | 'hang'
+global.fetch = async (url, opts) => {
+  if (String(url).includes('/rpc/dmj_count')) {
+    rpc.push({ url: String(url), headers: opts.headers, body: JSON.parse(opts.body) });
+    if (rpcMode === 'throw') throw new Error('network down');
+    if (rpcMode === 'error') return { ok: false, status: 404, json: async () => ({ message: 'function not found' }) };
+    // models real fetch: never settles on its own, rejects when the signal aborts
+    if (rpcMode === 'hang') return new Promise((_, rej) => opts.signal.addEventListener('abort', () => rej(Object.assign(new Error('aborted'), { name: 'AbortError' }))));
+    return { ok: true, status: 204, json: async () => null };
+  }
+  return { ok: true, status: 200, json: async () => ({ content: [{ type: 'text', text: reply }], stop_reason: 'end_turn', usage: { input_tokens: 1, output_tokens: 1 } }) };
+};
 const fp = require('../../api/fightpack.js');
 
 const REPLIES = {
@@ -62,6 +74,26 @@ let n = 0; const ok = (c, m) => { assert(c, m); n++; };
   // no line ever carries submitted content
   const blob = JSON.stringify(lines);
   ok(!/Claim 123|CO-50|passwd/.test(blob.replace(/etcpasswdDROPTABLEx/g, '')), 'no submitted text in any count line');
+
+  // ---------- the durable half ----------
+  ok(rpc.length === lines.length, 'every log line also attempted a durable write');
+  const last = rpc[rpc.length - 1];
+  ok(last.url.endsWith('/rest/v1/rpc/dmj_count'), 'writes go through the insert-only function');
+  ok(last.body.p_evt === 'kit_part' && typeof last.body.p_data === 'object', 'function arg shape');
+  ok(!!last.headers.apikey, 'anon key sent');
+  const rblob = JSON.stringify(rpc.map((r) => r.body));
+  ok(!/Claim 123|CO-50/.test(rblob), 'no submitted text in any durable write');
+
+  // A counter must never be able to break the site. Each of these would, if awaited naively.
+  rpcMode = 'error';
+  ok((await call(1, 'kitERR01')).code === 200, 'request still succeeds when dmj_count() is missing');
+  rpcMode = 'throw';
+  ok((await call(1, 'kitERR02')).code === 200, 'request still succeeds when the database is unreachable');
+  rpcMode = 'hang';
+  const t0 = Date.now();
+  ok((await call(1, 'kitERR03')).code === 200, 'request still succeeds when the write hangs');
+  ok(Date.now() - t0 < 4000, 'a hanging write is cut off by the timeout, not left to stall the response');
+  rpcMode = 'ok';
 
   console.log = realLog;
   console.log('count/kid tests passed (' + n + ' assertions)');

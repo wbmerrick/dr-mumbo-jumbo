@@ -12,6 +12,9 @@ const KIT = 'LETTER OF MEDICAL NECESSITY\n\nDear reviewer, ...\n\n\nYOUR DEADLIN
 let calls = [];
 let mailgunOk = true, supabaseStatus = 201;
 global.fetch = async (url, opts) => {
+  // the funnel count is its own endpoint; keep it out of `calls` so the mailgun and
+  // waitlist assertions below still see exactly the calls they are about
+  if (String(url).includes('/rpc/dmj_count')) return { ok: true, status: 204 };
   calls.push({ url: String(url), opts });
   if (String(url).includes('mailgun')) return { ok: mailgunOk, status: mailgunOk ? 200 : 401 };
   if (String(url).includes('supabase')) return { ok: supabaseStatus < 300, status: supabaseStatus };

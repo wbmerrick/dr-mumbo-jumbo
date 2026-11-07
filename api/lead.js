@@ -49,7 +49,7 @@ module.exports = async (req, res) => {
     });
 
     if (r.ok || r.status === 409) {
-      count('lead', { dup: r.status === 409 });
+      await count('lead', { dup: r.status === 409 });
       res.status(200).json({ ok: true, message: "You're on the list. First access + the launch price are yours." });
       return;
     }
