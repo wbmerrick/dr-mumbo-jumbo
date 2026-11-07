@@ -87,6 +87,7 @@ ${jsonld || ''}
 .relgrid a:hover{border-color:var(--accent);color:var(--text);text-decoration:none}
 .cta{margin-top:30px}
 </style>
+<script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>
 ${SPRITE}

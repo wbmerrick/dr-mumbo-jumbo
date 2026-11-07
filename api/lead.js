@@ -7,6 +7,8 @@ const SUPABASE_URL = 'https://jodcpflzbmhnnivtwghw.supabase.co';
 const SUPABASE_ANON_KEY =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpvZGNwZmx6Ym1obm5pdnR3Z2h3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxMTM0NDIsImV4cCI6MjEwNTY4OTQ0Mn0.Jf3_CjQ_UALHyMvzhQTxisEvSqCK7AAM-DaKe0KJNG8';
 
+const count = require('./_lib/count.js');
+
 const FIGHTING = new Set(['denied-claim', 'big-bill', 'confusing-eob', 'other']);
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
@@ -47,6 +49,7 @@ module.exports = async (req, res) => {
     });
 
     if (r.ok || r.status === 409) {
+      count('lead', { dup: r.status === 409 });
       res.status(200).json({ ok: true, message: "You're on the list. First access + the launch price are yours." });
       return;
     }

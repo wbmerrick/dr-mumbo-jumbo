@@ -34,6 +34,7 @@
   }
 
 </style>
+<script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>
 <svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
@@ -187,6 +188,9 @@
     jargon: 'Paste the note here. For example: Acute on chronic systolic heart failure, EF 35%, BNP 1840. Started IV diuresis, strict I/Os, holding ACE-I for AKI…',
     bill: 'Paste the bill, EOB or denial letter here. For example: CPT 99284 ER visit $1,842 … CO-45 adjustment … DENIED CO-50: not medically necessary. Patient responsibility: $638. Appeal within 180 days.'
   };
+  // Vercel Web Analytics custom event. No-op until Web Analytics is on, and if an
+  // ad blocker eats the script; the server-side [dmj] counts are the backstop.
+  function ev(name, data){ try{ if(window.va) window.va('event', { name: name, data: data || {} }); }catch(e){} }
   function setMode(m){
     mode = m;
     modeJargon.classList.toggle('on', m === 'jargon');
@@ -363,6 +367,7 @@
       rawText = res.data.translation || '';
       output.innerHTML = render(rawText);
       result.classList.add('on');
+      ev('translate_done', { mode: mode });
       result.scrollIntoView({behavior:'smooth', block:'start'});
     })
     .catch(function(){

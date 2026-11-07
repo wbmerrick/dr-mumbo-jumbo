@@ -12,6 +12,7 @@
 // Needs ANTHROPIC_API_KEY plus an unlock token from /api/unlock (free token, Stripe session or preview code).
 const { verify, isFree } = require('../lib/unlock.js');
 const { sanitizeFile, fileBlock, MAX_FILE_B64 } = require('../lib/files.js');
+const count = require('./_lib/count.js');
 
 const MAX_CHARS = 6000;
 const MAX_EXTRA = 1500;
@@ -570,6 +571,8 @@ module.exports = async (req, res) => {
     const text = stateFacts(built, part, { denial, extra, decode, files: !!(denialFile || recordsFile), level: post.level });
     const missing = P.slots.filter((alts) => !alts.some((h) => text.includes(h))).map((alts) => alts[0]);
     const usage = data.usage ? { in: data.usage.input_tokens, out: data.usage.output_tokens, cache_read: data.usage.cache_read_input_tokens || 0, cache_write: data.usage.cache_creation_input_tokens || 0 } : null;
+    // A kit is six calls, not one: part 1 is a kit started, part 6 is a kit finished.
+    count(part === 6 ? 'kit_done' : 'kit_part', { part, safety: post.level, urgent: urgent === true, missing: missing.length });
     res.status(200).json({ part, text, sid: auth.sid === 'preview' || auth.sid === 'free' ? auth.sid : 'paid', stop: data.stop_reason || null, missing, trimmed: norm.trimmed, safety: post.level, ...post.counts, usage, deadline: deadline ? isoOf(deadline.date) : null, urgent, clock });
   } catch (e) {
     clearTimeout(timer);
