@@ -2,13 +2,13 @@
 (function(){
   var $ = function(id){ return document.getElementById(id); };
   var denial = $('denial'), extra = $('extra'), buy = $('buy'), example = $('example');
-  var errbox = $('error'), notice = $('notice'), wait = $('wait');
+  var errbox = $('error'), notice = $('notice');
   var attachBtn = $('attach'), fileInput = $('file'), filechip = $('filechip'), filename = $('filename'), fileclear = $('fileclear');
   var attachRec = $('attachrec'), recInput = $('recfile'), recchip = $('recchip'), recname = $('recname'), recclear = $('recclear');
   var progress = $('progress'), kitout = $('kitout'), docsEl = $('docs');
   var attached = null, records = null, token = null, parts = {}, meta = null;
-  var configured = null;
-  // Free unless the server says otherwise (GET /api/checkout → free:false switches back to checkout).
+  // The Fight Pack is free and there is no checkout. Kept as a constant so the free-path
+  // branches below read the same as they always did.
   var free = true;
 
   var EXAMPLE_DENIAL = 'EXAMPLE NOTICE OF ADVERSE BENEFIT DETERMINATION — Reference 00000000. Date of notice: 10/02/2026. Member: [name]. Provider: Example Imaging Center. Date of service: 09/14/2026. Service: MRI lumbar spine without contrast (CPT 72148), billed $1,650.00. DETERMINATION: DENIED. Reason CO-50: not deemed a medical necessity by the payer. Per policy IMG-204, advanced imaging of the lumbar spine requires documentation of at least six weeks of conservative therapy unless red-flag findings are present. Member responsibility pending appeal: $1,650.00. You or your authorized representative may file an internal appeal within 180 days of this notice.';
@@ -17,30 +17,12 @@
   // ---------- storage helpers ----------
   // Vercel Web Analytics custom event. No-op until Web Analytics is on, and if an
   // ad blocker eats the script; the server-side [dmj] counts are the backstop.
-  function ev(name, data){ try{ if(window.va) window.va('event', { name: name, data: data || {} }); }catch(e){} }
+  // Named 'track', not 'ev': every submit handler here takes an event parameter called
+  // ev, which shadowed the helper and made kit_emailed and lead throw instead of fire.
+  function track(name, data){ try{ if(window.va) window.va('event', { name: name, data: data || {} }); }catch(e){} }
   function save(key, val){ try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){} }
   function load(key){ try{ var v = localStorage.getItem(key); return v ? JSON.parse(v) : null; }catch(e){ return null; } }
   function drop(key){ try{ localStorage.removeItem(key); }catch(e){} }
-  function stashInputs(){
-    var text = { denial: denial.value, extra: extra.value, fileName: attached ? attached.name : null, recName: records ? records.name : null };
-    try{ sessionStorage.setItem('dmj_fp_text', JSON.stringify(text)); }catch(e){}
-    try{ sessionStorage.setItem('dmj_fp_files', JSON.stringify({ file: attached, records: records })); }catch(e){ try{ sessionStorage.removeItem('dmj_fp_files'); }catch(e2){} }
-  }
-  function restoreInputs(){
-    try{
-      var t = JSON.parse(sessionStorage.getItem('dmj_fp_text') || 'null');
-      if(t){ denial.value = t.denial || ''; extra.value = t.extra || ''; }
-      var f = JSON.parse(sessionStorage.getItem('dmj_fp_files') || 'null');
-      if(f){
-        if(f.file){ attached = f.file; filename.textContent = attached.name; filechip.classList.add('on'); }
-        if(f.records){ records = f.records; recname.textContent = records.name; recchip.classList.add('on'); }
-      } else if(t && (t.fileName || t.recName)){
-        showNotice('Your text is back. Browser storage couldn\'t hold the attachment across checkout — please add the ' + (t.fileName ? 'photo/PDF of the denial' : 'records file') + ' again, then click Rebuild.');
-      }
-    }catch(e){}
-  }
-  function clearStash(){ try{ sessionStorage.removeItem('dmj_fp_text'); sessionStorage.removeItem('dmj_fp_files'); }catch(e){} }
-
   // ---------- files ----------
   function prepFile(f, ok, fail){
     var MAX = 3 * 1024 * 1024;
@@ -334,7 +316,7 @@
     building = true; hideError(); hideNotice();
     // One throwaway tag for this build's six calls. Random, not stored, never reused.
     var kid = Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
-    ev('kit_start', { files: !!(inp.file || inp.records) });
+    track('kit_start', { files: !!(inp.file || inp.records) });
     parts = {}; meta = null;
     resetSteps(); progress.classList.add('on'); startMorph(morphEl, MORPH); kitout.classList.remove('on');
     progress.scrollIntoView({ behavior:'smooth', block:'start' });
@@ -382,7 +364,7 @@
       building = false; buy.disabled = false;
       progress.classList.remove('on'); stopMorph(morphEl);
       renderKit();
-      ev('kit_built', { outcome: failures.length ? 'partial' : 'complete' });
+      track('kit_built', { outcome: failures.length ? 'partial' : 'complete' });
       save('dmj_fp_kit', { parts: parts, meta: meta, ts: Date.now() });
       clearStash();
       if(failures.length){ showError('Most of your kit is below, but these sections did not finish: ' + failures.join('; ') + '. ' + tryAgain()); }
@@ -390,7 +372,7 @@
     }).catch(function(e){
       building = false; buy.disabled = false;
       progress.classList.remove('on'); stopMorph(morphEl);
-      ev('kit_failed');
+      track('kit_failed');
       showError((e && e.message ? e.message : 'Something went wrong.') + ' ' + tryAgain());
       if(parts[1]) kitout.classList.add('on');
       $('tool').scrollIntoView({ behavior:'smooth', block:'start' });
@@ -421,59 +403,6 @@
     return renewing;
   }
   function freeToken(){ return haveToken() ? Promise.resolve(token) : renewFree(); }
-  // Paid mode (free:false from the server) restores the checkout copy.
-  function applyMode(){
-    if(free) return;
-    $('eyebrow').textContent = 'One denial · built by a practicing physician';
-    $('codelink').hidden = false;
-    if(!haveToken()){ buy.textContent = 'Get my Fight Pack'; $('pricenote').textContent = 'One-time. Use it for this denial as often as you need for 3 days.'; }
-    refreshBuyLabel();
-  }
-
-  $('regen').addEventListener('click', function(){
-    if(free){ hideError(); freeToken().then(function(t){ build(t); }).catch(function(e){ showError(e.message); }); return; }
-    if(!haveToken()){ showError('Your 3-day unlock has ended. Get a new Fight Pack for a new denial.'); $('tool').scrollIntoView({behavior:'smooth'}); return; }
-    build(token);
-  });
-
-  // ---------- unlock paths ----------
-  function unlockWith(body){
-    hideError();
-    return postJSON('/api/unlock', body, 30000).then(function(res){
-      if(!res.ok){ throw new Error(res.data.message || 'Could not unlock.'); }
-      keepToken(res.data.token);
-      return res.data.token;
-    });
-  }
-  $('havecode').addEventListener('click', function(){
-    if(haveToken()){ build(token); return; }
-    var code = window.prompt('Enter your code:');
-    if(!code) return;
-    unlockWith({ code: code.trim() }).then(function(tok){ build(tok); }).catch(function(e){ showError(e.message); });
-  });
-
-  buy.addEventListener('click', function(){
-    hideError();
-    var inp = inputs();
-    if(free){
-      if(!inp.denial && !inp.file){ showError('Paste the denial letter — or add a photo or PDF of it — first.'); denial.focus(); return; }
-      buy.disabled = true;
-      freeToken().then(function(t){ buy.disabled = false; build(t); }).catch(function(e){ buy.disabled = false; showError(e.message); });
-      return;
-    }
-    if(!inp.denial && !inp.file){ showError('Paste the denial letter — or add a photo or PDF of it — first, so your kit is ready the moment you\'re back from checkout.'); denial.focus(); return; }
-    if(haveToken()){ build(token); return; }
-    if(configured === false){ wait.classList.add('on'); wait.scrollIntoView({behavior:'smooth', block:'center'}); return; }
-    buy.disabled = true; buy.textContent = 'Opening secure checkout…';
-    stashInputs();
-    postJSON('/api/checkout', {}, 30000).then(function(res){
-      if(res.ok && res.data.url){ location.href = res.data.url; return; }
-      buy.disabled = false; buy.textContent = 'Get my Fight Pack';
-      if(res.status === 503){ configured = false; wait.classList.add('on'); wait.scrollIntoView({behavior:'smooth', block:'center'}); return; }
-      showError(res.data.message || "Couldn't start checkout. Try again in a moment.");
-    });
-  });
-
   // email me my kit
   var mailform = $('mailform'), mailemail = $('mailemail'), mailbtn = $('mailbtn'), mailmsg = $('mailmsg');
   function kitText(){ return sectionOrder.map(function(s){ return plain(s.title + '\n\n' + s.body); }).join('\n\n\n') + '\n\n\n' + deadlinesText(); }
@@ -484,43 +413,17 @@
       mailbtn.disabled = false; mailbtn.textContent = 'Email me my kit';
       mailmsg.className = 'wait-msg ' + (res.ok ? 'ok' : 'err');
       mailmsg.textContent = (res.data && res.data.message) || (res.ok ? 'Sent. Check your inbox.' : "Couldn't send it — try again in a minute.");
-      if(res.ok) ev('kit_emailed');
+      if(res.ok) track('kit_emailed');
       if(res.ok) mailform.reset();
-    });
-  });
-
-  // waitlist (fallback)
-  var leadform = $('leadform'), leademail = $('leademail'), leadbtn = $('leadbtn'), leadmsg = $('leadmsg');
-  leadform.addEventListener('submit', function(ev){
-    ev.preventDefault();
-    leadmsg.className = 'wait-msg'; leadbtn.disabled = true; leadbtn.textContent = 'Saving…';
-    postJSON('/api/lead', { email: leademail.value, fighting: 'denied-claim' }, 20000).then(function(res){
-      leadbtn.disabled = false; leadbtn.textContent = 'Reserve the founding price';
-      leadmsg.className = 'wait-msg ' + (res.ok ? 'ok' : 'err');
-      leadmsg.textContent = (res.data && res.data.message) || (res.ok ? "You're on the list." : "Couldn't save your spot — try again in a minute.");
-      if(res.ok) ev('lead');
-      if(res.ok) leadform.reset();
     });
   });
 
   // ---------- boot ----------
   (function boot(){
-    var q; try{ q = new URLSearchParams(location.search); }catch(e){ q = null; }
-    var sid = q && q.get('session_id');
-    var canceled = q && q.get('canceled');
-    if(sid || canceled){ restoreInputs(); try{ history.replaceState(null, '', '/fightpack'); }catch(e){} }
-    if(canceled){ showNotice('No charge was made. Your text is still here whenever you\'re ready.'); }
-
+    // No checkout, so no session to come back from and nothing to ask the server about
+    // before the page is usable.
     refreshBuyLabel();
-    fetch('/api/checkout', { method:'GET' }).then(function(r){ return r.json(); }).then(function(d){ configured = !!d.configured; free = d.free !== false; applyMode(); if(!free && !configured && !sid && !haveToken()){ $('pricenote').textContent = 'Launching shortly — reserve the founding price below.'; } }).catch(function(){ configured = null; });
 
-    if(sid){
-      showNotice('Payment received — unlocking your kit…');
-      unlockWith({ session_id: sid }).then(function(tok){ hideNotice(); build(tok); }).catch(function(e){
-        showError('Payment went through but the unlock didn\'t: ' + e.message + ' Reload this page to try again; if it keeps failing, your Stripe receipt has the seller\'s contact details.');
-      });
-      return;
-    }
     var saved = load('dmj_fp_kit');
     if(saved && saved.parts && saved.ts && Date.now() - saved.ts < 72*3600*1000){
       parts = saved.parts; meta = saved.meta || null; renderKit(); applyMeta();

@@ -17,7 +17,7 @@
 //     kits started = distinct data->>'kid'
 //   Never count rows or log lines. See qa/tests/test-count.js.
 //
-// The key below is Supabase's publishable (anon) key — public by design, same as api/lead.js.
+// The key below is Supabase's publishable (anon) key — public by design, same as api/email-kit.js.
 // dmj_events has RLS on with no policies, so the REST API cannot touch the table; the only
 // way in is dmj_count(), which can insert and nothing else.
 const SUPABASE_URL = 'https://jodcpflzbmhnnivtwghw.supabase.co';
