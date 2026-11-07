@@ -18,8 +18,10 @@
 //   Never count rows or log lines. See qa/tests/test-count.js.
 //
 // The key below is Supabase's publishable (anon) key — public by design, same as api/email-kit.js.
-// dmj_events has RLS on with no policies, so the REST API cannot touch the table; the only
-// way in is dmj_count(), which can insert and nothing else.
+// dmj_events has RLS on with no policies, so no anon request through the REST API can read
+// or write the table; dmj_count() is the way in, and it can insert and nothing else.
+// (Supabase's default privileges also hand anon table-level DML on new public tables;
+// supabase/dmj-events-harden.sql revokes those so RLS is not the only thing holding.)
 const SUPABASE_URL = 'https://jodcpflzbmhnnivtwghw.supabase.co';
 const SUPABASE_ANON_KEY =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpvZGNwZmx6Ym1obm5pdnR3Z2h3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxMTM0NDIsImV4cCI6MjEwNTY4OTQ0Mn0.Jf3_CjQ_UALHyMvzhQTxisEvSqCK7AAM-DaKe0KJNG8';
