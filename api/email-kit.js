@@ -9,6 +9,7 @@
 // actually went out. The key below is Supabase's publishable (anon) key, public by design; the table
 // is protected by row-level security that allows inserts only (see api/lead.js).
 const { verify } = require('../lib/unlock.js');
+const count = require('./_lib/count.js');
 
 const SUPABASE_URL = 'https://jodcpflzbmhnnivtwghw.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpvZGNwZmx6Ym1obm5pdnR3Z2h3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxMTM0NDIsImV4cCI6MjEwNTY4OTQ0Mn0.Jf3_CjQ_UALHyMvzhQTxisEvSqCK7AAM-DaKe0KJNG8';
@@ -116,5 +117,6 @@ module.exports = async (req, res) => {
   }
 
   await keepAddress(email);
+  count('kit_emailed');
   res.status(200).json({ ok: true, message: 'Sent. Check your inbox — and spam, the first time.' });
 };

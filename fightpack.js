@@ -15,6 +15,9 @@
   var EXAMPLE_EXTRA = 'Eight weeks of physical therapy and naproxen before the MRI; new left-leg weakness and numbness started in late August; my orthopedist ordered the MRI to decide about surgery.';
 
   // ---------- storage helpers ----------
+  // Vercel Web Analytics custom event. No-op until Web Analytics is on, and if an
+  // ad blocker eats the script; the server-side [dmj] counts are the backstop.
+  function ev(name, data){ try{ if(window.va) window.va('event', { name: name, data: data || {} }); }catch(e){} }
   function save(key, val){ try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){} }
   function load(key){ try{ var v = localStorage.getItem(key); return v ? JSON.parse(v) : null; }catch(e){ return null; } }
   function drop(key){ try{ localStorage.removeItem(key); }catch(e){} }
@@ -329,6 +332,7 @@
     var inp = inputs();
     if(!inp.denial && !inp.file){ showError('Paste the denial letter — or add a photo or PDF of it — then rebuild.'); return; }
     building = true; hideError(); hideNotice();
+    ev('kit_start', { files: !!(inp.file || inp.records) });
     parts = {}; meta = null;
     resetSteps(); progress.classList.add('on'); startMorph(morphEl, MORPH); kitout.classList.remove('on');
     progress.scrollIntoView({ behavior:'smooth', block:'start' });
@@ -376,6 +380,7 @@
       building = false; buy.disabled = false;
       progress.classList.remove('on'); stopMorph(morphEl);
       renderKit();
+      ev('kit_built', { outcome: failures.length ? 'partial' : 'complete' });
       save('dmj_fp_kit', { parts: parts, meta: meta, ts: Date.now() });
       clearStash();
       if(failures.length){ showError('Most of your kit is below, but these sections did not finish: ' + failures.join('; ') + '. ' + tryAgain()); }
@@ -383,6 +388,7 @@
     }).catch(function(e){
       building = false; buy.disabled = false;
       progress.classList.remove('on'); stopMorph(morphEl);
+      ev('kit_failed');
       showError((e && e.message ? e.message : 'Something went wrong.') + ' ' + tryAgain());
       if(parts[1]) kitout.classList.add('on');
       $('tool').scrollIntoView({ behavior:'smooth', block:'start' });
@@ -476,6 +482,7 @@
       mailbtn.disabled = false; mailbtn.textContent = 'Email me my kit';
       mailmsg.className = 'wait-msg ' + (res.ok ? 'ok' : 'err');
       mailmsg.textContent = (res.data && res.data.message) || (res.ok ? 'Sent. Check your inbox.' : "Couldn't send it — try again in a minute.");
+      if(res.ok) ev('kit_emailed');
       if(res.ok) mailform.reset();
     });
   });
@@ -489,6 +496,7 @@
       leadbtn.disabled = false; leadbtn.textContent = 'Reserve the founding price';
       leadmsg.className = 'wait-msg ' + (res.ok ? 'ok' : 'err');
       leadmsg.textContent = (res.data && res.data.message) || (res.ok ? "You're on the list." : "Couldn't save your spot — try again in a minute.");
+      if(res.ok) ev('lead');
       if(res.ok) leadform.reset();
     });
   });

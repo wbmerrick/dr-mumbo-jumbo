@@ -92,6 +92,7 @@ ${schema.libraryPage(ALL, TITLE, DESC)}
 .cn{font-size:14px;color:var(--soft)}
 .cta{margin:40px 0 0}
 </style>
+<script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>
 <svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">

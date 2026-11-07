@@ -72,6 +72,8 @@ function isBudget(status, detail) {
   return status === 402 || /spend_limit|billing/i.test(code) || /usage limits|credit balance|spend limit|billing/i.test(msg);
 }
 
+const count = require('./_lib/count.js');
+
 module.exports = async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
 
@@ -187,6 +189,7 @@ module.exports = async (req, res) => {
       return;
     }
 
+    count('appeal');
     res.status(200).json({ letter });
   } catch {
     res.status(500).json({ error: 'server', message: 'Something went wrong on our end. Try again in a moment.' });
