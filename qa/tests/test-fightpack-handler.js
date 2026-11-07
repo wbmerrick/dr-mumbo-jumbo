@@ -12,6 +12,9 @@ let lastReq = null;
 let reply = '';
 let stopReason = 'end_turn';
 global.fetch = async (url, opts) => {
+  // The handler also posts a funnel count (api/_lib/count.js). That is not the call
+  // under test here: answer it and keep the Anthropic request as the recorded one.
+  if (String(url).includes('/rpc/dmj_count')) return { ok: true, status: 204, json: async () => null };
   lastReq = { url, body: JSON.parse(opts.body), headers: opts.headers };
   return { ok: true, status: 200, json: async () => ({ content: [{ type: 'text', text: reply }], stop_reason: stopReason, usage: { input_tokens: 10, output_tokens: 5, cache_read_input_tokens: 7, cache_creation_input_tokens: 0 } }) };
 };

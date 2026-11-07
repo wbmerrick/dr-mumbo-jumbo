@@ -137,6 +137,9 @@ ok(/It is not designed to deliver the intensity/.test(lim) && /A car is not vali
 // ---------- through the handler ----------
 let reply = '', lastAsk = '';
 global.fetch = async (url, opts) => {
+  // The handler also posts a funnel count (api/_lib/count.js). That is not the call
+  // under test here: answer it and keep the Anthropic request as the recorded one.
+  if (String(url).includes('/rpc/dmj_count')) return { ok: true, status: 204, json: async () => null };
   const b = JSON.parse(opts.body);
   lastAsk = b.messages[0].content.slice(-1)[0].text;
   return { ok: true, status: 200, json: async () => ({ content: [{ type: 'text', text: reply }], stop_reason: 'end_turn', usage: { input_tokens: 1, output_tokens: 1 } }) };

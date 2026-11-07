@@ -580,7 +580,7 @@ module.exports = async (req, res) => {
     // Kits built = distinct kid with all 6 parts; part 6 alone does NOT mean a whole kit
     // (parts 2-6 run in parallel, so 6 can land while 3 fails) and part 6 is re-asked
     // when sections come back missing, which would double-count a single kit.
-    count('kit_part', { kid, part, safety: post.level, urgent: urgent === true, missing: missing.length });
+    await count('kit_part', { kid, part, safety: post.level, urgent: urgent === true, missing: missing.length });
     res.status(200).json({ part, text, sid: auth.sid === 'preview' || auth.sid === 'free' ? auth.sid : 'paid', stop: data.stop_reason || null, missing, trimmed: norm.trimmed, safety: post.level, ...post.counts, usage, deadline: deadline ? isoOf(deadline.date) : null, urgent, clock });
   } catch (e) {
     clearTimeout(timer);

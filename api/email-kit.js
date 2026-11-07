@@ -117,6 +117,6 @@ module.exports = async (req, res) => {
   }
 
   await keepAddress(email);
-  count('kit_emailed');
+  await count('kit_emailed');
   res.status(200).json({ ok: true, message: 'Sent. Check your inbox — and spam, the first time.' });
 };

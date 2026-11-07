@@ -212,7 +212,7 @@ module.exports = async (req, res) => {
       return;
     }
 
-    count('translate', { mode });
+    await count('translate', { mode });
     res.status(200).json({ translation });
   } catch {
     res.status(500).json({ error: 'server', message: 'Something went wrong on our end. Try again in a moment.' });
