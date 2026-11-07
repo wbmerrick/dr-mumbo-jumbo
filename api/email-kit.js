@@ -7,7 +7,7 @@
 //
 // The address is kept in the same table as the waitlist (source 'kit-email'), only after the email
 // actually went out. The key below is Supabase's publishable (anon) key, public by design; the table
-// is protected by row-level security that allows inserts only (see api/lead.js).
+// is protected by row-level security that allows inserts only.
 const { verify } = require('../lib/unlock.js');
 const count = require('./_lib/count.js');
 

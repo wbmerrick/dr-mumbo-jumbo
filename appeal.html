@@ -53,11 +53,8 @@
   <div class="wrap bar">
     <a class="brand" href="/" aria-label="Dr Mumbo Jumbo, home"><span class="mark" aria-hidden="true"><svg viewBox="0 0 64 48" width="38" height="29"><g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M10 34C12 20 16 10 20 10c3 0 2 14 4 20 2 6 5-12 9-14 3-1 3 10 7 11 4 1 8-3 14-5" stroke="currentColor" stroke-width="3.2"/><path d="M7 41h50" stroke="var(--accent)" stroke-width="3.6"/></g></svg></span><span class="wm">Dr Mumbo <span class="lime">Jumbo</span></span></a>
     <nav class="nav" aria-label="Main">
-      <a href="/" class="xl">Translator</a>
-      <a href="/appeal" aria-current="page">Appeal<span class="xl"> letter</span></a>
-      <a href="/denials">Playbook</a>
-      <a href="/codes/">Codes</a>
-      <a class="btn btn-primary btn-sm" href="/fightpack">Fight Pack</a>
+      <a href="/how-its-tested">How it's tested</a>
+      <a class="btn btn-primary btn-sm" href="/">Build my kit</a>
     </nav>
   </div>
 </header>
@@ -100,7 +97,7 @@
         </div>
         <div class="prose" id="output"></div>
         <div class="hr mt-3"></div>
-        <p class="small mt-2">This is a draft for you to finish and send: education, not legal advice. Fill every [bracket] and check the deadline on your denial letter. The strongest attachment is your doctor's letter of medical necessity; <a href="/fightpack">the Fight Pack writes it for them to sign</a>, with the scripts, the records request and the deadlines. Full strategy: <a href="/denials">the Denial Playbook</a>.</p>
+        <p class="small mt-2">This is a draft for you to finish and send: education, not legal advice. Fill every [bracket] and check the deadline on your denial letter. The strongest attachment is your doctor's letter of medical necessity; <a href="/">the Fight Pack writes it for them to sign</a>, with the scripts, the records request and the deadlines. Full strategy: <a href="/denials">the Denial Playbook</a>.</p>
       </div>
     </section>
 
@@ -128,7 +125,7 @@
         <h2 id="fp-title" class="mt-1">The appeal that wins comes with your doctor's letter.</h2>
         <p class="lead mt-2">The draft above is round one. The Fight Pack adds the document that usually decides it, a <strong>letter of medical necessity written for your doctor to sign</strong>, plus word-for-word phone scripts, the records and itemized-bill request, the round-two external-review filing, and every deadline on your calendar.</p>
         <div class="row mt-3">
-          <a class="btn btn-primary btn-lg" href="/fightpack"><svg class="ic" style="width:18px;height:18px" aria-hidden="true"><use href="#i-sig"/></svg> Get the Fight Pack</a>
+          <a class="btn btn-primary btn-lg" href="/"><svg class="ic" style="width:18px;height:18px" aria-hidden="true"><use href="#i-sig"/></svg> Get the Fight Pack</a>
           <span class="small">Free. Nothing you paste is stored. Rebuild it as often as you need.</span>
         </div>
       </div>
@@ -140,7 +137,7 @@
   <div class="wrap">
     <div class="hr full"></div>
     <div class="cols">
-      <div><h4>Tools</h4><ul><li><a href="/">Translator</a></li><li><a href="/appeal">Appeal letter</a></li><li><a href="/fightpack">Fight Pack</a></li></ul></div>
+      <div><h4>Tools</h4><ul><li><a href="/">Fight Pack</a></li><li><a href="/translate">Translator</a></li><li><a href="/appeal">Appeal letter</a></li></ul></div>
       <div><h4>Learn</h4><ul><li><a href="/denials">Denial Playbook</a></li><li><a href="/codes/">Code library</a></li><li><a href="/how-its-tested">How it's tested</a></li></ul></div>
       <div class="about"><h4>About</h4><p>Built by a practicing physician.</p><p>Nothing you paste or upload is stored.</p><p><a href="mailto:hello@dr-mumbo-jumbo.com">hello@dr-mumbo-jumbo.com</a></p></div>
       <div><h4>Legal</h4><ul><li><a href="/privacy">Privacy</a></li><li><a href="/terms">Terms</a></li></ul></div>
@@ -184,7 +181,9 @@
 
   // Vercel Web Analytics custom event. No-op until Web Analytics is on, and if an
   // ad blocker eats the script; the server-side [dmj] counts are the backstop.
-  function ev(name, data){ try{ if(window.va) window.va('event', { name: name, data: data || {} }); }catch(e){} }
+  // Named 'track', not 'ev': every submit handler here takes an event parameter called
+  // ev, which shadowed the helper and made kit_emailed and lead throw instead of fire.
+  function track(name, data){ try{ if(window.va) window.va('event', { name: name, data: data || {} }); }catch(e){} }
   function updateCount(){ count.textContent = denial.value.length.toLocaleString('en-US') + ' / 6,000'; }
   denial.addEventListener('input', updateCount);
 
@@ -338,7 +337,7 @@
       rawText = res.data.letter || '';
       output.innerHTML = render(rawText);
       result.classList.add('on');
-      ev('appeal_done');
+      track('appeal_done');
       result.scrollIntoView({behavior:'smooth', block:'start'});
     })
     .catch(function(){

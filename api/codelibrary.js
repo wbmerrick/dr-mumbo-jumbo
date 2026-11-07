@@ -106,11 +106,8 @@ ${schema.libraryPage(ALL, TITLE, DESC)}
   <div class="wrap bar">
     <a class="brand" href="/" aria-label="Dr Mumbo Jumbo, home"><span class="mark" aria-hidden="true"><svg viewBox="0 0 64 48" width="38" height="29"><g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M10 34C12 20 16 10 20 10c3 0 2 14 4 20 2 6 5-12 9-14 3-1 3 10 7 11 4 1 8-3 14-5" stroke="currentColor" stroke-width="3.2"/><path d="M7 41h50" stroke="var(--accent)" stroke-width="3.6"/></g></svg></span><span class="wm">Dr Mumbo <span class="lime">Jumbo</span></span></a>
     <nav class="nav" aria-label="Main">
-      <a href="/" class="xl">Translator</a>
-      <a href="/appeal">Appeal<span class="xl"> letter</span></a>
-      <a href="/denials">Playbook</a>
-      <a href="/codes/" aria-current="page">Codes</a>
-      <a class="btn btn-primary btn-sm" href="/fightpack">Fight Pack</a>
+      <a href="/how-its-tested">How it's tested</a>
+      <a class="btn btn-primary btn-sm" href="/">Build my kit</a>
     </nav>
   </div>
 </header>
@@ -128,7 +125,7 @@ ${schema.libraryPage(ALL, TITLE, DESC)}
       <span class="kicker">Can't find your code?</span>
       <h2 class="mt-1">Paste the whole bill instead.</h2>
       <p class="lead mt-2">The free translator reads the entire bill, EOB or denial letter and gives it back in plain English: charges, codes and what's worth questioning.</p>
-      <div class="row mt-3"><a class="btn btn-primary btn-lg" href="/?mode=bill#translator"><svg class="ic" style="width:18px;height:18px" aria-hidden="true"><use href="#i-receipt"/></svg> Translate my bill</a></div>
+      <div class="row mt-3"><a class="btn btn-primary btn-lg" href="/translate?mode=bill#translator"><svg class="ic" style="width:18px;height:18px" aria-hidden="true"><use href="#i-receipt"/></svg> Translate my bill</a></div>
     </section>
   </div>
 </main>
@@ -136,7 +133,7 @@ ${schema.libraryPage(ALL, TITLE, DESC)}
   <div class="wrap">
     <div class="hr full"></div>
     <div class="cols">
-      <div><h4>Tools</h4><ul><li><a href="/">Translator</a></li><li><a href="/appeal">Appeal letter</a></li><li><a href="/fightpack">Fight Pack</a></li></ul></div>
+      <div><h4>Tools</h4><ul><li><a href="/">Fight Pack</a></li><li><a href="/translate">Translator</a></li><li><a href="/appeal">Appeal letter</a></li></ul></div>
       <div><h4>Learn</h4><ul><li><a href="/denials">Denial Playbook</a></li><li><a href="/codes/">Code library</a></li><li><a href="/how-its-tested">How it's tested</a></li></ul></div>
       <div class="about"><h4>About</h4><p>Built by a practicing physician.</p><p>Nothing you paste or upload is stored.</p><p><a href="mailto:hello@dr-mumbo-jumbo.com">hello@dr-mumbo-jumbo.com</a></p></div>
       <div><h4>Legal</h4><ul><li><a href="/privacy">Privacy</a></li><li><a href="/terms">Terms</a></li></ul></div>

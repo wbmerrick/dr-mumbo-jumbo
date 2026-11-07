@@ -16,10 +16,12 @@ const body = Buffer.from(JSON.stringify({ sid: 'x', iat: 1, exp: 2 })).toString(
 const sig = crypto.createHmac('sha256', key).update(body).digest('base64').replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
 assert.strictEqual(u.verify(body + '.' + sig), null, 'expired');
 assert.strictEqual(u.verify('garbage'), null, 'garbage');
-// key changes when stripe key appears
+// token signing no longer touches the payment credential (there is no paid path). See
+// qa/tests/test-token-signing.js for why that matters.
 process.env.STRIPE_SECRET_KEY = 'sk_test_zzz';
-assert.strictEqual(u.verify(t), null, 'old token invalid after key change');
+assert(u.verify(t), 'a token survives a Stripe key appearing');
 delete process.env.STRIPE_SECRET_KEY;
+assert(u.verify(t), 'and survives it going away again');
 // handlers
 function mockRes(){ const r = { code: 0, body: null, headers: {} }; r.setHeader = (k,v)=>{ r.headers[k]=v; }; r.status = (c)=>{ r.code=c; return r; }; r.json = (b)=>{ r.body=b; return r; }; return r; }
 (async () => {
@@ -28,16 +30,15 @@ function mockRes(){ const r = { code: 0, body: null, headers: {} }; r.setHeader 
   process.env.FIGHTPACK_PREVIEW_CODE = 'PREVIEW-1';
   res = mockRes(); await unlock({ method:'POST', body:{ code:'PREVIEW-1' } }, res); assert.strictEqual(res.code, 200); assert(res.body.token, 'preview token');
   const tok = res.body.token;
-  res = mockRes(); await unlock({ method:'POST', body:{ session_id:'cs_test_abc' } }, res); assert.strictEqual(res.code, 503, 'no stripe → 503');
-  res = mockRes(); await unlock({ method:'POST', body:{ session_id:'bad id' } }, res); assert.strictEqual(res.code, 400, 'bad session id');
+  // there is no paid path: a checkout session is just an unrecognised request now
+  res = mockRes(); await unlock({ method:'POST', body:{ session_id:'cs_test_abc' } }, res); assert.strictEqual(res.code, 400, 'checkout session → 400');
+  res = mockRes(); await unlock({ method:'POST', body:{ session_id:'bad id' } }, res); assert.strictEqual(res.code, 400, 'bad session id → 400');
   const fp = require('../../api/fightpack.js');
   res = mockRes(); await fp({ method:'POST', body:{ denial:'x' } }, res); assert.strictEqual(res.code, 401, 'no token → 401');
   res = mockRes(); await fp({ method:'POST', body:{ token: tok } }, res); assert.strictEqual(res.code, 400, 'empty → 400');
   delete process.env.ANTHROPIC_API_KEY;
   res = mockRes(); await fp({ method:'POST', body:{ token: tok, denial:'Denied CO-50', part: 2 } }, res); assert.strictEqual(res.code, 503, 'no api key → 503');
   res = mockRes(); await fp({ method:'POST', body:{ token: tok, denial:'x', file:{ kind:'image', media_type:'image/jpeg', data:'a'.repeat(4300001) } } }, res); assert.strictEqual(res.code, 400); assert.strictEqual(res.body.error, 'file_too_big');
-  const checkout = require('../../api/checkout.js');
-  res = mockRes(); await checkout({ method:'GET', headers:{} }, res); assert.deepStrictEqual(res.body, { configured:false, preview:true, free:true });
   // free mode (the default): any visitor gets a token, a few an hour; each token covers a few kits
   const ipA = { 'x-forwarded-for': '203.0.113.7, 10.0.0.1' }, ipB = { 'x-real-ip': '198.51.100.2' };
   const free = [];
@@ -76,10 +77,11 @@ function mockRes(){ const r = { code: 0, body: null, headers: {} }; r.setHeader 
   assert(aHour <= 10 && aDay <= 30 && tHour <= 30 && tDay <= 100, 'allowances stay modest (each call is a few cents at most)');
   assert(u.verify(tok) && u.verify(tok) && u.verify(tok), 'preview and paid tokens are never throttled');
   res = mockRes(); await fp({ method:'POST', body:{ token: ft, denial:'x' } }, res); assert.strictEqual(res.code, 401, 'spent free token → 401 (the page then asks for a new one)');
+  // FIGHTPACK_FREE=off is still an off switch for the free kit; with the paid path deleted
+  // it leaves only the preview code, so it is an off switch for the product, not a paywall.
   process.env.FIGHTPACK_FREE = 'off';
-  res = mockRes(); await unlock({ method:'POST', headers: ipB, body:{ free:true } }, res); assert.strictEqual(res.code, 403, 'free mode off → checkout only');
-  res = mockRes(); await checkout({ method:'GET', headers:{} }, res); assert.strictEqual(res.body.free, false);
+  res = mockRes(); await unlock({ method:'POST', headers: ipB, body:{ free:true } }, res); assert.strictEqual(res.code, 403, 'free mode off → no free token');
+  res = mockRes(); await unlock({ method:'POST', body:{ code:'PREVIEW-1' } }, res); assert.strictEqual(res.code, 200, 'the preview code still works with free mode off');
   delete process.env.FIGHTPACK_FREE;
-  res = mockRes(); await checkout({ method:'POST', headers:{} }, res); assert.strictEqual(res.code, 503, 'unconfigured checkout');
   console.log('all unlock/handler tests passed');
 })().catch(e => { console.error('TEST FAIL', e); process.exit(1); });
