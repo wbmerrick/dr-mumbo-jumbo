@@ -94,6 +94,12 @@ global.fetch = async (url, opts) => {
     [403, '{"message":"Domain dr-mumbo-jumbo.com is not verified"}',        'domain_not_verified',     /DNS records at the registrar/],
     [400, '{"message":"Sandbox subdomains are for test purposes only. Please add your own domain or add the address to authorized recipients"}', 'recipient_not_authorized', /authorized recipients|verified sending domain/],
     [429, '{"message":"Too many requests"}',                                'rate_limited',            /rate limit/i],
+    // Mailgun does not use one status per condition. These three are why diagnose() reads
+    // the message before the status: a confidently wrong instruction sends you to fix the
+    // wrong thing, which is worse than saying nothing.
+    [403, '{"message":"Sandbox subdomains are for test purposes only. Please add the address to authorized recipients in Account Settings"}', 'recipient_not_authorized', /authorized recipients/],
+    [400, '{"message":"Domain dr-mumbo-jumbo.com is not verified. Please add the DNS records."}', 'domain_not_verified', /DNS records at the registrar/],
+    [403, '{"message":"Forbidden"}',                                        'forbidden',               /verified AND whether the recipient is allowed/],
     [503, '{"message":"upstream"}',                                         'mailgun_down',            /retry/i]
   ];
   for (const [status, body, why, fixRe] of cases) {

@@ -55,10 +55,20 @@ function scrub(s) {
 function diagnose(status, detail) {
   const d = String(detail || '');
   if (status === 0) return { why: 'network_or_timeout', fix: 'Mailgun unreachable or slower than the timeout' };
+
+  // Mailgun's message is the authoritative signal; the status is only a fallback. It does
+  // not use one status per condition - a sandbox refusal has been seen as both 400 and
+  // 403 - and a confidently WRONG instruction (go fix DNS when the real problem is the
+  // authorized-recipient list) is worse than no instruction at all. So read the words first.
+  if (/sandbox|authorized recipient/i.test(d)) return { why: 'recipient_not_authorized', fix: 'Sandbox domain only sends to authorized recipients - use a verified sending domain, or add the address in Account Settings' };
+  if (/not verified|unverified|verify (?:your )?domain/i.test(d)) return { why: 'domain_not_verified', fix: 'Domain added but not verified: add Mailgun DNS records at the registrar and wait for verification' };
+  if (/domain not found|no such domain|unknown domain/i.test(d)) return { why: 'domain_not_found', fix: 'MAILGUN_DOMAIN is not a domain in this Mailgun account/region - check it is added exactly as spelled' };
+  if (/invalid (?:private |api )?key|invalid credentials/i.test(d)) return { why: 'key_rejected', fix: 'MAILGUN_API_KEY wrong, or the account is EU-region and needs MAILGUN_API_BASE=https://api.eu.mailgun.net' };
+
+  // Status fallback, for a refusal whose body says nothing recognisable.
   if (status === 401) return { why: 'key_rejected', fix: 'MAILGUN_API_KEY wrong, or the account is EU-region and needs MAILGUN_API_BASE=https://api.eu.mailgun.net' };
   if (status === 404) return { why: 'domain_not_found', fix: 'MAILGUN_DOMAIN is not a domain in this Mailgun account/region - check it is added exactly as spelled' };
-  if (status === 403) return { why: 'domain_not_verified', fix: 'Domain added but not verified: add Mailgun DNS records at the registrar and wait for verification' };
-  if (status === 400 && /authorized recipient|not allowed to send|sandbox/i.test(d)) return { why: 'recipient_not_authorized', fix: 'Sandbox domain only sends to authorized recipients - use a verified sending domain' };
+  if (status === 403) return { why: 'forbidden', fix: 'Mailgun refused the send: check in the dashboard whether the domain is verified AND whether the recipient is allowed (a sandbox domain restricts both)' };
   if (status === 400) return { why: 'bad_request', fix: 'Mailgun rejected the message itself' };
   if (status === 429) return { why: 'rate_limited', fix: 'Mailgun rate limit' };
   if (status >= 500) return { why: 'mailgun_down', fix: 'Mailgun server error - retry' };
