@@ -332,6 +332,8 @@
     var inp = inputs();
     if(!inp.denial && !inp.file){ showError('Paste the denial letter — or add a photo or PDF of it — then rebuild.'); return; }
     building = true; hideError(); hideNotice();
+    // One throwaway tag for this build's six calls. Random, not stored, never reused.
+    var kid = Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
     ev('kit_start', { files: !!(inp.file || inp.records) });
     parts = {}; meta = null;
     resetSteps(); progress.classList.add('on'); startMorph(morphEl, MORPH); kitout.classList.remove('on');
@@ -341,7 +343,7 @@
     refreshSteps(done);
     // One part: ask, retry once on a transient server error, retry once if a section came back missing.
     function fetchPart(p, extraBody){
-      function ask(){ return postJSON('/api/fightpack', Object.assign({ token: tok, part: p }, inp, extraBody || {})); }
+      function ask(){ return postJSON('/api/fightpack', Object.assign({ token: tok, part: p, kid: kid }, inp, extraBody || {})); }
       return ask().then(function(res){
         if(!res.ok && (res.status === 0 || res.status >= 500)){
           return new Promise(function(r){ setTimeout(r, 1500); }).then(ask);
