@@ -42,6 +42,8 @@ Set these in Vercel → Project → Settings → Environment Variables, then red
 | `STRIPE_PRICE_ID` | for payments | The one-time price (`price_…`) from the Stripe product. |
 | `FIGHTPACK_SECRET` | yes (any random string) | Signs the unlock tokens (free or paid), combined with the Stripe key when there is one. |
 | `FIGHTPACK_PREVIEW_CODE` | no | A private code that unlocks the kit without paying — for testing. Remove or rotate after launch. |
+| `RESEND_API_KEY` | for "Email me my kit" | A Resend API key with **Sending access** (`re_…`). Until it is set, `/api/email-kit` returns a friendly 503 and the page's other two exits (Copy everything, Print) still work. The sender is `hello@dr-mumbo-jumbo.com`, so `dr-mumbo-jumbo.com` must be added and verified at resend.com/domains (DNS records go into Squarespace DNS). |
+| `RESEND_FROM` | no | Overrides the sender. Set it to `Dr Mumbo Jumbo <onboarding@resend.dev>` to prove the pipeline before the domain is verified — Resend then delivers only to the account owner's own address — and remove it once the domain shows Verified. A failed send is counted as `kit_email_failed` with a `why` and a `fix` naming what to change. |
 
 Waitlist storage: run `supabase/waitlist.sql` once in the Supabase SQL Editor. `api/lead.js` uses the project's publishable (anon) key, which is public by design; row-level security allows inserts only.
 
@@ -103,4 +105,4 @@ robots.txt
 
 ## Privacy posture
 
-Nothing a visitor pastes or uploads is stored. The only data kept is the waitlist table (email + category), which also holds the addresses of people who asked to have a kit emailed to them (source `kit-email`). An emailed kit transits Mailgun once and is not stored on our side; set Mailgun's message retention to the minimum and do not store bodies. Pages ask visitors to leave out names, birthdates, and ID numbers, and the prompts instruct the model not to repeat them.
+Nothing a visitor pastes or uploads is stored. The only data kept is the waitlist table (email + category), which also holds the addresses of people who asked to have a kit emailed to them (source `kit-email`). An emailed kit transits Resend once and is not stored on our side; Resend keeps its copy of the message (contents and delivery records) for its fixed 30-day retention, then deletes it — `privacy.html` says exactly that. Pages ask visitors to leave out names, birthdates, and ID numbers, and the prompts instruct the model not to repeat them.
