@@ -150,7 +150,17 @@
     var json = null; try{ json = JSON.parse(m[1]); }catch(e){}
     return { text: md.replace(m[0], '').trim(), json: json };
   }
-  function plain(md){ return md.replace(/\*\*/g,'').replace(/^#{2,4}\s+/gm,'').trim(); }
+  // The kit as plain text, for the email and the Copy buttons: the marks come off, the words stay.
+  // A line of hyphens is a paragraph break (as in renderBody), and *italics* lose their asterisks
+  // like **bold** does. A list's "* " and a signature line of underscores are content.
+  function plain(md){
+    return md
+      .replace(/(?:\r?\n)*^[ \t]*-{3,}[ \t]*$(?:\r?\n)*/gm, '\n\n')
+      .replace(/\*\*/g,'')
+      .replace(/(^|[^*\w])\*([^\s*](?:[^*\n]*[^\s*])?)\*(?![*\w])/g, '$1$2')
+      .replace(/^#{2,4}\s+/gm,'')
+      .trim();
+  }
 
   // ---------- rendering the kit ----------
   var sectionOrder = [];
