@@ -7,6 +7,8 @@
   var attachRec = $('attachrec'), recInput = $('recfile'), recchip = $('recchip'), recname = $('recname'), recclear = $('recclear');
   var progress = $('progress'), kitout = $('kitout'), docsEl = $('docs');
   var attached = null, records = null, token = null, parts = {}, meta = null;
+  // What each part that arrived is still short of (see shortOf). Empty for a whole kit; saved with it.
+  var gaps = {};
   // The Fight Pack is free and there is no checkout. Kept as a constant so the free-path
   // branches below read the same as they always did.
   var free = true;
@@ -23,6 +25,7 @@
   function save(key, val){ try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){} }
   function load(key){ try{ var v = localStorage.getItem(key); return v ? JSON.parse(v) : null; }catch(e){ return null; } }
   function drop(key){ try{ localStorage.removeItem(key); }catch(e){} }
+  function stash(){ save('dmj_fp_kit', { parts: parts, meta: meta, gaps: gaps, ts: Date.now() }); }
   // ---------- files ----------
   function prepFile(f, ok, fail){
     var MAX = 3 * 1024 * 1024;
@@ -98,7 +101,7 @@
   function resetSteps(){ for(var i=1;i<=4;i++){ var el=$('st'+i); el.className=''; el.querySelector('.pic').textContent = String(i); } }
   // Which progress step each generator part belongs to (part 1 = decode; 2–3 = letters; 4–5 = scripts; 6 = round two).
   var STEP_OF = { 1:1, 2:2, 3:2, 4:3, 5:3, 6:4 };
-  var PART_LABEL = { 2:'Your appeal letter', 3:"Your doctor's letter and the note for the office", 4:'Peer-to-peer brief and the insurer phone script', 5:'Billing-office script and records request', 6:'Round two and your deadlines' };
+  var PART_LABEL = { 1:'Your denial, decoded', 2:'Your appeal letter', 3:"Your doctor's letter and the note for the office", 4:'Peer-to-peer brief and the insurer phone script', 5:'Billing-office script and records request', 6:'Round two and your deadlines' };
   function refreshSteps(done){
     for(var s=1;s<=4;s++){
       var partsOfStep = Object.keys(STEP_OF).filter(function(p){ return STEP_OF[p]===s; });
@@ -221,7 +224,7 @@
     });
     if(!count){ fixmsg.textContent = 'Not found — check spacing and capitals exactly as they appear in the kit.'; return; }
     if(meta && meta.claim_number === from) meta.claim_number = to;
-    save('dmj_fp_kit', { parts: parts, meta: meta, ts: Date.now() });
+    stash();
     renderKit(); // the deadline tracker keeps whatever the reader has set
     fixmsg.textContent = 'Replaced ' + count + (count === 1 ? ' time' : ' times') + ' across your kit.';
     toast('Replaced in every section');
@@ -311,6 +314,18 @@
 
   // ---------- generation ----------
   var building = false;
+  // What a part's answer is short of, if anything: a section the handler did not find in it, or an
+  // ending the writer never reached (it ran out of room, which the handler reports as stop "max_tokens").
+  function shortOf(d){
+    var miss = ((d && d.missing) || []).map(function(h){ return String(h).replace(/^#+\s*/, ''); });
+    if(miss.length) return 'missing ' + miss.join(' and ');
+    return d && d.stop === 'max_tokens' ? 'it stops before the end' : '';
+  }
+  // The parts of the kit that are not whole: never arrived, or arrived short. None = a complete kit.
+  function unfinished(){
+    return [1,2,3,4,5,6].filter(function(p){ return !parts[p] || gaps[p]; })
+      .map(function(p){ return PART_LABEL[p] + (parts[p] ? ' (' + gaps[p] + ')' : ''); });
+  }
   function postJSON(url, body, ms){
     var ctrl = new AbortController();
     var t = setTimeout(function(){ ctrl.abort(); }, ms || 120000);
@@ -327,7 +342,7 @@
     // One throwaway tag for this build's six calls. Random, not stored, never reused.
     var kid = Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
     track('kit_start', { files: !!(inp.file || inp.records) });
-    parts = {}; meta = null;
+    parts = {}; meta = null; gaps = {};
     resetSteps(); progress.classList.add('on'); startMorph(morphEl, MORPH); kitout.classList.remove('on');
     progress.scrollIntoView({ behavior:'smooth', block:'start' });
     buy.disabled = true;
@@ -346,10 +361,12 @@
         }
         return res;
       }).then(function(res){
-        if(res.ok && res.data.missing && res.data.missing.length){
+        // A part that came back short - a section missing, or cut off before its end - is asked for once more.
+        if(res.ok && shortOf(res.data)){
           return ask().then(function(res2){
-            if(res2.ok && (!res2.data.missing || res2.data.missing.length < res.data.missing.length)) return res2;
-            return res;
+            if(!res2.ok) return res;
+            if(!shortOf(res2.data)) return res2;
+            return (res2.data.missing || []).length < (res.data.missing || []).length ? res2 : res;
           });
         }
         return res;
@@ -358,6 +375,7 @@
         var text = res.data.text || '';
         if(p === 6){ var ex = extractJson(text); text = ex.text; meta = ex.json; }
         parts[p] = text; done[p] = true;
+        var gap = shortOf(res.data); if(gap) gaps[p] = gap; else delete gaps[p];
         refreshSteps(done);
         renderKit();
         if(p === 6 || (p === 1 && !meta)) applyMeta();
@@ -374,8 +392,10 @@
       building = false; buy.disabled = false;
       progress.classList.remove('on'); stopMorph(morphEl);
       renderKit();
+      // A part that arrived short did not finish either; the reader hears about it the same way.
+      [1,2,3,4,5,6].forEach(function(p){ if(parts[p] && gaps[p]) failures.push(PART_LABEL[p] + ' (' + gaps[p] + ')'); });
       track('kit_built', { outcome: failures.length ? 'partial' : 'complete' });
-      save('dmj_fp_kit', { parts: parts, meta: meta, ts: Date.now() });
+      stash();
       if(failures.length){ showError('Most of your kit is below, but these sections did not finish: ' + failures.join('; ') + '. ' + tryAgain()); }
       kitout.scrollIntoView({ behavior:'smooth', block:'start' });
     }).catch(function(e){
@@ -431,6 +451,15 @@
   function kitText(){ return sectionOrder.map(function(s){ return plain(s.title + '\n\n' + s.body); }).join('\n\n\n') + '\n\n\n' + deadlinesText(); }
   mailform.addEventListener('submit', function(ev){
     ev.preventDefault();
+    // The email is the copy people keep, so it goes out only when every part is in and whole.
+    var short = building ? [] : unfinished();
+    if(building || short.length){
+      mailmsg.className = 'wait-msg err';
+      mailmsg.textContent = building
+        ? 'Not sent yet: your kit is still being written. Email it when all ten sections are in.'
+        : 'Not sent: this kit is not complete. Still to finish: ' + short.join('; ') + '. Click "Rebuild with edits", then email it.';
+      return;
+    }
     mailmsg.className = 'wait-msg'; mailbtn.disabled = true; mailbtn.textContent = 'Sending…';
     postJSON('/api/email-kit', { email: mailemail.value, kit: kitText(), token: token }, 30000).then(function(res){
       mailbtn.disabled = false; mailbtn.textContent = 'Email me my kit';
@@ -449,7 +478,7 @@
 
     var saved = load('dmj_fp_kit');
     if(saved && saved.parts && saved.ts && Date.now() - saved.ts < 72*3600*1000){
-      parts = saved.parts; meta = saved.meta || null; renderKit(); applyMeta();
+      parts = saved.parts; meta = saved.meta || null; gaps = saved.gaps || {}; renderKit(); applyMeta();
       showNotice('Here\'s the Fight Pack you built ' + new Date(saved.ts).toLocaleDateString('en-US', {month:'short', day:'numeric'}) + '. Edit your text and click "Rebuild with edits" to regenerate.');
     }
   })();
