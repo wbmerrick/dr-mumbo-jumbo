@@ -105,7 +105,8 @@ G and H were written after run 5; they informed fixes only after runs 7 and 9. I
   Each guard is tested on the real lines the model wrote in earlier runs. Before a guard shipped it was also run against every stored output, to catch false positives;
 - the unlock flow, free and paid: free tokens per visitor per hour and per day, a token's lifetime budget, and that preview and paid tokens are never throttled;
 - what the reader is told when the model API refuses a request: a spend limit or credit balance, an unreadable or oversized file, a rate limit, and a passing fault, each in both modes; and the free translator's and letter writer's allowance per visitor;
-- the v9.10–v9.13 facts, rules and guards, on the real lines the model wrote and through the handler (82 assertions).
+- the v9.10–v9.13 facts, rules and guards, on the real lines the model wrote and through the handler (82 assertions);
+- the kit as it is emailed and copied: the page's own text path, run over every stored kit. Rule lines and emphasis marks must be gone, and every other character of every section must still be there, in order.
 
 **Automated checker** (`qa/fp-check.js` with `qa/manifest.js`, about 100 checks per kit). The checks cover:
 
