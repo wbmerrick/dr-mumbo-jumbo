@@ -77,6 +77,13 @@
   .kitout.sample .kit-mine{display:none}
   .kitout.sample .samplenote{display:block;margin-top:0}
   .kitout.sample .checkline,.kitout.sample .mailkit,.kitout.sample #regen,.kitout.sample #fixbtn,.kitout.sample .fixform,.kitout.sample .whisper{display:none}
+  /* The live first read: while the first section is still being written the progress panel shrinks to its
+     heading and status line, and the kit area shows that section and nothing that would treat it as a kit:
+     no copy, print, rebuild or fix, no email, no "saved in this browser", and no tracker (its dates are the
+     last kit's until this one is in). */
+  .progress.slim .plist,.progress.slim .small{display:none}
+  .kitout.live .kit-actions,.kitout.live .copy-btn,.kitout.live .checkline,.kitout.live .mailkit,.kitout.live .fixform,.kitout.live #deadlines,.kitout.live .whisper{display:none}
+  .kitout.live .pulse-dot{display:block;margin-top:10px}
   .fixform{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin:10px 0 4px;padding:12px 14px;border:1px dashed var(--divider);border-radius:var(--r-md);background:var(--surface)}
   .fixform label{font-size:13px;color:var(--soft)}
   .fixform .input{flex:1;min-width:150px;width:auto;min-height:36px;padding:6px 10px}

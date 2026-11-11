@@ -177,7 +177,8 @@ const wordOf = (page) => { const words = page.sent().map((b) => b.src); const on
   {
     const page = await built({ search: '?utm_source=reddit', referrer: 'https://www.reddit.com/r/x/' });
     const keys = [...new Set(page.sent().flatMap((b) => Object.keys(b)))].sort();
-    same(keys, ['decode', 'denial', 'extra', 'file', 'kid', 'part', 'records', 'src', 'token'], "a build call holds what it always held, plus src");
+    // live: the first call asks for the first section as it is written (test-live-page.js); it says nothing of the reader
+    same(keys, ['decode', 'denial', 'extra', 'file', 'kid', 'live', 'part', 'records', 'src', 'token'], "a build call holds what it always held, plus src and the live flag");
   }
 
   // ---------- 7. the first word sticks for the tab; it does not outlive it ----------

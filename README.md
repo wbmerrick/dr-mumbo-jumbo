@@ -84,6 +84,7 @@ The kit's first section (the decode) is shown line by line while it is being wri
 - The page adds `live: true` to its first request for part 1. `api/fightpack.js` then asks the model for a streamed answer and replies with a stream of small messages: `{"from": N, "lines": [...]}` as lines settle, and last `{"done": {...}}`, the same object the endpoint has always returned (or `{"error": {...}}`).
 - A line is sent only after the text so far has been through the same guards as the finished section (`decodeText`). The newest line is always held back, and the section's two closing lines, "What you may actually owe" and "Do this first", arrive only with the finished section, because code can rewrite them (`api/_lib/fightpack-live.js`).
 - A request without `live`, parts 2–6, and anything that fails before the first line are answered exactly as before.
+- On the page (`fightpack.js`), the lines are drawn in the first document while the progress panel shrinks to its heading and status line. They are kept apart from the kit: nothing live is saved, copied, printed, emailed or passed to parts 2–6, and the copy, print, email, rebuild and fix controls and the deadline tracker stay hidden until the section is finished. If the stream fails part-way or the section comes back short, the page clears the live text and asks again the plain way. A browser that cannot read a reply piece by piece never asks for one.
 - A live first section adds one number to its count line: `redo`, how many times a line already on screen had to be corrected. It should always be 0; the guards are written so that a line's rewrite depends only on that line and the ones above it.
 - If the reader leaves while the first section is being written, the model call is stopped and that part is not counted.
 
@@ -126,6 +127,7 @@ api/_lib/           the Fight Pack engine, kept out of the public site (Vercel s
                     fightpack-guards.js — the deterministic text guards and the safety renderer
                     fightpack-limits.js — settings, vehicles and waits; choice and notice (v9.8.2–v9.8.3)
                     fightpack-facts.js — the ambulance bill, policy numbers, the doctor's expedited request (v9.10), where Original Medicare records go (v9.11–v9.12), the urgent external-review route (v9.13)
+                    fightpack-live.js — the live first read: reads the model's stream and decides which guarded lines of the decode can be shown
 lib/                code-library data (CPT in three modules, ICD-10, denial reasons); unlock.js (tokens); files.js (attachments).
                     These stay publicly readable (static hosting serves them; vercel.json only redirects the plain /lib/ path),
                     so nothing secret or proprietary goes here.

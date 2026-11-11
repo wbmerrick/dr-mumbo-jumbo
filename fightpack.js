@@ -244,24 +244,28 @@
     docsEl.innerHTML = '';
     sectionOrder = [];
     // Parts render in kit order; a part that hasn't arrived yet shows a placeholder in its slot.
+    // The first document, while it is still being written, is drawn from the lines sent so far (liveLines).
     [1,2,3,4,5,6].forEach(function(p){
-      if(!parts[p]){
+      var live = p === 1 && !parts[1] && !!liveLines;
+      var text = live ? liveLines.join('\n') : parts[p];
+      if(!text){
         if(p > 1 && building){ var ph = document.createElement('div'); ph.className = 'doc panel'; ph.innerHTML = '<p class="pending">' + escapeHtml(PART_LABEL[p] || 'More') + ' — on the way…</p>'; docsEl.appendChild(ph); }
         return;
       }
-      splitSections(parts[p]).forEach(function(sec){
+      splitSections(text).forEach(function(sec){
         var tag = /medical necessity|emergency attestation/i.test(sec.title) ? 'For your doctor' : /corrected-claim/i.test(sec.title) ? 'For the billing office' : /coverage facts/i.test(sec.title) ? 'For HR / benefits' : '';
         var isStar = !!tag;
         // Documents a person sends (letters and requests) render on paper; the decode, scripts and notes stay on the dark surface.
         var isPaper = /appeal letter|medical necessity|emergency attestation|records and itemized|external review request|corrected-claim request|coverage facts/i.test(sec.title);
         var card = document.createElement('div');
         card.className = 'doc panel' + (isStar ? ' star' : '') + (isPaper ? ' paper' : '');
-        var h = '<div class="doc-top"><h3>' + escapeHtml(sec.title) + (isStar ? '<span class="tag tag-accent">' + tag + '</span>' : '') + '</h3><button class="btn btn-secondary btn-sm copy-btn" type="button">Copy</button></div><div class="doc-body prose">' + renderBody(sec.body) + '</div>';
+        var h = '<div class="doc-top"><h3>' + escapeHtml(sec.title) + (isStar ? '<span class="tag tag-accent">' + tag + '</span>' : '') + '</h3><button class="btn btn-secondary btn-sm copy-btn" type="button">Copy</button></div><div class="doc-body prose">' + renderBody(sec.body) + '</div>' + (live ? '<span class="pulse-dot" aria-hidden="true"></span>' : '');
         card.innerHTML = h;
         var btn = card.querySelector('.copy-btn');
         btn.addEventListener('click', function(){ copyText(plain(sec.title + '\n\n' + sec.body), btn); });
         docsEl.appendChild(card);
-        sectionOrder.push(sec);
+        // Text still being written is not part of the kit: "Copy everything" and the email are made from sectionOrder.
+        if(!live) sectionOrder.push(sec);
       });
     });
     kitout.classList.add('on');
@@ -271,15 +275,19 @@
     function fallback(){ var ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); done(); }catch(e){} document.body.removeChild(ta); }
     if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(done).catch(fallback); } else { fallback(); }
   }
+  // While the first section is still being written (liveLines) there is no kit yet to copy, print, fix or
+  // rebuild: these controls are hidden then (index.html, .kitout.live) and do nothing if reached anyway.
   $('copyall').addEventListener('click', function(){
+    if(liveLines) return;
     copyText(kitText(), $('copyall'));
   });
-  $('printbtn').addEventListener('click', function(){ window.print(); });
+  $('printbtn').addEventListener('click', function(){ if(liveLines) return; window.print(); });
 
   // ---------- fix a detail everywhere ----------
   // A misread member ID or a misspelled name is corrected once and replaced in all ten sections.
   var fixform = $('fixform'), fixbtn = $('fixbtn'), fixfrom = $('fixfrom'), fixto = $('fixto'), fixmsg = $('fixmsg');
   fixbtn.addEventListener('click', function(){
+    if(liveLines) return;
     var open = fixform.hidden;
     fixform.hidden = !open; fixbtn.setAttribute('aria-expanded', open ? 'true' : 'false');
     if(open){ fixmsg.textContent = ''; fixfrom.focus(); }
@@ -351,10 +359,20 @@
   }
   function deadlinesText(){ return 'YOUR DEADLINES\n' + dlRows.map(function(r){ return '- ' + r.title + ': ' + fmt(r.date) + ' (' + r.note + ')'; }).join('\n'); }
   [dlDenial, dlStated, dlFiled, dlType, dlDays, dlPlan].forEach(function(el){ el.addEventListener('change', computeDeadlines); el.addEventListener('input', computeDeadlines); });
-  // The case-strength chip comes from the decode (section 1) — the same line the rest of the kit was written from.
+  // The case-strength chip comes from the decode (section 1) — the same line the rest of the kit was written from:
+  // the finished decode when there is one, otherwise the lines of it shown so far.
   function strengthFromDecode(){
-    var m = (parts[1] || '').match(/case strength:?\*{0,2}\s*\*{0,2}\s*"?(strong|good|needs)/i);
+    var m = (parts[1] || (liveLines ? liveLines.join('\n') : '')).match(/case strength:?\*{0,2}\s*\*{0,2}\s*"?(strong|good|needs)/i);
     return m ? (m[1].toLowerCase() === 'needs' ? 'needs-evidence' : m[1].toLowerCase()) : null;
+  }
+  // Shown when a strength is known; hidden when none is (a line shown live can be taken back).
+  function showStrength(){
+    var chip = $('strength'), cs = strengthFromDecode() || (meta && meta.case_strength);
+    if(cs === 'strong' || cs === 'good' || cs === 'needs-evidence'){
+      chip.textContent = 'Case strength: ' + (cs === 'strong' ? 'Strong' : cs === 'good' ? 'Good — one thing missing' : 'Needs evidence');
+      chip.className = 'tag ' + (cs === 'strong' ? 'tag-ok' : cs === 'good' ? 'tag-accent' : 'tag-warn');
+      chip.style.display = 'inline-flex';
+    } else chip.style.display = 'none';
   }
   function applyMeta(){
     var today = new Date().toISOString().slice(0,10);
@@ -365,12 +383,7 @@
       if(meta.urgent) dlType.value = 'urgent'; else if(meta.service_type === 'pre-service') dlType.value = 'pre-service'; else dlType.value = 'post-service';
       if(meta.plan_type === 'medicare' || meta.plan_type === 'medicaid' || meta.plan_type === 'original-medicare' || meta.plan_type === 'other') dlPlan.value = meta.plan_type; else dlPlan.value = 'commercial';
     }
-    var chip = $('strength'), cs = strengthFromDecode() || (meta && meta.case_strength);
-    if(cs === 'strong' || cs === 'good' || cs === 'needs-evidence'){
-      chip.textContent = 'Case strength: ' + (cs === 'strong' ? 'Strong' : cs === 'good' ? 'Good — one thing missing' : 'Needs evidence');
-      chip.className = 'tag ' + (cs === 'strong' ? 'tag-ok' : cs === 'good' ? 'tag-accent' : 'tag-warn');
-      chip.style.display = 'inline-flex';
-    }
+    showStrength();
     if(!dlFiled.value) dlFiled.value = today;
     computeDeadlines();
   }
@@ -387,6 +400,13 @@
 
   // ---------- generation ----------
   var building = false;
+  // The live first read: the first section's lines, drawn as the server sends them (api/fightpack.js).
+  // liveLines holds them while that section is still being written and is null the rest of the time; they are
+  // never put in `parts`, so nothing saves them, copies them or hands them to the other five parts.
+  // liveShown: this build's live view has been brought into view, so the page need not move when the kit is done.
+  var liveLines = null, liveShown = false;
+  // A browser that cannot read a reply piece by piece does not ask for one.
+  var canLive = typeof TextDecoder !== 'undefined' && typeof Response !== 'undefined' && 'body' in Response.prototype;
   // What a part's answer is short of, if anything: a section the handler did not find in it, or an
   // ending the writer never reached (it ran out of room, which the handler reports as stop "max_tokens").
   function shortOf(d){
@@ -406,6 +426,43 @@
       .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(d){ clearTimeout(t); return { ok: r.ok, status: r.status, data: d }; }); })
       .catch(function(e){ clearTimeout(t); return { ok:false, status:0, data:{ message: e && e.name === 'AbortError' ? 'That took too long — try again.' : 'Connection dropped — try again.' } }; });
   }
+  // The same request, for the first section asked for live. The reply is either what any request gets (and is
+  // handled exactly as postJSON handles it) or a stream of small messages: "from line N, these lines", handed to
+  // onLines as they come, then the finished reply ("done") or an error. A stream that ends with neither is a
+  // dropped connection.
+  function postLive(url, body, onLines, ms){
+    var ctrl = new AbortController();
+    var t = setTimeout(function(){ ctrl.abort(); }, ms || 120000);
+    return fetch(url, { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify(body), signal: ctrl.signal })
+      .then(function(r){
+        var type = r.headers && r.headers.get ? String(r.headers.get('content-type') || '') : '';
+        if(type.indexOf('text/event-stream') !== 0){
+          return r.json().catch(function(){ return {}; }).then(function(d){ clearTimeout(t); return { ok: r.ok, status: r.status, data: d }; });
+        }
+        // The network cuts the stream where it likes - inside a message, inside a character - so the bytes are
+        // decoded as a stream and a message is read only once the blank line that ends it has arrived.
+        var reader = r.body.getReader(), decoder = new TextDecoder(), pending = '';
+        function next(){
+          return reader.read().then(function(step){
+            if(step.done) return { ok:false, status:0, data:{ message:'Connection dropped — try again.' } };
+            pending += decoder.decode(step.value, { stream:true });
+            var messages = pending.split('\n\n');
+            pending = messages.pop();
+            for(var i = 0; i < messages.length; i++){
+              var m = null;
+              try{ m = JSON.parse(messages[i].replace(/^data:\s?/, '')); }catch(e){}
+              if(!m) continue;
+              if(m.done) return { ok:true, status:200, data: m.done };
+              if(m.error) return { ok:false, status: m.error.status || 0, data: m.error };
+              if(m.lines) onLines(m.from, m.lines);
+            }
+            return next();
+          });
+        }
+        return next().then(function(res){ clearTimeout(t); return res; });
+      })
+      .catch(function(e){ clearTimeout(t); return { ok:false, status:0, data:{ message: e && e.name === 'AbortError' ? 'That took too long — try again.' : 'Connection dropped — try again.' } }; });
+  }
   function inputs(){ return { denial: denial.value.trim(), extra: extra.value.trim(), file: attached ? { kind: attached.kind, media_type: attached.media_type, data: attached.data } : null, records: records ? { kind: records.kind, media_type: records.media_type, data: records.data } : null }; }
   function build(tok){
     if(building) return;
@@ -422,27 +479,63 @@
     if(sample) [dlDenial, dlStated, dlDays, dlFiled].forEach(function(el){ el.value = ''; });
     sample = false; kitout.classList.remove('sample');
     $('strength').style.display = 'none';   // the rating beside the heading is the last kit's; this kit's decode sets its own
+    liveLines = null; liveShown = false; progress.classList.remove('slim'); kitout.classList.remove('live');
     resetSteps(); progress.classList.add('on'); startMorph(morphEl, MORPH); kitout.classList.remove('on');
     progress.scrollIntoView({ behavior:'smooth', block:'start' });
     buy.disabled = true;
     var done = {};
     refreshSteps(done);
     // One part: ask, retry once on a transient server error, retry once if a section came back missing.
+    // The first lines of the decode have come: the progress panel shrinks to its heading and status line, the
+    // first document opens under it, and the page is brought there once (a build starts there, so this moves
+    // only a reader who has scrolled away). Each message says "from line N, these lines".
+    function onLines(from, lines){
+      if(!liveLines){
+        liveLines = [];
+        progress.classList.add('slim'); kitout.classList.add('live');
+        progress.scrollIntoView({ behavior:'smooth', block:'start' });
+        liveShown = true;
+      }
+      liveLines = liveLines.slice(0, from).concat(lines);
+      renderKit(); showStrength();
+    }
+    // The live reply is over. A whole section: its lines make way for the finished text, which the caller draws.
+    // Anything else after lines were shown - a failure, a stream that stopped, a section cut short - and the page
+    // goes back to how it is while part 1 is being written: no half-drawn document, the panel full size and in view.
+    function endLive(whole){
+      var had = !!liveLines;
+      liveLines = null;
+      kitout.classList.remove('live');
+      if(whole || !had) return;
+      liveShown = false;
+      kitout.classList.remove('on'); docsEl.innerHTML = '';
+      progress.classList.remove('slim');
+      $('strength').style.display = 'none';
+      progress.scrollIntoView({ behavior:'smooth', block:'start' });
+    }
     function fetchPart(p, extraBody){
-      function ask(){ return postJSON('/api/fightpack', Object.assign({ token: tok, part: p, kid: kid, src: source }, inp, extraBody || {})); }
-      return ask().then(function(res){
+      // The decode (part 1) is asked for live where the browser can read it as it is written. Asking again after
+      // a failure or a short section is done the plain way; asking again with a new session is live, since the
+      // live reply has not been tried yet.
+      function ask(liveToo){
+        var body = Object.assign({ token: tok, part: p, kid: kid, src: source }, inp, extraBody || {});
+        if(!(liveToo && p === 1 && canLive)) return postJSON('/api/fightpack', body);
+        body.live = true;
+        return postLive('/api/fightpack', body, onLines).then(function(res){ endLive(res.ok && !shortOf(res.data)); return res; });
+      }
+      return ask(true).then(function(res){
         if(!res.ok && (res.status === 0 || res.status >= 500)){
-          return new Promise(function(r){ setTimeout(r, 1500); }).then(ask);
+          return new Promise(function(r){ setTimeout(r, 1500); }).then(function(){ return ask(false); });
         }
         // a free token that has done its share of kits: get a fresh one once, then ask again
         if(!res.ok && res.status === 401 && free){
-          return renewFree().then(function(t2){ tok = t2; return ask(); });
+          return renewFree().then(function(t2){ tok = t2; return ask(true); });
         }
         return res;
       }).then(function(res){
         // A part that came back short - a section missing, or cut off before its end - is asked for once more.
         if(res.ok && shortOf(res.data)){
-          return ask().then(function(res2){
+          return ask(false).then(function(res2){
             if(!res2.ok) return res;
             if(!shortOf(res2.data)) return res2;
             return (res2.data.missing || []).length < (res.data.missing || []).length ? res2 : res;
@@ -469,17 +562,18 @@
       }));
     }).then(function(){
       building = false; buy.disabled = false;
-      progress.classList.remove('on'); stopMorph(morphEl);
+      progress.classList.remove('on'); progress.classList.remove('slim'); stopMorph(morphEl);
       renderKit();
       // A part that arrived short did not finish either; the reader hears about it the same way.
       [1,2,3,4,5,6].forEach(function(p){ if(parts[p] && gaps[p]) failures.push(PART_LABEL[p] + ' (' + gaps[p] + ')'); });
       track('kit_built', { outcome: failures.length ? 'partial' : 'complete' });
       stash();
       if(failures.length){ showError('Most of your kit is below, but these sections did not finish: ' + failures.join('; ') + '. ' + tryAgain()); }
-      kitout.scrollIntoView({ behavior:'smooth', block:'start' });
+      // A reader who watched the first section being written is already at the kit, and reading: the page stays put.
+      if(!liveShown) kitout.scrollIntoView({ behavior:'smooth', block:'start' });
     }).catch(function(e){
       building = false; buy.disabled = false;
-      progress.classList.remove('on'); stopMorph(morphEl);
+      progress.classList.remove('on'); progress.classList.remove('slim'); stopMorph(morphEl);
       track('kit_failed');
       showError((e && e.message ? e.message : 'Something went wrong.') + ' ' + tryAgain());
       if(parts[1]) kitout.classList.add('on');
@@ -566,6 +660,7 @@
   });
 
   $('regen').addEventListener('click', function(){
+    if(liveLines) return;
     hideError();
     start();
   });

@@ -47,6 +47,15 @@ The kit has ten sections, written in six passes.
 - stops a writer that drifts into the next part;
 - normalizes every part, so only that part's sections survive, under their exact headings.
 
+**The decode is shown while it is written.** The page asks for part 1 live, and the handler sends its lines as the writer finishes them. A line is sent only after the text so far has been through the same code as the finished decode (`guardPart`, `decodeText`), so nothing reaches the reader unguarded for even a second. Two more cautions apply:
+
+- the newest line is always held back, because the next line can still change it;
+- the decode's two closing lines, "What you may actually owe" and "Do this first", arrive only with the finished decode, because code can rewrite them.
+
+On the page the live lines are kept apart from the kit: they are not saved, copied, printed or emailed, and parts 2–6 are written from the finished decode only. If the stream fails or the decode comes back short, the page clears the live text and asks again the plain way. `FIGHTPACK_LIVE=off` turns the live read off (README, "Live first read").
+
+Replayed over the first section of all 169 stored kits, no line that would have been shown was changed afterwards (`redo` is 0), and how the stream was cut up made no difference (`qa/tests/test-live-read.js`). How soon the first line reaches a reader on the live site has not been measured yet.
+
 The writer's rules, the plan rules and the guards live in `api/_lib/`, which the site never serves.
 
 ### Decided in code
@@ -396,7 +405,7 @@ Two run-15 guard misfires are fixed: "causing foot drop and falls" now brackets 
 ## 8. How to re-run
 
 ```bash
-# unit tests
+# unit tests (the live first read: test-live-read.js for the server, test-live-page.js for the page)
 for t in qa/tests/*.js; do node "$t" || break; done
 
 # live run of all ten cases against the deployed site (the preview code is never throttled)
