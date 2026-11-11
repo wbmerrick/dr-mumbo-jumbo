@@ -128,12 +128,15 @@ function open({ hash = '', canStream = true, first = null, holdRetry = false, re
     return Promise.resolve(answer);
   };
   const keeps = (bag) => ({ getItem: (k) => (k in bag ? bag[k] : null), setItem: (k, v) => { bag[k] = String(v); }, removeItem: (k) => { delete bag[k]; } });
-  const win = { matchMedia: () => ({ matches: true }), location: { hash, search: '', hostname: 'dr-mumbo-jumbo.com' }, va() {}, sessionStorage: keeps({}), print() { printed++; }, scrollBy(how) { moves.push(how); movedBy += how.top; } };
+  const win = { matchMedia: () => ({ matches: true }), location: { hash, search: '', hostname: 'dr-mumbo-jumbo.com' }, va() {}, sessionStorage: keeps({}), print() { printed++; },
+    // the page moved by hand, as (x, y); `seen` is whether the reader would watch it glide (the site's pages scroll smoothly unless told otherwise)
+    scrollBy(x, y) { moves.push({ x, y, seen: root.style.scrollBehavior !== 'auto' }); movedBy += y; } };
+  const root = element();
   const navigator = { clipboard: { writeText: (text) => { copied.push(text); return Promise.resolve(); } } };
   const soon = (fn, ms) => { if (ms <= 2000) Promise.resolve().then(fn); return 1; };
   class FileReader { readAsDataURL() { this.result = 'data:application/pdf;base64,JVBERi0x'; Promise.resolve().then(() => this.onload()); } }
   new Function('window', 'document', 'localStorage', 'navigator', 'fetch', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'AbortController', 'FileReader', 'TextDecoder', 'Response', js)(
-    win, { getElementById: $, createElement: () => element(), body: element(), referrer: '' }, keeps(saved), navigator, fetch, soon, () => {}, () => 0, () => {},
+    win, { getElementById: $, createElement: () => element(), body: element(), documentElement: root, referrer: '' }, keeps(saved), navigator, fetch, soon, () => {}, () => 0, () => {},
     class { constructor() { this.signal = {}; } abort() {} }, FileReader, canStream ? TextDecoder : undefined, canStream ? Response : undefined);
   const page = {
     $, saved,
@@ -145,6 +148,7 @@ function open({ hash = '', canStream = true, first = null, holdRetry = false, re
     drawn: () => $('docs').children.map((card) => card.innerHTML).join('\n'),
     docsTop: () => $('docs').getBoundingClientRect().top,      // where the documents start on screen
     moves: () => moves,                                        // every time the page was moved to hold the reader's place
+    smoothly: () => root.style.scrollBehavior !== 'auto',      // whether the page's own scrolling is still the smooth kind
     error: () => ($('error').classList.contains('on') ? $('error').textContent : ''),
     bytes: async (piece) => { feed(piece); await settle(); },
     say: async (message) => { feed(frame(message)); await settle(); },
@@ -224,7 +228,8 @@ const shown = (page) => page.$('strength').style.display === 'inline-flex';
     ok(!page.$('kitout').classList.contains('live'), 'when the kit is done its controls are back');
     ok(!page.$('progress').classList.contains('slim') && !page.$('progress').classList.contains('on'), 'the panel is put away, full size for the next build');
     same(page.docsTop(), before, 'and the documents stay where they are on screen through both changes');
-    ok(page.moves().length > 0 && page.moves().every((m) => m.behavior === 'instant' && m.left === 0), 'the place is held at once, not by a scroll the reader watches');
+    ok(page.moves().length > 0 && page.moves().every((m) => m.x === 0 && !m.seen), 'the place is held at once, not by a scroll the reader watches');
+    ok(page.smoothly(), 'and the page\'s own smooth scrolling is left as it was');
     ok(page.$('kitout').scrolls === 0 && page.$('progress').scrolls === 2, 'the page is not sent to the top of the kit');
     ok(/"parts"/.test(page.saved.dmj_fp_kit || ''), 'the finished kit is saved, as today');
     same(page.error(), '', 'and the build raises no error');

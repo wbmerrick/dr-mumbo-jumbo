@@ -409,12 +409,18 @@
   var liveLines = null, liveShown = false;
   // A change above the documents - the strength tag arriving, the kit's controls coming back, the progress panel
   // going - made without moving what the reader is reading: the documents stay where they are on screen.
-  // (Some browsers do this by themselves; where one has, there is nothing left to make up.)
+  // (Some browsers do this by themselves; where one has, there is nothing left to make up.) The site's pages
+  // scroll smoothly (nocturne.css), which here would be a glide the reader watches, so it is switched off for
+  // the one move, and put back.
   function holdPlace(change){
     var before = docsEl.getBoundingClientRect().top;
     change();
     var moved = docsEl.getBoundingClientRect().top - before;
-    if(moved) window.scrollBy({ top: moved, left: 0, behavior: 'instant' });
+    if(!moved) return;
+    var root = document.documentElement, was = root.style.scrollBehavior;
+    root.style.scrollBehavior = 'auto';
+    window.scrollBy(0, moved);
+    root.style.scrollBehavior = was;
   }
   // A browser that cannot read a reply piece by piece does not ask for one.
   var canLive = typeof TextDecoder !== 'undefined' && typeof Response !== 'undefined' && 'body' in Response.prototype;
