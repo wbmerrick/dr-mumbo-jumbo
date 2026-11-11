@@ -108,7 +108,9 @@ G and H were written after run 5; they informed fixes only after runs 7 and 9. I
 - what the reader is told when the model API refuses a request: a spend limit or credit balance, an unreadable or oversized file, a rate limit, and a passing fault, each in both modes; and the free translator's and letter writer's allowance per visitor;
 - the v9.10–v9.13 facts, rules and guards, on the real lines the model wrote and through the handler (82 assertions);
 - the kit as it is emailed and copied: the page's own text path, run over every stored kit. Rule lines and emphasis marks must be gone, and every other character of every section must still be there, in order;
-- the kit on the page: the renderer itself, on literal cases and every stored kit. Italics are shown as italics and no text is left wrapped in asterisks.
+- the kit on the page: the renderer itself, on literal cases and every stored kit. Italics are shown as italics and no text is left wrapped in asterisks;
+- the homepage's first screen: the order the page is read in, and how much stands before the Build button. The tool follows the headline directly (54 words before the button; the suite fails above 75), progress and the kit open right under it, the pitch and the six cards come after and stay off a printed kit, and every element the page script looks up is on the page once. Pixels need a browser: measured in Chrome, the Build button ends 637 px down on a laptop (it was 1,381) and 655 px down on a 390 × 664 phone (it was 2,441);
+- the analytics tags: every page loads Vercel's script once, from the path Vercel serves, and asks for nothing else under `/_vercel/`. The emailed kit carries no tag.
 
 **Automated checker** (`qa/fp-check.js` with `qa/manifest.js`, about 100 checks per kit). The checks cover:
 

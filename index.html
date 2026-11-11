@@ -22,13 +22,20 @@
 <link rel="stylesheet" href="/nocturne.css">
 <style>
 
-  .kit{margin-top:6px}
+  /* First screen: the headline, then the tool. The pitch and the six cards follow it,
+     so the paste box and the Build button are on screen without scrolling. */
+  .hero{padding:20px 0 16px}
+  .kit-intro{margin-top:44px;max-width:760px}
+  .kit{margin-top:18px}
   .kit .ti .icon-circle{margin-bottom:2px}
   .progress .morph-line{margin:12px 0 8px;min-height:2.2rem}
   .progress .morph{font-size:clamp(1.35rem,2.8vw,1.8rem);letter-spacing:-.02em}
   .attachrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  /* the row that shows a chosen file takes no room until there is one */
+  #tool .attachrow.chips{margin-top:0;row-gap:0}
+  #tool .filechip.on{margin-top:12px}
   .controls{margin-top:16px}
-  #tool textarea.input{min-height:170px}
+  #tool textarea.input{min-height:124px}
   .whisper{margin-top:12px}
   .codelink{font-size:13px;color:var(--muted);margin-top:12px}
   .codelink a{cursor:pointer}
@@ -83,9 +90,23 @@
   .dl-note{margin-top:12px}
   @media (max-width:720px){.dl-grid{grid-template-columns:1fr 1fr}}
   @media (max-width:640px){#tool .controls .btn-lg{flex:1 1 100%}}
+  /* Phones: the same first screen in less room. This page has one header link, so it shares
+     the logo's line; the upload buttons drop the words that made them wider than the panel. */
+  @media (max-width:640px){
+    .site-header .bar{flex-wrap:nowrap}
+    .site-header .nav{width:auto;margin:0;padding:0;overflow:visible}
+    .hero{padding:10px 0 12px;gap:8px}
+    h1{font-size:2.15rem}
+    #tool{padding:16px}
+    #tool textarea.input{min-height:104px}
+    #tool .attachrow{margin-top:10px}
+    #tool .attachrow .wide{display:none}
+    #tool .label.mt-3{margin-top:14px}
+    #tool .controls{margin-top:14px}
+  }
   @media (max-width:480px){.dl-grid{grid-template-columns:1fr}}
   @media print{
-    .kit,.kit-top .kit-actions,.whisper,.codelink,.mailkit{display:none !important}
+    .kit-intro,.kit,.kit-top .kit-actions,.whisper,.codelink,.mailkit{display:none !important}
     .kit-top{margin:0 0 12pt}
     .doc-top{border-bottom:1px solid #000}
     .doc-top .btn{display:none}
@@ -98,7 +119,6 @@
 <script>
   window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
 </script>
-<script defer src="/_vercel/web-analytics/script.js"></script>
 </head>
 <body>
 <svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
@@ -133,28 +153,18 @@
     <section class="hero">
       <span class="kicker" id="eyebrow">Free · built by a practicing physician</span>
       <h1>The appeal kit that comes with your doctor's letter<span class="lime">.</span></h1>
-      <p class="lead">Most appeals are won or lost on one document: the treating doctor's <strong>letter of medical necessity</strong>. Doctors rarely have time to write it. The Fight Pack writes it for them, in the language insurers approve, alongside everything else you need to overturn the denial.</p>
     </section>
 
-    <section class="tlist three kit" aria-label="What is in the kit">
-      <div class="ti star"><span class="icon-circle solid"><svg class="ic" aria-hidden="true"><use href="#i-sig"/></svg></span><span class="kicker">01 · The difference-maker</span><h3>Letter of medical necessity</h3><p>Written in your doctor's voice, answering the insurer's exact reason. They review, edit, sign. Five minutes.</p></div>
-      <div class="ti"><span class="icon-circle"><svg class="ic" aria-hidden="true"><use href="#i-scan"/></svg></span><span class="ovl">02</span><h3>Your denial, decoded</h3><p>What type of denial it is, what the insurer has to show, how strong your case is, and the exact documents that would make it decisive.</p></div>
-      <div class="ti"><span class="icon-circle"><svg class="ic" aria-hidden="true"><use href="#i-pen"/></svg></span><span class="ovl">03</span><h3>Your appeal letter</h3><p>A formal internal appeal that answers the insurer's criteria point by point and asks for the policy, the reviewer's credentials and a written decision.</p></div>
-      <div class="ti"><span class="icon-circle"><svg class="ic" aria-hidden="true"><use href="#i-phone"/></svg></span><span class="ovl">04</span><h3>Peer-to-peer brief and phone scripts</h3><p>Talking points for your doctor's call with the medical director, plus word-for-word scripts for the insurer and the billing office.</p></div>
-      <div class="ti"><span class="icon-circle"><svg class="ic" aria-hidden="true"><use href="#i-folder"/></svg></span><span class="ovl">05</span><h3>Records request and round two</h3><p>The letter that gets your chart and a coded bill, and the external-review request already written for when they say no again.</p></div>
-      <div class="ti"><span class="icon-circle"><svg class="ic" aria-hidden="true"><use href="#i-calcheck"/></svg></span><span class="ovl">06</span><h3>Every deadline, on your calendar</h3><p>Filing dates, decision-due dates, the external-review window: computed from your letter, downloadable to your calendar.</p></div>
-    </section>
-
-    <section class="panel hi mt-4" id="tool" aria-label="Build your Fight Pack">
+    <section class="panel hi" id="tool" aria-label="Build your Fight Pack">
       <label class="label" for="denial">Paste the denial letter or EOB</label>
       <textarea class="input" id="denial" maxlength="6000" spellcheck="false" aria-label="Paste your denial letter" placeholder="For example: Claim 00000000 — MRI lumbar spine (CPT 72148) DENIED. Reason CO-50: not deemed medically necessary; conservative therapy must be documented prior to advanced imaging. You may appeal within 180 days of this notice…"></textarea>
       <div class="attachrow">
-        <button class="btn btn-secondary" id="attach" type="button"><svg class="ic" style="width:17px;height:17px" aria-hidden="true"><use href="#i-camera"/></svg> Photo or PDF of the denial</button>
-        <button class="btn btn-secondary" id="attachrec" type="button"><svg class="ic" style="width:17px;height:17px" aria-hidden="true"><use href="#i-clip"/></svg> Doctor's note or records <span class="muted">(optional)</span></button>
+        <button class="btn btn-secondary" id="attach" type="button"><svg class="ic" style="width:17px;height:17px" aria-hidden="true"><use href="#i-camera"/></svg> <span>Photo or PDF<span class="wide"> of the denial</span></span></button>
+        <button class="btn btn-secondary" id="attachrec" type="button"><svg class="ic" style="width:17px;height:17px" aria-hidden="true"><use href="#i-clip"/></svg> <span>Doctor's note<span class="wide"> or records</span></span> <span class="muted">(optional)</span></button>
       </div>
       <input type="file" id="file" accept="image/*,application/pdf,.pdf" hidden>
       <input type="file" id="recfile" accept="image/*,application/pdf,.pdf" hidden>
-      <div class="attachrow">
+      <div class="attachrow chips">
         <div class="filechip" id="filechip"><svg class="ic" style="width:15px;height:15px" aria-hidden="true"><use href="#i-clip"/></svg><span id="filename"></span><button class="x" id="fileclear" type="button" aria-label="Remove file"><svg class="ic" style="width:14px;height:14px" aria-hidden="true"><use href="#i-x"/></svg></button></div>
         <div class="filechip" id="recchip"><svg class="ic" style="width:15px;height:15px" aria-hidden="true"><use href="#i-clip"/></svg><span id="recname"></span><button class="x" id="recclear" type="button" aria-label="Remove records file"><svg class="ic" style="width:14px;height:14px" aria-hidden="true"><use href="#i-x"/></svg></button></div>
       </div>
@@ -224,6 +234,19 @@
         </div>
       </div>
       <p class="small whisper">Your kit is saved in this browser for 3 days so you can come back to it. <a id="forget" style="cursor:pointer">Clear it from this browser</a>.</p>
+    </section>
+
+    <div class="kit-intro">
+      <p class="lead">Most appeals are won or lost on one document: the treating doctor's <strong>letter of medical necessity</strong>. Doctors rarely have time to write it. The Fight Pack writes it for them, in the language insurers approve, alongside everything else you need to overturn the denial.</p>
+    </div>
+
+    <section class="tlist three kit" aria-label="What is in the kit">
+      <div class="ti star"><span class="icon-circle solid"><svg class="ic" aria-hidden="true"><use href="#i-sig"/></svg></span><span class="kicker">01 · The difference-maker</span><h3>Letter of medical necessity</h3><p>Written in your doctor's voice, answering the insurer's exact reason. They review, edit, sign. Five minutes.</p></div>
+      <div class="ti"><span class="icon-circle"><svg class="ic" aria-hidden="true"><use href="#i-scan"/></svg></span><span class="ovl">02</span><h3>Your denial, decoded</h3><p>What type of denial it is, what the insurer has to show, how strong your case is, and the exact documents that would make it decisive.</p></div>
+      <div class="ti"><span class="icon-circle"><svg class="ic" aria-hidden="true"><use href="#i-pen"/></svg></span><span class="ovl">03</span><h3>Your appeal letter</h3><p>A formal internal appeal that answers the insurer's criteria point by point and asks for the policy, the reviewer's credentials and a written decision.</p></div>
+      <div class="ti"><span class="icon-circle"><svg class="ic" aria-hidden="true"><use href="#i-phone"/></svg></span><span class="ovl">04</span><h3>Peer-to-peer brief and phone scripts</h3><p>Talking points for your doctor's call with the medical director, plus word-for-word scripts for the insurer and the billing office.</p></div>
+      <div class="ti"><span class="icon-circle"><svg class="ic" aria-hidden="true"><use href="#i-folder"/></svg></span><span class="ovl">05</span><h3>Records request and round two</h3><p>The letter that gets your chart and a coded bill, and the external-review request already written for when they say no again.</p></div>
+      <div class="ti"><span class="icon-circle"><svg class="ic" aria-hidden="true"><use href="#i-calcheck"/></svg></span><span class="ovl">06</span><h3>Every deadline, on your calendar</h3><p>Filing dates, decision-due dates, the external-review window: computed from your letter, downloadable to your calendar.</p></div>
     </section>
 
     <section class="section" aria-labelledby="faq-title">
