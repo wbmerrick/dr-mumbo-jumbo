@@ -133,7 +133,7 @@ Written before the code, and watched to fail first.
 - A plain reply to a live request behaves as today.
 - The example kit still calls nothing.
 
-**Every existing suite** passes unchanged, except the one-line addition of `redo` in `test-count.js`.
+**Every existing suite** passes unchanged, except two one-line additions: `redo` in `test-count.js`'s list of count fields, and `live` in `test-source.js`'s list of the fields a build request holds.
 
 **Real browser:** headless Chrome over the live site with this branch's files and a stand-in server that streams slowly, at phone and laptop sizes. Checked: the first line is visible, the page scrolls once, and the finished section replaces the live one without a jump.
 
