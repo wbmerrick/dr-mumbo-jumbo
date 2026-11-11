@@ -54,7 +54,17 @@ The kit has ten sections, written in six passes.
 
 On the page the live lines are kept apart from the kit: they are not saved, copied, printed or emailed, and parts 2–6 are written from the finished decode only. If the stream fails or the decode comes back short, the page clears the live text and asks again the plain way. `FIGHTPACK_LIVE=off` turns the live read off (README, "Live first read").
 
-Replayed over the first section of all 169 stored kits, no line that would have been shown was changed afterwards (`redo` is 0), and how the stream was cut up made no difference (`qa/tests/test-live-read.js`). How soon the first line reaches a reader on the live site has not been measured yet.
+Replayed over the first section of all 169 stored kits, no line that would have been shown was changed afterwards (`redo` is 0), and how the stream was cut up made no difference (`qa/tests/test-live-read.js`). In the same replay, the median point in the section's text at which each line is released:
+
+| Line | Released when this much of the section has been written |
+|---|---|
+| The heading | 2% |
+| The first of the reader's own details ("Read from your letter") | 4% |
+| Type of denial | 29% (it begins at 19%; a line is released when the line after it is complete) |
+| What they're really saying | 50% |
+| Case strength | 69% |
+
+The first section took a median of 25 seconds to arrive whole in runs 16–27. How soon these lines reach a reader on the live site has not been measured yet: that depends on how long the writer takes to start, and on the stream not being held back on the way. `FP_LIVE=1` on the runner measures it (section 8).
 
 The writer's rules, the plan rules and the guards live in `api/_lib/`, which the site never serves.
 
@@ -412,6 +422,9 @@ for t in qa/tests/*.js; do node "$t" || break; done
 cd qa && FP_CODE=<preview code> FP_RUN=runs28 FP_CONC=3 node fp-run.js
 # one case the way a visitor builds it, through the free path
 FP_FREE=1 FP_RUN=runs28-free node fp-run.js G-medicaid-mri-redflags
+# the same, with the first section asked for live as the page asks, and its lines timed
+# (prints: first line, type of denial, case strength, finished section, and redo, which should be 0)
+FP_FREE=1 FP_LIVE=1 FP_RUN=runs28-live node fp-run.js A-sleep-paraphrase
 
 # score it (FP_TODAY pins "today" for the date checks; list the cases a partial run ran)
 FP_TODAY=2026-10-30 node fp-check.js runs28

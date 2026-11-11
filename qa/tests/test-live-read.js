@@ -398,6 +398,27 @@ const TOO_LONG = 'That took too long. Try again — the kit builds in short pass
     same(late.res.written, sent, 'an answer that finishes after the reader has gone is not written');
     same(lines.length, before, 'nor counted');
   }
+  // ---------- 4. the test runner reads a live reply as the page does, and times it (qa/live-client.js) ----------
+  {
+    const { readLive } = require('../live-client.js');
+    const asResponse = (b) => new Response(b.res.written, { headers: { 'content-type': b.res.headers['Content-Type'] } });
+    const b = await live(S, { size: 50 });
+    const got = await readLive(asResponse(b), Date.now());
+    same(got.data, b.done, 'the runner reads the finished section out of the stream');
+    ok(got.ok && got.status === 200 && got.live.redo === b.redo && got.live.messages === b.messages.length, 'and counts messages and corrections as the server test does');
+    const t = got.live;
+    ok([t.first_ms, t.type_ms, t.grade_ms, t.done_ms].every((x) => typeof x === 'number'), 'every time is recorded');
+    ok(t.first_ms <= t.type_ms && t.type_ms <= t.grade_ms && t.grade_ms <= t.done_ms, 'first line, type of denial, grade, done: in that order');
+    const bad = await live(S, { sse: { errorAfter: 30 } });
+    const lost = await readLive(asResponse(bad), Date.now());
+    ok(!lost.ok && lost.status === 502 && lost.data.error === 'upstream' && lost.live.done_ms === null, 'a live reply that failed is reported as failed, so the runner asks again');
+    // a stream that stops with neither a finished section nor an error is a dropped connection
+    const half = await readLive(new Response('data: ' + JSON.stringify({ from: 0, lines: ['## 1. T', 'a'] }) + '\n\n', { headers: { 'content-type': 'text/event-stream; charset=utf-8' } }), Date.now());
+    ok(!half.ok && half.status === 0 && half.live.messages === 1 && half.live.done_ms === null, 'a stream that just stops is reported as a dropped connection');
+    const flat = await readLive(new Response(JSON.stringify({ part: 1, text: 'x' }), { headers: { 'content-type': 'application/json' } }), Date.now());
+    ok(flat.ok && flat.data.text === 'x' && flat.live === null, 'a plain reply is read as before, with no live record');
+  }
+
   same(limits.filter((t) => !t.cleared).length, 0, 'every request cleared its time limit when it ended (' + limits.length + ' requests)');
   global.setTimeout = realSet;
   global.clearTimeout = realClear;
