@@ -31,6 +31,58 @@
   function drop(key){ try{ localStorage.removeItem(key); }catch(e){} }
   // The reader's kit, kept in this browser. The example kit is not theirs and is never kept.
   function stash(){ if(sample) return; save('dmj_fp_kit', { parts: parts, meta: meta, gaps: gaps, ts: Date.now() }); }
+  // ---------- where this reader came from ----------
+  // One word for the visit. It goes with a kit's build calls, so the kit count can say which place
+  // sent the people who built one (api/fightpack.js keeps it beside the count). The word is:
+  //   the tag on the link they followed (?utm_source=reddit), cut down to a-z 0-9 and dashes;
+  //   else the site that linked here, as a name from the short list below, or 'other' for any site not on it;
+  //   else 'site' for another page of this site, and 'direct' when the browser names no page at all.
+  // The address of the page they came from is never kept and never sent: only the word.
+  // The first word sticks for the life of the tab, so a look at another page of the site and back does
+  // not lose it; a new tagged link replaces it. It is not kept past the tab: a reader who comes back
+  // next week on their own is not last week's link.
+  var REFERRERS = [
+    ['reddit', /(^|\.)(reddit\.com|redd\.it)$|^com\.reddit\./],
+    ['x', /^t\.co$|(^|\.)(x|twitter)\.com$|^com\.twitter\./],
+    ['threads', /(^|\.)threads\.(net|com)$|^com\.instagram\.barcelona$/],
+    ['bluesky', /(^|\.)bsky\.app$/],
+    ['hn', /^news\.ycombinator\.com$/],
+    ['facebook', /(^|\.)(facebook|fb)\.com$|^com\.facebook\./],
+    ['linkedin', /(^|\.)linkedin\.com$|^lnkd\.in$/],
+    ['google', /(^|\.)google\.[a-z.]{2,6}$/],
+    ['bing', /(^|\.)bing\.com$/],
+    ['duckduckgo', /(^|\.)duckduckgo\.com$/],
+    ['chatgpt', /(^|\.)chatgpt\.com$|^chat\.openai\.com$/],
+    ['perplexity', /(^|\.)perplexity\.ai$/],
+    ['claude', /(^|\.)claude\.ai$/]
+  ];
+  function cleanWord(s){ return String(s || '').toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 24); }
+  // The host of an address (or the package of an Android app that opened the link), without "www."
+  function hostOf(url){
+    var m = /^[a-z][a-z0-9+.-]*:\/\/([^\/?#]*)/i.exec(String(url || ''));
+    return m ? m[1].replace(/^.*@/, '').replace(/:\d+$/, '').toLowerCase().replace(/^www\./, '') : '';
+  }
+  function taggedAs(){
+    var m = /[?&]utm_source=([^&#]*)/.exec((window.location && window.location.search) || '');
+    if(!m) return '';
+    try{ return cleanWord(decodeURIComponent(m[1].replace(/\+/g, ' '))); }catch(e){ return ''; }   // a tag that cannot be read is no tag
+  }
+  function sentBy(){
+    var host = hostOf(document.referrer);
+    if(!host) return 'direct';
+    if(host === hostOf('https://' + ((window.location && window.location.hostname) || ''))) return 'site';
+    for(var i = 0; i < REFERRERS.length; i++) if(REFERRERS[i][1].test(host)) return REFERRERS[i][0];
+    return 'other';
+  }
+  var source = (function(){
+    var tab = null;
+    try{ tab = window.sessionStorage; }catch(e){}                       // some browsers refuse even to hand it over
+    var kept = '';
+    try{ kept = tab ? cleanWord(tab.getItem('dmj_src')) : ''; }catch(e){}
+    var word = taggedAs() || kept || sentBy();
+    try{ if(tab) tab.setItem('dmj_src', word); }catch(e){}
+    return word;
+  })();
   // ---------- files ----------
   function prepFile(f, ok, fail){
     var MAX = 3 * 1024 * 1024;
@@ -377,7 +429,7 @@
     refreshSteps(done);
     // One part: ask, retry once on a transient server error, retry once if a section came back missing.
     function fetchPart(p, extraBody){
-      function ask(){ return postJSON('/api/fightpack', Object.assign({ token: tok, part: p, kid: kid }, inp, extraBody || {})); }
+      function ask(){ return postJSON('/api/fightpack', Object.assign({ token: tok, part: p, kid: kid, src: source }, inp, extraBody || {})); }
       return ask().then(function(res){
         if(!res.ok && (res.status === 0 || res.status >= 500)){
           return new Promise(function(r){ setTimeout(r, 1500); }).then(ask);

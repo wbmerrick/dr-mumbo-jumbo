@@ -35,10 +35,10 @@ const REPLIES = {
   6: '## 9. Ask for an outside review (external review / IRE)\nBody.\n\n## 10. Your deadlines and what to do next\nBody.'
 };
 function mockRes(){ const r = { code: 0, body: null }; r.setHeader = () => {}; r.status = (c) => { r.code = c; return r; }; r.json = (b) => { r.body = b; return r; }; return r; }
-async function call(part, kid){
+async function call(part, kid, more){
   reply = REPLIES[part] || REPLIES[6];
   const res = mockRes();
-  await fp({ method: 'POST', body: { token: tok, part, kid, denial: 'Claim 123 denied CO-50' } }, res);
+  await fp({ method: 'POST', body: Object.assign({ token: tok, part, kid, denial: 'Claim 123 denied CO-50' }, more || {}) }, res);
   return res;
 }
 const kitsBuilt = () => {
@@ -70,6 +70,31 @@ let n = 0; const ok = (c, m) => { assert(c, m); n++; };
   ok(lines.some((l) => l.kid === 'z'.repeat(24)), 'tag capped at 24 chars');
   await call(1, undefined);
   ok(lines.some((l) => l.kid === 'untagged'), 'missing tag falls back to untagged');
+
+  // ---------- where the kit's reader came from ----------
+  // One word the page sends with each part (fightpack.js works it out from the link's tag or the
+  // site that linked here; test-source.js). The request body is whatever a caller sends, so the
+  // word is cut down again here and never trusted. Written out by hand: 'Reddit Thread?id=5&name=John Smith'
+  // lowercased, with everything but a-z 0-9 and dashes removed, is redditthreadid5namejohnsmith; 24 characters of that.
+  const srcOf = (kid) => (lines.find((l) => l.kid === kid) || {}).src;
+  await call(1, 'kitSRC01', { src: 'reddit' });
+  ok(srcOf('kitSRC01') === 'reddit', 'the source word is counted with the kit part (got ' + srcOf('kitSRC01') + ')');
+  ok((rpc.find((r) => r.body.p_data.kid === 'kitSRC01') || { body: { p_data: {} } }).body.p_data.src === 'reddit', 'and written with the durable count');
+  await call(1, 'kitSRC02', { src: 'Reddit Thread?id=5&name=John Smith' });
+  ok(srcOf('kitSRC02') === 'redditthreadid5namejohns', 'the word is cut down to lowercase letters, digits and dashes, 24 at most (got ' + srcOf('kitSRC02') + ')');
+  await call(1, 'kitSRC03', { src: 'x-replies' });
+  ok(srcOf('kitSRC03') === 'x-replies', 'dashes are kept (got ' + srcOf('kitSRC03') + ')');
+  await call(1, 'kitSRC04');
+  ok(srcOf('kitSRC04') === 'unknown', 'a call that names no source is counted as unknown (got ' + srcOf('kitSRC04') + ')');
+  await call(1, 'kitSRC05', { src: { toString: () => 'reddit' } });
+  ok(srcOf('kitSRC05') === 'unknown', 'only a plain string is taken as a source (got ' + srcOf('kitSRC05') + ')');
+  await call(1, 'kitSRC06', { src: '!!! ???' });
+  ok(srcOf('kitSRC06') === 'unknown', 'a word with nothing usable in it is counted as unknown (got ' + srcOf('kitSRC06') + ')');
+  // What a count line may hold is the whole promise on the privacy page: which action, which part of
+  // which kit, a safety label, two flags, and the source word. A field added here is a field kept.
+  const HOLDS = ['evt', 'kid', 'part', 'safety', 'urgent', 'missing', 'src'];
+  const extra = [...new Set(lines.flatMap((l) => Object.keys(l)))].filter((k) => !HOLDS.includes(k));
+  ok(extra.length === 0, 'a count line holds only ' + HOLDS.join(', ') + ' (also found: ' + extra.join(', ') + ')');
 
   // no line ever carries submitted content
   const blob = JSON.stringify(lines);

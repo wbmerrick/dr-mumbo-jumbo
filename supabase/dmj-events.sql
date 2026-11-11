@@ -14,8 +14,9 @@
 -- those grants in place - run supabase/dmj-events-harden.sql to revoke them.
 --
 -- WHAT GOES IN HERE: counts and flags only — which action happened, which part of a
--- kit, a severity label, a random per-build tag. Never submitted text, never an email
--- address, never an IP. privacy.html says exactly this and qa/tests/test-count.js
+-- kit, a severity label, a random per-build tag, and one word for where a kit's reader
+-- came from (the tag on their link, or a name for the site that linked here; never an
+-- address). Never submitted text, never an email address, never an IP. privacy.html says exactly this and qa/tests/test-count.js
 -- asserts it. Please keep it that way.
 
 create table if not exists public.dmj_events (

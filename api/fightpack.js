@@ -450,6 +450,12 @@ module.exports = async (req, res) => {
   // and a retried part from a second kit. Not a visitor id: random, per build, never reused.
   const kid = String(body.kid || '').replace(/[^A-Za-z0-9]/g, '').slice(0, 24) || 'untagged';
 
+  // Where this kit's reader came from: one word the page works out (fightpack.js) - the tag on the link
+  // they followed, or a name for the site that linked here. Never an address. It is whatever the caller
+  // sent, so it is cut down again here: lowercase letters, digits and dashes, 24 at most. A caller that
+  // names none is 'unknown'. Kept beside the count so "kits built" can be split by place.
+  const src = (typeof body.src === 'string' ? body.src : '').toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 24) || 'unknown';
+
   const auth = verify(body.token);
   if (!auth) {
     res.status(401).json({ error: 'locked', message: isFree()
@@ -580,7 +586,7 @@ module.exports = async (req, res) => {
     // Kits built = distinct kid with all 6 parts; part 6 alone does NOT mean a whole kit
     // (parts 2-6 run in parallel, so 6 can land while 3 fails) and part 6 is re-asked
     // when sections come back missing, which would double-count a single kit.
-    await count('kit_part', { kid, part, safety: post.level, urgent: urgent === true, missing: missing.length });
+    await count('kit_part', { kid, part, src, safety: post.level, urgent: urgent === true, missing: missing.length });
     res.status(200).json({ part, text, sid: auth.sid === 'preview' || auth.sid === 'free' ? auth.sid : 'paid', stop: data.stop_reason || null, missing, trimmed: norm.trimmed, safety: post.level, ...post.counts, usage, deadline: deadline ? isoOf(deadline.date) : null, urgent, clock });
   } catch (e) {
     clearTimeout(timer);

@@ -56,6 +56,26 @@ Free use is limited per visitor so nobody can run up the bill: 3 free tokens an 
 1. **Claude Console → Billing → Spend limits → Set limit** (platform.claude.com/settings/billing): a monthly cap for the organization. At the cap the model API refuses requests instead of billing more. The Fight Pack then tells visitors plainly that the free kit "has reached its limit for now" (it does not ask them to retry); the appeal letter and the translator share the key and say the same plainly.
 2. **Optional — Vercel → Project → Firewall → Rules:** a rate limit on `/api/` (for example 60 requests per 10 minutes per IP), which holds across server instances.
 
+### Where kits come from
+
+Every kit part is counted in `public.dmj_events` (Supabase) with the kit's throwaway tag and one word for where its reader came from, `src`:
+
+- the tag on the link they followed: `https://dr-mumbo-jumbo.com/?utm_source=reddit` is counted as `reddit`. Any tag works; it is cut down to lowercase letters, digits and dashes, 24 at most;
+- with no tag, a name for the site that linked here: `reddit`, `x`, `threads`, `bluesky`, `hn`, `facebook`, `linkedin`, `google`, `bing`, `duckduckgo`, `chatgpt`, `perplexity` or `claude`, and `other` for any site not on that list (`fightpack.js`);
+- `site` for a reader who arrived from another page of this site, and `direct` when the browser names no page at all. Many links opened inside phone apps arrive that way, so tag the links you post;
+- `qa` for the test runner (`qa/fp-run.js`) and `unknown` for a caller that sent no word. Kits built before November 11, 2026 have none.
+
+The word is all that is kept: never the address of the page the reader came from. It lasts for the browser tab, so a look at another page of the site does not lose it, and no longer. Kits by place, test runs left out:
+
+```sql
+with k as (
+  select data->>'kid' as kid, max(data->>'src') as src, count(distinct data->>'part') as parts
+  from public.dmj_events where evt = 'kit_part' group by 1
+)
+select coalesce(src, '(before sources)') as source, count(*) as started, count(*) filter (where parts = 6) as built
+from k where coalesce(src, '') <> 'qa' group by 1 order by built desc, started desc;
+```
+
 ### Switching on Fight Pack payments (later)
 
 1. In Stripe: Products → Add product → "Dr Mumbo Jumbo Fight Pack", one-time, at the chosen price. Copy the price ID (`price_…`).
@@ -107,4 +127,4 @@ robots.txt
 
 ## Privacy posture
 
-Nothing a visitor pastes or uploads is stored. The only data kept is the waitlist table (email + category), which also holds the addresses of people who asked to have a kit emailed to them (source `kit-email`). An emailed kit transits Resend once and is not stored on our side; Resend keeps its copy of the message (contents and delivery records) for its fixed 30-day retention, then deletes it — `privacy.html` says exactly that. Pages ask visitors to leave out names, birthdates, and ID numbers, and the prompts instruct the model not to repeat them.
+Nothing a visitor pastes or uploads is stored. The only data kept is the waitlist table (email + category), which also holds the addresses of people who asked to have a kit emailed to them (source `kit-email`). An emailed kit transits Resend once and is not stored on our side; Resend keeps its copy of the message (contents and delivery records) for its fixed 30-day retention, then deletes it — `privacy.html` says exactly that. Pages ask visitors to leave out names, birthdates, and ID numbers, and the prompts instruct the model not to repeat them. The use counter (`public.dmj_events`) holds counts and flags, and for a kit one word for where its reader came from, never an address; `qa/tests/test-count.js` fails if a count line gains a field.
