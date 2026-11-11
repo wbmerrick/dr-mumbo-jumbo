@@ -1,0 +1,53 @@
+{
+  "ok": true,
+  "status": 200,
+  "data": {
+    "part": 4,
+    "text": "## 5. Peer-to-peer talking points — for your doctor\n\n**Before the call:**\n- Have the chart open to the late August visit notes documenting the new left-leg weakness and numbness, the dates and records of the patient's physical therapy and conservative treatment, and the MRI order or referral\n- Have the full text of the insurer's policy IMG-204 (request it from the plan if not already provided) and claim/reference number 00000000 ready\n- Ask the reviewer's name, credentials, and specialty at the start of the call and write them down\n\n**30-second opening:**\n\"This is [specialty] calling about [patient name], date of birth [DOB], member ID [member ID], claim reference 00000000. The service is an MRI of the lumbar spine without contrast, CPT 72148, performed on September 14, 2026, which the plan denied under policy IMG-204. The patient reports completing eight weeks of physical therapy and naproxen before the MRI and developed new left-leg weakness and numbness in late August. [If documented: I documented those neurologic findings on exam.] The MRI was ordered to evaluate for nerve-root compromise and guide surgical decision-making. This meets both pathways in your own policy.\"\n\n**Criteria, point by point:**\n- Policy IMG-204 requirement: \"at least six weeks of conservative therapy unless red-flag findings are present.\"\n- Conservative therapy duration: The patient reports eight weeks of physical therapy and naproxen prior to the September 14 MRI — [dates from the physical therapy records and prescription or pharmacy records]. That exceeds the six-week threshold.\n- Red-flag findings exception: The patient reports new left-leg weakness and numbness starting in late August. [If documented: Exam findings included motor weakness in the left lower extremity, sensory changes, and concern for radiculopathy or nerve-root compression.] New motor or sensory deficits are red-flag findings that make imaging medically necessary regardless of conservative-treatment duration.\n\n**If they push back:**\n- \"The records don't show six weeks of treatment\": [Physical therapy discharge summary or treatment log, and prescription/pharmacy records showing the eight-week timeline, are attached to the written appeal.] If not yet sent, I will provide them today.\n- \"We need documentation of the neurologic findings\": [My office note from late August or early September documents the motor and sensory exam and the clinical indication for urgent imaging.] I will send it with the appeal or as an addendum if it was not in the original submission.\n- \"Conservative treatment should continue first\": The new motor and sensory deficits indicate possible nerve-root compromise; delaying imaging while neurologic symptoms are present risks progression and permanent deficit. Your policy's own red-flag exception covers this situation.\n\n**The ask:**\nOverturn the denial now based on this discussion. If you cannot approve it on this call, please provide in writing the specific criterion you consider unmet, your name and specialty, and what additional documentation would change the decision.\n\n**After the call:**\nLog the date, time, reviewer's name and credentials, reference number given on the call, the outcome, and any next step or documentation requested.\n\n---\n\n## 6. Phone script — calling the insurer\n\n**Before you call, have ready:**\n- Your insurance card with the member services phone number\n- The denial letter dated 10/02/2026\n- Claim/reference number: 00000000\n- Date of service: 09/14/2026\n- Service: MRI lumbar spine without contrast, CPT 72148\n- Pen and paper for notes\n\n**Say:** \"I'm calling about a denied claim, reference number 00000000, for an MRI of the lumbar spine performed on September 14, 2026. The denial letter says it was denied as not medically necessary under policy IMG-204. I need some information to complete my appeal.\"\n\n**Ask:** \"What is the exact denial reason code on this claim?\" Write down the code and ask for its plain-English meaning.\n\n**Then ask:** \"The letter mentions policy IMG-204. Can you provide the full name and number of that policy, and how do I request a copy of the complete policy text?\"\n\n**Ask:** \"Was this claim reviewed by a physician? If so, what is the reviewing clinician's name, credentials, and specialty?\"\n\n**Ask:** \"Is a peer-to-peer review available — can my treating doctor speak directly with your medical director about this case? If so, how does my doctor schedule that, and what is the phone number or process?\"\n\n**Ask:** \"What is the exact deadline to file my appeal?\" (The letter says 180 days from October 2, 2026, which is March 31, 2027 — confirm that date.) \"Where do I send the appeal — fax number, mailing address, or online portal — and what documents must I include?\"\n\n**If they say the claim was processed as non-emergency or out-of-network in error:** \"Can you reprocess this claim correctly now as a processing correction? I will still file the formal appeal by the deadline, but I'm asking that it be corrected in your system first.\"\n\n**Ask:** \"Can you give me a call reference number for today's call, and your name, so I have a record of this conversation?\"\n\n**Before you hang up, confirm:** Repeat back the appeal deadline, the address or fax number, and any reference number they gave you. Ask: \"Is there anything else I need to include in the appeal packet?\"\n\n**Call log** (fill out immediately after the call):\n- Date and time of call: ______________________\n- Representative's name: ______________________\n- Call reference number: ______________________\n- What they said (denial reason, policy name, peer-to-peer availability, deadline confirmed): ______________________\n- What they promised or agreed to do: ______________________\n- My next step: ______________________",
+    "sid": "free",
+    "stop": "end_turn",
+    "missing": [],
+    "trimmed": [],
+    "safety": "today",
+    "hedged": 0,
+    "ed_now": 0,
+    "choice": 0,
+    "consent": 0,
+    "choice_argument": 0,
+    "cost_sharing": 0,
+    "earlier_date": 0,
+    "coding": 0,
+    "request_passive": 0,
+    "unverified": 0,
+    "authority": 0,
+    "authorship": 0,
+    "records": 0,
+    "labels": 0,
+    "severity": 0,
+    "setting": 0,
+    "phones": 0,
+    "usage": {
+      "in": 2323,
+      "out": 1327,
+      "cache_read": 5414,
+      "cache_write": 0
+    },
+    "deadline": "2027-03-31",
+    "urgent": false,
+    "clock": "for employer and marketplace plans, the plan must decide an appeal for care already received within 60 days of receiving it (30 days per level if it has two appeal levels); care already received is never expedited"
+  },
+  "attempts": [
+    {
+      "status": 200,
+      "ms": 36842,
+      "stop": "end_turn",
+      "missing": [],
+      "usage": {
+        "in": 2323,
+        "out": 1327,
+        "cache_read": 5414,
+        "cache_write": 0
+      }
+    }
+  ]
+}

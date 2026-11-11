@@ -110,7 +110,8 @@ G and H were written after run 5; they informed fixes only after runs 7 and 9. I
 - the kit as it is emailed and copied: the page's own text path, run over every stored kit. Rule lines and emphasis marks must be gone, and every other character of every section must still be there, in order;
 - the kit on the page: the renderer itself, on literal cases and every stored kit. Italics are shown as italics and no text is left wrapped in asterisks;
 - the homepage's first screen: the order the page is read in, and how much stands before the Build button. The tool follows the headline directly (54 words before the button; the suite fails above 75), progress and the kit open right under it, the pitch and the six cards come after and stay off a printed kit, and every element the page script looks up is on the page once. Pixels need a browser: measured in Chrome, the Build button ends 637 px down on a laptop (it was 1,381) and 655 px down on a 390 × 664 phone (it was 2,441);
-- the analytics tags: every page loads Vercel's script once, from the path Vercel serves, and asks for nothing else under `/_vercel/`. The emailed kit carries no tag.
+- the analytics tags: every page loads Vercel's script once, from the path Vercel serves, and asks for nothing else under `/_vercel/`. The emailed kit carries no tag;
+- the example kit: "Try an example" shows `sample-kit.json`, a kit the site wrote for the example letter, instead of making a visitor wait for one. The file must be exactly what the site returned (the raw answers are in `qa/evidence/sample/`), built from the letter the button uses today, whole, and on the deploy list. The page script, run whole, must show it with no server call, never save or email it, leave a reader's saved kit alone, show it again when Build is pressed on the unchanged example, build for real once a word or the note changes, and fall back to the old behaviour when the file is missing. The example's letter and story must also never ride along into a reader's kit: a letter pasted over the example's clears the example's note, and a file of the reader's own clears both boxes of example text (before this, the example's symptoms went into the reader's requests). The stored kit scored 90 pass, 0 fail on the corpus checker; two earlier builds each failed one check and were discarded, not edited.
 
 **Automated checker** (`qa/fp-check.js` with `qa/manifest.js`, about 100 checks per kit). The checks cover:
 
@@ -419,12 +420,19 @@ OLD=/path/to/previous/api/_lib/fightpack-guards.js node guard-diff.js runs19 run
 
 # unbracketed relabels by case, term and section
 node relabel-map.js runs21
+
+# the example kit on the homepage: build it again on the live site, score it, write sample-kit.json
+# (one real kit per run; needed when the writing rules or the example letter change)
+cd .. && node scripts/build-sample-kit.js
+# score the stored build again without building
+node scripts/build-sample-kit.js --check
 ```
 
 The evidence is in:
 
 - `qa/evidence/` — the kits and reports from runs 4–21 and 23–27, and the two production kits (`runs22-free`);
 - `qa/evidence/raw-runs9-15.tar.gz`, `raw-runs16-24.tar.gz` and `raw-runs25-27.tar.gz` — the raw part files for runs 9–27, which can be re-scored or replayed (runs 3–8 survive as kits and reports only);
+- `qa/evidence/sample/` — the raw answers, checker report and build date behind `sample-kit.json`;
 - `docs/qa-evidence/` — the seven audits.
 
 ## 9. Sources checked by the audits

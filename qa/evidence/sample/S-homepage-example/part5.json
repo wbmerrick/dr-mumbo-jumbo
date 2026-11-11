@@ -1,0 +1,50 @@
+{
+  "ok": true,
+  "status": 200,
+  "data": {
+    "part": 5,
+    "text": "## 7. Phone script — calling the hospital or doctor's billing office\n\n**Before you call:** Have your insurance card, the denial letter (reference 00000000), and the date of service (09/14/2026) ready.\n\n**Call:** Example Imaging Center's billing office (number from your billing statement or the imaging center's main line).\n\n**Say:**\n\n\"Hello, my name is [your name]. I'm calling about a charge for an MRI of my lumbar spine on September 14, 2026, reference number 00000000. My insurance denied it as not medically necessary, and I'm appealing. I have a few questions:\n\nFirst, can you send me an itemized statement showing the CPT code and the charge — I have CPT 72148 for $1,650 from the denial letter, but I want to confirm that's correct.\n\nSecond, can you place my account on hold — no collections — while the appeal is pending? The deadline is March 31, 2027.\n\nThird, are you in-network with my plan, and is the $1,650 a contractual write-off or my responsibility? The denial says 'member responsibility pending appeal,' but I need to understand what I'd owe if the appeal succeeds versus if it's upheld.\n\nFourth, the denial says the records didn't show six weeks of conservative treatment or red-flag findings before the MRI. I had eight weeks of physical therapy and new leg weakness. Will your office or the ordering doctor's office add documentation or appeal on my behalf, or do I handle the whole appeal myself?\n\nFinally, do you have financial assistance, a charity-care application, or a prompt-pay discount if I end up owing this?\"\n\n**Get:**\n- Name and direct phone number of the person handling your account\n- Whether they will hold the account\n- Confirmation of the amount and whether it's your responsibility\n- Whether they or the doctor will support the appeal\n\n**Call log:**\n- Date and time: ____________________\n- Spoke with: ____________________\n- Phone number for follow-up: ____________________\n- Account placed on hold?  ☐ Yes  ☐ No\n- Will they or the doctor appeal or add records?  ☐ Yes  ☐ No  ☐ I handle it\n- Notes: ________________________________________\n\n---\n\n## 8. Records and itemized-bill request letter\n\n[Your name]  \n[Date of birth]  \n[Address]  \n[Phone number]  \n[Date]\n\nExample Imaging Center  \nMedical Records / Health Information Management Department  \n[Address — from your paperwork or the imaging center's website]\n\nRE: Patient [your name], date of birth [your DOB], date of service 09/14/2026\n\nTo whom it may concern:\n\nI am writing to request a copy of my complete medical record and an itemized billing statement for the MRI of my lumbar spine performed at your facility on September 14, 2026 (CPT 72148, reference 00000000).\n\nPlease provide:\n1. The complete medical record for that date, including the MRI order or referral, the technologist's notes, the radiologist's report, and any intake or screening forms\n2. An itemized statement listing the charge with its CPT/HCPCS code and any modifiers\n\nThese records are needed for an insurance appeal with a deadline of March 31, 2027. My health plan denied the claim, stating that documentation of at least six weeks of conservative therapy or red-flag findings was not present. I need the records showing what was documented at the time of service.\n\nPlease send the records and itemized statement to the address above [or: by electronic delivery to [email/patient portal]] within 30 days, as provided under my right of access to my own health information.\n\nThank you for your prompt attention.\n\nSincerely,\n\n_________________________  \n[Your name]",
+    "sid": "free",
+    "stop": "end_turn",
+    "missing": [],
+    "trimmed": [],
+    "safety": "today",
+    "hedged": 0,
+    "ed_now": 0,
+    "choice": 0,
+    "consent": 0,
+    "choice_argument": 0,
+    "cost_sharing": 0,
+    "earlier_date": 0,
+    "coding": 0,
+    "request_passive": 0,
+    "unverified": 0,
+    "authority": 0,
+    "records": 0,
+    "setting": 0,
+    "phones": 0,
+    "usage": {
+      "in": 2159,
+      "out": 879,
+      "cache_read": 5414,
+      "cache_write": 0
+    },
+    "deadline": "2027-03-31",
+    "urgent": false,
+    "clock": "for employer and marketplace plans, the plan must decide an appeal for care already received within 60 days of receiving it (30 days per level if it has two appeal levels); care already received is never expedited"
+  },
+  "attempts": [
+    {
+      "status": 200,
+      "ms": 23652,
+      "stop": "end_turn",
+      "missing": [],
+      "usage": {
+        "in": 2159,
+        "out": 879,
+        "cache_read": 5414,
+        "cache_write": 0
+      }
+    }
+  ]
+}

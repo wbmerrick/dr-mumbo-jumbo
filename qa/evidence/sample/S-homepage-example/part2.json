@@ -1,0 +1,52 @@
+{
+  "ok": true,
+  "status": 200,
+  "data": {
+    "part": 2,
+    "text": "## 2. Your appeal letter\n\n[Your name]  \n[Address]  \n[Phone]  \n[Date]\n\n[Insurer appeals department address — on your denial letter or member portal]\n\nRE: Formal Internal Appeal  \nClaim/Reference #: 00000000  \nMember: [name]  \nMember ID: [member ID from your insurance card]  \nDate of Service: 09/14/2026  \nService: MRI lumbar spine without contrast (CPT 72148)  \nProvider: Example Imaging Center  \n\nDear Appeals Department:\n\nThis is a formal internal appeal of your denial dated 10/02/2026 for the MRI of my lumbar spine performed on 09/14/2026. Your notice states the service was \"not deemed a medical necessity by the payer\" because \"policy IMG-204 requires documentation of at least six weeks of conservative therapy unless red-flag findings are present.\"\n\nI meet both pathways your policy provides. I completed eight weeks of physical therapy and naproxen treatment before the September 14 MRI — more than the six weeks your policy requires. The enclosed physical therapy records show [start date] through [end date], and the prescription records document naproxen use during that period. In addition, I developed new left-leg weakness and numbness in late August — red-flag neurologic findings that made the MRI medically necessary regardless of the duration of conservative care. My orthopedist documented these findings on exam and ordered the MRI to evaluate for nerve-root compression and determine whether surgery was needed. The enclosed letter from my orthopedist and the office note from [date of visit in late August or early September] detail the clinical findings and the medical necessity of immediate imaging.\n\nYour policy's own criteria contemplate both the six-week conservative-treatment requirement and the red-flag exception. This case satisfies both. [I have also asked my orthopedist's office to send any records that were missing from the original request — delete if not done.]\n\nI request the following under my appeal rights:\n\n- The complete text of policy IMG-204 and any clinical guidelines or plan provisions you relied on in this denial  \n- The name, credentials, and specialty of the reviewer who made this determination  \n- Copies of all documents, notes, and criteria considered in the review  \n\nPlease authorize the MRI performed on 09/14/2026 and process the claim for payment according to my plan benefits. If you uphold this denial, I will request external review and pursue all available remedies under my plan and federal law.\n\nI request a written decision within the timeframe required by the plan and federal rules.\n\n**Enclosures:** [list what you attach — e.g., letter from Dr. [name], physical therapy records dated [dates], prescription records, office note from [date], MRI order]\n\nSincerely,\n\n[Your signature]  \n[Your printed name]",
+    "sid": "free",
+    "stop": "end_turn",
+    "missing": [],
+    "trimmed": [],
+    "safety": "today",
+    "hedged": 0,
+    "ed_now": 0,
+    "choice": 0,
+    "consent": 0,
+    "choice_argument": 0,
+    "cost_sharing": 0,
+    "earlier_date": 0,
+    "coding": 0,
+    "request_passive": 0,
+    "unverified": 0,
+    "authority": 0,
+    "records": 0,
+    "labels": 0,
+    "severity": 0,
+    "setting": 0,
+    "phones": 0,
+    "usage": {
+      "in": 1957,
+      "out": 647,
+      "cache_read": 5414,
+      "cache_write": 0
+    },
+    "deadline": "2027-03-31",
+    "urgent": false,
+    "clock": "for employer and marketplace plans, the plan must decide an appeal for care already received within 60 days of receiving it (30 days per level if it has two appeal levels); care already received is never expedited"
+  },
+  "attempts": [
+    {
+      "status": 200,
+      "ms": 18992,
+      "stop": "end_turn",
+      "missing": [],
+      "usage": {
+        "in": 1957,
+        "out": 647,
+        "cache_read": 5414,
+        "cache_write": 0
+      }
+    }
+  ]
+}

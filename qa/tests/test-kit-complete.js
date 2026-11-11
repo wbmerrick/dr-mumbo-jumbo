@@ -86,6 +86,8 @@ function open(answer, saved = {}) {
   const $ = (id) => els[id] || (els[id] = element());
   const asked = [];
   const fetch = (url, opts) => {
+    // a request with nothing to send is the page looking for a file; this browser has none to give
+    if (!opts || !opts.body) return Promise.resolve({ ok: false, status: 404, json: () => Promise.reject(new Error('not found')) });
     const body = JSON.parse(opts.body);
     asked.push({ url, body });
     const nth = asked.filter((c) => c.url === url && c.body.part === body.part).length;
@@ -105,7 +107,9 @@ function open(answer, saved = {}) {
   };
 }
 const settle = async () => { for (let i = 0; i < 25; i++) await new Promise((r) => setImmediate(r)); };
-const build = async (page) => { page.$('example').fire('click'); page.$('buy').fire('click'); await settle(); };
+// A build of the reader's own letter. (The example letter is not built: the page shows a kit already
+// written for it. test-sample-kit.js covers that.)
+const build = async (page) => { page.$('denial').value = 'NOTICE OF ADVERSE DETERMINATION. Prior authorization for infliximab is denied: step therapy is required first.'; page.$('buy').fire('click'); await settle(); };
 const email = async (page) => { page.$('mailemail').value = 'reader@example.com'; page.$('mailform').fire('submit'); await settle(); return page.$('mailmsg'); };
 const errorBox = (page) => (page.$('error').classList.contains('on') ? page.$('error').textContent : '');
 

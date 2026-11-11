@@ -72,7 +72,7 @@ The site is plain static HTML plus Node serverless functions — no build step, 
 
 - **From this repo:** import it into the Vercel project (Vercel → Project → Settings → Git) and every push to `main` deploys.
 - **Without Git:** `npx vercel --prod` from the project folder does the same thing.
-- **What gets deployed:** `.vercelignore` allows only the site itself (`api/`, `lib/`, the `.html` pages, `fightpack.js`, `nocturne.css`, `og.png`, `robots.txt`, `vercel.json`). The QA harness, evidence, docs, scripts and SQL stay in the repo and are never served from the website. Add any new top-level site file to that list.
+- **What gets deployed:** `.vercelignore` allows only the site itself (`api/`, `lib/`, the `.html` pages, `fightpack.js`, `sample-kit.json`, `nocturne.css`, `og.png`, `robots.txt`, `vercel.json`). The QA harness, evidence, docs, scripts and SQL stay in the repo and are never served from the website. Add any new top-level site file to that list.
 
 ## Repo layout
 
@@ -84,6 +84,7 @@ fightpack.js        the Fight Pack page's client code (passes, retries, kit rend
 denials.html        the Denial Playbook
 how-its-tested.html, privacy.html, terms.html
                     the trust pages
+sample-kit.json     the finished kit shown by "Try an example": the site's own answer to the example letter, never edited by hand
 nocturne.css        the shared design system (tokens, components, print styles)
 og.png              the share image
 api/                serverless functions (translate, appeal, fightpack, checkout, unlock, lead, codelibrary, codepage, sitemap)
@@ -98,6 +99,7 @@ lib/                code-library data (CPT in three modules, ICD-10, denial reas
 qa/                 the Fight Pack test corpus, live runner, checker, replay, unit tests and evidence
 docs/               fightpack-qa.md — how the Fight Pack is tested, the results, and what is unproven
 scripts/            build-codes.js — validates the data files (legacy static generator)
+                    build-sample-kit.js — rebuilds sample-kit.json on the live site and scores it (one real kit per run)
 supabase/           waitlist.sql — one-time table setup
 vercel.json         routes, headers, function timeouts
 robots.txt

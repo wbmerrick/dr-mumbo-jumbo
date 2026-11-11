@@ -1,0 +1,52 @@
+{
+  "ok": true,
+  "status": 200,
+  "data": {
+    "part": 6,
+    "text": "## 9. If they say no again — external review request\n\n[Independent Review Organization or State Insurance Department named on your final denial letter — or the federal external review process if your plan uses it]\n[Address from the final denial letter]\n\nRE: External Review Request\nPatient: [name]\nMember ID: [member ID from your insurance card]\nClaim / Reference #: 00000000\nDate(s) of Service: 09/14/2026\n\nTo Whom It May Concern:\n\nThe internal appeal process has been exhausted. I received a final denial dated [date on the final denial letter]. I request independent external review of the denial of MRI lumbar spine without contrast (CPT 72148) performed on September 14, 2026.\n\nThe insurer denied the MRI under policy IMG-204, stating that documentation of at least six weeks of conservative therapy or red-flag findings was required. I completed eight weeks of physical therapy and naproxen before the September 14 MRI — exceeding the six-week requirement the policy sets. In addition, I developed new left-leg weakness and numbness in late August, which are red-flag neurologic findings indicating possible nerve-root compromise that made the MRI medically necessary regardless of the duration of conservative care. The plan's own policy provides for both pathways, and this case meets both. The records from my orthopedist and physical therapist confirm the timeline and the clinical findings.\n\nEnclosures: final denial letter, original denial (dated 10/02/2026), appeal letter, the doctor's letter, medical records.\n\nSincerely,\n[Your signature]\n[Your name]\n[Date]\n\n- You file this yourself within the window stated on your final denial letter — generally 4 months from the date of that letter. The plan does not forward it automatically.\n- Keep copies of everything you send.\n- The external reviewer's decision is binding on the plan.\n- If your plan is self-funded (the notice says \"administered by\" a third-party administrator or names an ERISA plan), complaints go to the U.S. Department of Labor's Employee Benefits Security Administration (EBSA) at 1-866-444-3272. If your plan is fully insured, complaints go to your state insurance department — the number is on your denial letter or at naic.org.\n\n## 10. Your deadlines and next moves\n\n- **File your appeal by Wednesday, March 31, 2027** — 180 days from the Friday, October 2, 2026 notice, as the letter states. Send the appeal letter (section 2), the doctor's letter (section 3), and the records proving the eight weeks of conservative treatment and the neurologic findings before the denial deadline, even if you are still gathering records — you can add more evidence later, but the deadline is firm.\n- After you file, the plan must decide within 60 days of receiving the appeal for care already received (30 days per level if the plan has two internal appeal levels).\n- If the plan upholds the denial, you have generally 4 months from the date of the final denial letter to request independent external review (section 9). You file that yourself — the plan does not forward it automatically. The external reviewer decides within 45 days.\n- If the documents suggest your plan is Medicare Advantage or Medicaid rather than an employer or marketplace plan, ask member services — the next level of review differs by plan type.\n- **The deadline printed on your own letter controls.** If anyone gives you a different date by phone, go by the earlier one.\n\n```json\n{\n  \"denial_date\": \"2026-10-02\",\n  \"stated_appeal_deadline\": null,\n  \"appeal_window_days\": 180,\n  \"service_type\": \"post-service\",\n  \"urgent\": false,\n  \"claim_number\": \"00000000\",\n  \"service\": \"MRI lumbar spine without contrast\",\n  \"denial_reason\": \"not deemed a medical necessity by the payer\",\n  \"denial_type\": \"medical-necessity\",\n  \"case_strength\": \"good\",\n  \"plan_type\": \"unknown\"\n}\n```",
+    "sid": "free",
+    "stop": "end_turn",
+    "missing": [],
+    "trimmed": [],
+    "safety": "today",
+    "hedged": 0,
+    "ed_now": 0,
+    "choice": 0,
+    "consent": 0,
+    "choice_argument": 0,
+    "cost_sharing": 0,
+    "earlier_date": 0,
+    "coding": 0,
+    "request_passive": 0,
+    "unverified": 0,
+    "authority": 0,
+    "records": 0,
+    "labels": 0,
+    "severity": 0,
+    "setting": 0,
+    "phones": 0,
+    "usage": {
+      "in": 2435,
+      "out": 937,
+      "cache_read": 5414,
+      "cache_write": 0
+    },
+    "deadline": "2027-03-31",
+    "urgent": false,
+    "clock": "for employer and marketplace plans, the plan must decide an appeal for care already received within 60 days of receiving it (30 days per level if it has two appeal levels); care already received is never expedited"
+  },
+  "attempts": [
+    {
+      "status": 200,
+      "ms": 24408,
+      "stop": "end_turn",
+      "missing": [],
+      "usage": {
+        "in": 2435,
+        "out": 937,
+        "cache_read": 5414,
+        "cache_write": 0
+      }
+    }
+  ]
+}

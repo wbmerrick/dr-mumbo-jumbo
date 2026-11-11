@@ -1,0 +1,53 @@
+{
+  "ok": true,
+  "status": 200,
+  "data": {
+    "part": 3,
+    "text": "## 3. Letter of medical necessity — for your doctor to sign\n\n[Practice letterhead]\n\n[Date]\n\nTo: [Appeal address from your denial letter]\nAttn: Medical Director\n\nRE: [Patient name]  \nDOB: [patient date of birth]  \nMember ID: [member ID number]  \nClaim/Reference #: 00000000  \nDate of service: 09/14/2026  \nService denied: MRI lumbar spine without contrast, CPT 72148  \nDiagnosis: [ICD-10 code(s) from the order or claim]\n\nI am the treating [specialty] for [patient name] and I am writing to request that the denial of the lumbar MRI be overturned.\n\n[Patient name] presented with [presenting complaint and onset — from your note] and reports chronic low back pain [duration and character, if documented]. The patient reports new left-leg weakness and numbness that started in late August 2026. [If documented: examination findings on motor strength testing, sensory exam, reflexes, and straight-leg raise; gait and functional limitations observed.] The patient completed eight weeks of physical therapy [start date through end date from the therapy discharge summary] and trial of naproxen [dose and dates from prescription records or your note] prior to the September 14, 2026 MRI, without adequate relief. [If documented: functional limitations despite conservative care — activities the patient cannot perform, pain level, work or daily-living impact.]\n\n### Criteria met\n\nYour policy IMG-204 requires \"at least six weeks of conservative therapy unless red-flag findings are present.\" The patient completed eight weeks of physical therapy and naproxen before the MRI was performed on 09/14/2026 [enclose the physical therapy discharge summary showing treatment dates from approximately mid-July through mid-September 2026, and prescription records]. In addition, the new left-leg weakness and numbness that began in late August constitute red-flag findings for possible lumbar radiculopathy or nerve-root compression [if documented: specific exam findings such as motor weakness in L5 or S1 distribution, sensory deficits, or reflex asymmetry]. These neurologic findings made prompt imaging medically necessary to evaluate for surgically correctable pathology regardless of the duration of prior conservative treatment.\n\nThis is the standard of care for evaluating new neurologic deficits in the setting of lumbar radicular symptoms [cite: the relevant specialty-society guideline or the insurer's own policy criteria that this patient meets].\n\nWithout approval, the patient faces [consequences specific to untreated nerve-root compression — for example progressive weakness, permanent neurologic deficit, or delay in surgical intervention if indicated]. [If the MRI showed a surgical lesion: The study was clinically necessary and has guided treatment decisions.]\n\nI request that you overturn the denial and authorize payment for the MRI performed on 09/14/2026. [If the notice prints a peer-to-peer line: I will call [peer-to-peer phone number] within [the window the notice gives] to discuss this case.] [If no peer-to-peer line is printed: I am available for peer-to-peer discussion at [best days/times and direct phone number].]\n\nSincerely,\n\n[Clinician name, credentials]  \n[Specialty]  \nNPI: [NPI number]  \nPhone: [practice phone]  \nFax: [practice fax]\n\n---\n\n## 4. Note for your doctor's office\n\n- **What this is:** A pre-drafted appeal letter for the doctor to review, edit, sign, and send on letterhead to overturn the MRI denial.\n\n- **Why it matters:** The insurer denied payment for the September 14 lumbar MRI, saying the records did not show six weeks of conservative treatment or red-flag findings. The patient reports eight weeks of physical therapy and naproxen before the MRI, plus new left-leg weakness and numbness starting in late August — both of which meet the policy's own criteria — but the appeal needs the documentation proving it.\n\n- **What to do:** Please review the letter, correct anything inaccurate, and fill in the bracketed items with what the chart supports — the examination findings documenting the neurologic deficits, the diagnosis codes, the dates and details of conservative treatment, and the clinical reasoning for ordering the MRI. Keep only what your records show.\n\n- **Documents to enclose:** Physical therapy discharge summary or treatment log showing dates of care from approximately mid-July through mid-September 2026; prescription records or your note documenting naproxen use; your office note from late August or early September documenting the new left-leg weakness and numbness on exam; and the MRI order with indication.\n\n- **Next steps:** Print the final letter on your letterhead, sign with your credentials and NPI, and fax it with the records to the insurer's appeals department at [fax number from the denial letter — or ask the patient to get it from member services]. Please give the patient a copy for their records.\n\n- **Peer-to-peer:** [If the notice prints a peer-to-peer line: The insurer offers a peer-to-peer discussion — please call [peer-to-peer phone number] within [the window printed on the notice]. Talking points are in section 5 of the patient's kit.] [If no peer-to-peer line is printed: If the insurer offers a peer-to-peer discussion, please accept it — talking points are in section 5 of the patient's kit.]\n\n- **Deadline:** The appeal must be postmarked or faxed by March 31, 2027. Sending it within the next few days protects the timeline.\n\n- **Thank you** for your time — this documentation will likely resolve the denial.",
+    "sid": "free",
+    "stop": "end_turn",
+    "missing": [],
+    "trimmed": [],
+    "safety": "today",
+    "hedged": 0,
+    "ed_now": 0,
+    "choice": 0,
+    "consent": 0,
+    "choice_argument": 0,
+    "cost_sharing": 0,
+    "earlier_date": 0,
+    "coding": 0,
+    "request_passive": 0,
+    "unverified": 0,
+    "authority": 0,
+    "authorship": 0,
+    "records": 0,
+    "labels": 0,
+    "severity": 0,
+    "setting": 0,
+    "phones": 0,
+    "usage": {
+      "in": 3284,
+      "out": 1302,
+      "cache_read": 5414,
+      "cache_write": 0
+    },
+    "deadline": "2027-03-31",
+    "urgent": false,
+    "clock": "for employer and marketplace plans, the plan must decide an appeal for care already received within 60 days of receiving it (30 days per level if it has two appeal levels); care already received is never expedited"
+  },
+  "attempts": [
+    {
+      "status": 200,
+      "ms": 29952,
+      "stop": "end_turn",
+      "missing": [],
+      "usage": {
+        "in": 3284,
+        "out": 1302,
+        "cache_read": 5414,
+        "cache_write": 0
+      }
+    }
+  ]
+}
