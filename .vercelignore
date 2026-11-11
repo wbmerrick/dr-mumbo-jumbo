@@ -6,6 +6,7 @@
 !lib
 !*.html
 !fightpack.js
+!sample-kit.json
 !nocturne.css
 !og.png
 !favicon.svg

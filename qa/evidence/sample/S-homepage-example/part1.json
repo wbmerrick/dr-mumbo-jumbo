@@ -1,0 +1,44 @@
+{
+  "ok": true,
+  "status": 200,
+  "data": {
+    "part": 1,
+    "text": "## 1. Your denial, decoded — and how strong your case is\n\n**Read from your letter — check these against the original:**\n- Patient: [name]\n- Member ID: [not on the letter]\n- Claim / reference #: 00000000\n- Notice date: 10/02/2026\n- Date(s) of service: 09/14/2026\n- Service denied: MRI lumbar spine without contrast (CPT 72148), billed $1,650.00\n- Approved or allowed instead: [none stated]\n- Care status: already received\n- Appeal deadline as printed: within 180 days of this notice\n- Send appeals to: [not on the letter]\n- Expedited appeal line: [not on the letter]\n- Peer-to-peer line: [not on the letter]\n- Phone and fax numbers: [not on the letter]\n\n**Safety first:** Contact the doctor today about what you describe — new left-leg weakness and numbness. Go to an emergency department now, or call 911, if any emergency sign appears: chest pain or pressure, trouble breathing, fainting, new weakness or numbness, confusion, or heavy bleeding.\n\n**Type of denial:** Medical necessity. The denial states \"not deemed a medical necessity by the payer\" based on policy IMG-204, which \"requires documentation of at least six weeks of conservative therapy unless red-flag findings are present.\"\n\n**Plan:** Unknown plan type — the notice does not identify it as employer, marketplace, Medicare Advantage, or Medicaid; check your insurance card or ask member services. You are filing for yourself.\n\n**Urgent:** No — standard review (the MRI was already done in September, so waiting for the appeal decision does not delay care), but your doctor should evaluate the new weakness and numbness today.\n\n**What they're really saying:** They denied payment because their policy requires proof of six weeks of conservative treatment before approving a lumbar MRI, or evidence of red-flag findings that would make the MRI immediately necessary. They are saying the records they reviewed did not show either one.\n\n**What they have to show:** Policy IMG-204's criteria for lumbar MRI, quoted in the denial as \"at least six weeks of conservative therapy unless red-flag findings are present\" — request the full policy text to see the complete requirements and any exception language.\n\n**Your strongest argument:** You completed eight weeks of physical therapy and naproxen before the September MRI — more than the six weeks the policy requires. In addition, new left-leg weakness and numbness that started in late August are red-flag findings (possible nerve-root compromise or cauda equina involvement) that can make immediate imaging medically necessary regardless of the duration of conservative care. The plan's own policy provides for both pathways, and this case meets both.\n\n**Case strength:** Good — one thing missing. The denial reason is directly answered by the timeline you report, but the appeal needs the documentation proving it.\n\n**What would make it decisive:**\n- The physical therapy discharge summary or treatment log showing start and end dates (proving the eight-week duration before 09/14/2026)\n- Prescription records or pharmacy printout showing naproxen use during that period\n- The orthopedist's office note from late August or early September documenting the new left-leg weakness and numbness on exam, and the clinical concern (such as radiculopathy or nerve-root compression) that made the MRI urgent\n- The MRI order or referral stating the indication, ideally mentioning the neurologic findings\n\n**Who fixes this:** You file the appeal with the documents from your orthopedist and physical therapist; your orthopedist's office provides the letter and records showing the red-flag findings and the timeline.\n\n**What you may actually owe:** The notice lists member responsibility of $1,650.00 pending appeal. Whether that is your final responsibility depends on the plan's contract with the imaging center (whether the center is in-network and whether they can bill you for a denied service), your plan's cost-sharing rules, and the appeal outcome — ask the imaging center's billing office whether they are in your plan's network and to hold the bill while you appeal.\n\n**Do this first:** Call your orthopedist today about the left-leg weakness and numbness — go to the emergency department now if you develop trouble controlling your bladder or bowels, numbness between your legs or in the saddle area, new or worsening weakness in both legs, or any other emergency warning sign.",
+    "sid": "free",
+    "stop": "end_turn",
+    "missing": [],
+    "trimmed": [],
+    "safety": "today",
+    "hedged": 0,
+    "ed_now": 0,
+    "choice": 0,
+    "cost_sharing": 0,
+    "earlier_date": 0,
+    "coding": 0,
+    "setting": 0,
+    "phones": 0,
+    "usage": {
+      "in": 1548,
+      "out": 950,
+      "cache_read": 5414,
+      "cache_write": 0
+    },
+    "deadline": null,
+    "urgent": null,
+    "clock": null
+  },
+  "attempts": [
+    {
+      "status": 200,
+      "ms": 29555,
+      "stop": "end_turn",
+      "missing": [],
+      "usage": {
+        "in": 1548,
+        "out": 950,
+        "cache_read": 5414,
+        "cache_write": 0
+      }
+    }
+  ]
+}

@@ -1,0 +1,189 @@
+{
+  "log": [
+    {
+      "part": 1,
+      "attempts": [
+        {
+          "status": 200,
+          "ms": 29555,
+          "stop": "end_turn",
+          "missing": [],
+          "usage": {
+            "in": 1548,
+            "out": 950,
+            "cache_read": 5414,
+            "cache_write": 0
+          }
+        }
+      ],
+      "final": {
+        "ok": true,
+        "status": 200,
+        "stop": "end_turn",
+        "missing": [],
+        "chars": 4389,
+        "usage": {
+          "in": 1548,
+          "out": 950,
+          "cache_read": 5414,
+          "cache_write": 0
+        }
+      }
+    },
+    {
+      "part": 2,
+      "attempts": [
+        {
+          "status": 200,
+          "ms": 18992,
+          "stop": "end_turn",
+          "missing": [],
+          "usage": {
+            "in": 1957,
+            "out": 647,
+            "cache_read": 5414,
+            "cache_write": 0
+          }
+        }
+      ],
+      "final": {
+        "ok": true,
+        "status": 200,
+        "stop": "end_turn",
+        "missing": [],
+        "chars": 2778,
+        "usage": {
+          "in": 1957,
+          "out": 647,
+          "cache_read": 5414,
+          "cache_write": 0
+        }
+      }
+    },
+    {
+      "part": 5,
+      "attempts": [
+        {
+          "status": 200,
+          "ms": 23652,
+          "stop": "end_turn",
+          "missing": [],
+          "usage": {
+            "in": 2159,
+            "out": 879,
+            "cache_read": 5414,
+            "cache_write": 0
+          }
+        }
+      ],
+      "final": {
+        "ok": true,
+        "status": 200,
+        "stop": "end_turn",
+        "missing": [],
+        "chars": 3537,
+        "usage": {
+          "in": 2159,
+          "out": 879,
+          "cache_read": 5414,
+          "cache_write": 0
+        }
+      }
+    },
+    {
+      "part": 6,
+      "attempts": [
+        {
+          "status": 200,
+          "ms": 24408,
+          "stop": "end_turn",
+          "missing": [],
+          "usage": {
+            "in": 2435,
+            "out": 937,
+            "cache_read": 5414,
+            "cache_write": 0
+          }
+        }
+      ],
+      "final": {
+        "ok": true,
+        "status": 200,
+        "stop": "end_turn",
+        "missing": [],
+        "chars": 3817,
+        "usage": {
+          "in": 2435,
+          "out": 937,
+          "cache_read": 5414,
+          "cache_write": 0
+        }
+      }
+    },
+    {
+      "part": 3,
+      "attempts": [
+        {
+          "status": 200,
+          "ms": 29952,
+          "stop": "end_turn",
+          "missing": [],
+          "usage": {
+            "in": 3284,
+            "out": 1302,
+            "cache_read": 5414,
+            "cache_write": 0
+          }
+        }
+      ],
+      "final": {
+        "ok": true,
+        "status": 200,
+        "stop": "end_turn",
+        "missing": [],
+        "chars": 5506,
+        "usage": {
+          "in": 3284,
+          "out": 1302,
+          "cache_read": 5414,
+          "cache_write": 0
+        }
+      }
+    },
+    {
+      "part": 4,
+      "attempts": [
+        {
+          "status": 200,
+          "ms": 36842,
+          "stop": "end_turn",
+          "missing": [],
+          "usage": {
+            "in": 2323,
+            "out": 1327,
+            "cache_read": 5414,
+            "cache_write": 0
+          }
+        }
+      ],
+      "final": {
+        "ok": true,
+        "status": 200,
+        "stop": "end_turn",
+        "missing": [],
+        "chars": 5762,
+        "usage": {
+          "in": 2323,
+          "out": 1327,
+          "cache_read": 5414,
+          "cache_write": 0
+        }
+      }
+    }
+  ],
+  "wall": {
+    "total_ms": 66398,
+    "decode_ms": 29555,
+    "parallel_ms": 36843
+  }
+}

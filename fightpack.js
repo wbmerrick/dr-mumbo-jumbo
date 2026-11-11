@@ -9,6 +9,10 @@
   var attached = null, records = null, token = null, parts = {}, meta = null;
   // What each part that arrived is still short of (see shortOf). Empty for a whole kit; saved with it.
   var gaps = {};
+  // The example kit on the page (sample-kit.json): what the site wrote earlier for the example
+  // letter. While `sample` is true the kit shown is that one, not the reader's: it is never
+  // saved, never emailed, and it never stands in for a build of the reader's own letter.
+  var sample = false, sampleKit = null;
   // The Fight Pack is free and there is no checkout. Kept as a constant so the free-path
   // branches below read the same as they always did.
   var free = true;
@@ -25,7 +29,8 @@
   function save(key, val){ try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){} }
   function load(key){ try{ var v = localStorage.getItem(key); return v ? JSON.parse(v) : null; }catch(e){ return null; } }
   function drop(key){ try{ localStorage.removeItem(key); }catch(e){} }
-  function stash(){ save('dmj_fp_kit', { parts: parts, meta: meta, gaps: gaps, ts: Date.now() }); }
+  // The reader's kit, kept in this browser. The example kit is not theirs and is never kept.
+  function stash(){ if(sample) return; save('dmj_fp_kit', { parts: parts, meta: meta, gaps: gaps, ts: Date.now() }); }
   // ---------- files ----------
   function prepFile(f, ok, fail){
     var MAX = 3 * 1024 * 1024;
@@ -62,10 +67,22 @@
       prepFile(f, function(res){ setter(res); nameEl.textContent = res.name; chip.classList.add('on'); }, function(msg){ setter(null); input.value=''; chip.classList.remove('on'); showError(msg); });
     });
   }
-  hookFile(attachBtn, fileInput, filechip, filename, fileclear, function(v){ attached = v; });
-  hookFile(attachRec, recInput, recchip, recname, recclear, function(v){ records = v; });
+  hookFile(attachBtn, fileInput, filechip, filename, fileclear, function(v){ attached = v; if(v) dropExample(true); });
+  hookFile(attachRec, recInput, recchip, recname, recclear, function(v){ records = v; if(v) dropExample(true); });
 
-  example.addEventListener('click', function(){ denial.value = EXAMPLE_DENIAL; extra.value = EXAMPLE_EXTRA; denial.focus(); });
+  // The example: its letter and note go in the two boxes, and the kit already written for them
+  // is shown under the tool, so the reader sees what a Fight Pack is before waiting for one.
+  example.addEventListener('click', function(){ denial.value = EXAMPLE_DENIAL; extra.value = EXAMPLE_EXTRA; denial.focus(); showSample('button'); });
+  // The example is somebody else's case. Once a reader brings something of their own - a file,
+  // or a letter typed or pasted over the example's - what is left of the example in the two
+  // boxes goes, so its symptoms and dates are never written into their kit. Their own words are
+  // never touched: only text that is still exactly the example's is cleared.
+  function dropExample(letterToo){
+    if(letterToo && denial.value.trim() === EXAMPLE_DENIAL) denial.value = '';
+    if(extra.value.trim() === EXAMPLE_EXTRA) extra.value = '';
+  }
+  // A letter that no longer opens like the example's has replaced it; one that still does is the example being tried out.
+  denial.addEventListener('input', function(){ if(denial.value.slice(0, 40) !== EXAMPLE_DENIAL.slice(0, 40)) dropExample(false); });
 
   // ---------- motion: jargon dissolving into plain English while the kit is written; a copy toast ----------
   var MORPH = [['adverse benefit determination', 'denial'], ['letter of medical necessity', "your doctor's letter"], ['CO-50', 'not medically necessary'], ['peer-to-peer', 'a doctor-to-doctor call'], ['internal appeal', 'asking them to look again'], ['external review', 'an independent referee'], ['authorized representative', 'someone helping you']];
@@ -234,7 +251,7 @@
     toast('Replaced in every section');
     fixfrom.value = ''; fixto.value = '';
   });
-  $('forget').addEventListener('click', function(){ drop('dmj_fp_kit'); drop('dmj_fp_token'); parts = {}; meta = null; kitout.classList.remove('on'); showNotice('Cleared from this browser.'); });
+  $('forget').addEventListener('click', function(){ drop('dmj_fp_kit'); drop('dmj_fp_token'); parts = {}; meta = null; sample = false; kitout.classList.remove('on'); kitout.classList.remove('sample'); showNotice('Cleared from this browser.'); });
 
   // ---------- deadlines ----------
   var dlDenial = $('dlDenial'), dlStated = $('dlStated'), dlFiled = $('dlFiled'), dlType = $('dlType'), dlList = $('dlList'), dlDays = $('dlDays'), dlPlan = $('dlPlan');
@@ -347,6 +364,12 @@
     var kid = Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
     track('kit_start', { files: !!(inp.file || inp.records) });
     parts = {}; meta = null; gaps = {};
+    // From here on the kit is the reader's own. If the example was up, the tracker holds its notice date
+    // and its 180 days: those go, or a letter that prints no date would be given the example's deadline.
+    // (Dates the reader entered for their own kit stay, as they always have.)
+    if(sample) [dlDenial, dlStated, dlDays, dlFiled].forEach(function(el){ el.value = ''; });
+    sample = false; kitout.classList.remove('sample');
+    $('strength').style.display = 'none';   // the rating beside the heading is the last kit's; this kit's decode sets its own
     resetSteps(); progress.classList.add('on'); startMorph(morphEl, MORPH); kitout.classList.remove('on');
     progress.scrollIntoView({ behavior:'smooth', block:'start' });
     buy.disabled = true;
@@ -436,18 +459,63 @@
     return renewing;
   }
   function freeToken(){ return haveToken() ? Promise.resolve(token) : renewFree(); }
+
+  // ---------- the example kit ----------
+  // The boxes hold the example exactly as the button leaves them: nothing changed, nothing attached.
+  function isExample(){ return denial.value.trim() === EXAMPLE_DENIAL && extra.value.trim() === EXAMPLE_EXTRA && !attached && !records; }
+  function loadSample(){
+    if(!sampleKit){
+      sampleKit = fetch('/sample-kit.json')
+        .then(function(r){ return r.ok ? r.json() : null; })
+        .then(function(k){ return k && k.parts && [1,2,3,4,5,6].every(function(p){ return typeof k.parts[p] === 'string' && k.parts[p]; }) ? k : null; })
+        .catch(function(){ return null; })
+        .then(function(k){ if(!k) sampleKit = null; return k; });   // not there this time: look again next time
+    }
+    return sampleKit;
+  }
+  // Puts the example kit on the page. Resolves false when there is none to show (the file did not
+  // load) or a kit is being written; the caller then carries on as it would have without it.
+  function showSample(how){
+    return loadSample().then(function(k){
+      if(!k || building) return false;
+      var own = load('dmj_fp_kit');
+      parts = {}; gaps = {};
+      [1,2,3,4,5,6].forEach(function(p){ parts[p] = k.parts[p]; });
+      var ex = extractJson(parts[6]); parts[6] = ex.text; meta = ex.json;   // as fetchPart does with a part 6 that just arrived
+      sample = true; kitout.classList.add('sample');
+      hideError(); progress.classList.remove('on');
+      // the tracker shows the example's dates, not ones left from a kit that was on the page before
+      [dlDenial, dlStated, dlDays, dlFiled].forEach(function(el){ el.value = ''; });
+      $('strength').style.display = 'none';
+      renderKit(); applyMeta();
+      if(own && own.parts && own.ts && Date.now() - own.ts < 72*3600*1000) showNotice('This is the example kit. The kit you built is still saved in this browser: reload the page to see it.');
+      else hideNotice();
+      track('example_opened', { via: how });
+      kitout.scrollIntoView({ behavior:'smooth', block:'start' });
+      return true;
+    });
+  }
+
   // ---------- build ----------
+  // The example letter, unchanged, already has its kit: show that one. Writing it again would cost
+  // the reader a minute and tell them nothing new. Anything else is built.
+  function start(){
+    buy.disabled = true;
+    (isExample() ? showSample('build') : Promise.resolve(false)).then(function(shown){
+      if(shown){ buy.disabled = false; return; }
+      return freeToken().then(function(t){ buy.disabled = false; build(t); });
+    }).catch(function(e){ buy.disabled = false; showError(e.message); });
+  }
   buy.addEventListener('click', function(){
     hideError();
     var inp = inputs();
     if(!inp.denial && !inp.file){ showError('Paste the denial letter — or add a photo or PDF of it — first.'); denial.focus(); return; }
-    buy.disabled = true;
-    freeToken().then(function(t){ buy.disabled = false; build(t); }).catch(function(e){ buy.disabled = false; showError(e.message); });
+    start();
   });
 
   $('regen').addEventListener('click', function(){
     hideError();
-    freeToken().then(function(t){ build(t); }).catch(function(e){ showError(e.message); });
+    start();
   });
 
   // email me my kit
@@ -455,6 +523,8 @@
   function kitText(){ return sectionOrder.map(function(s){ return plain(s.title + '\n\n' + s.body); }).join('\n\n\n') + '\n\n\n' + deadlinesText(); }
   mailform.addEventListener('submit', function(ev){
     ev.preventDefault();
+    // The example is not the reader's kit: it is not sent to them as if it were.
+    if(sample){ mailmsg.className = 'wait-msg err'; mailmsg.textContent = 'This is the example kit. Build one from your own letter, then email it.'; return; }
     // The email is the copy people keep, so it goes out only when every part is in and whole.
     var short = building ? [] : unfinished();
     if(building || short.length){
@@ -494,5 +564,7 @@
       parts = saved.parts; meta = saved.meta || null; gaps = saved.gaps || {}; renderKit(); applyMeta();
       showNotice('Here\'s the Fight Pack you built ' + new Date(saved.ts).toLocaleDateString('en-US', {month:'short', day:'numeric'}) + '. Edit your text and click "Rebuild with edits" to regenerate.');
     }
+    // A link straight to the example (dr-mumbo-jumbo.com/#sample): its letter in the boxes, its kit on the page.
+    if(window.location && window.location.hash === '#sample'){ denial.value = EXAMPLE_DENIAL; extra.value = EXAMPLE_EXTRA; showSample('link'); }
   })();
 })();

@@ -64,12 +64,19 @@
   .plist li.done .pic{background:var(--accent);border-color:var(--accent);color:var(--bg)}
   @media (prefers-reduced-motion:reduce){.plist li.doing .pic{animation:none;border-top-color:var(--accent)}}
   /* kit output */
-  .kitout{display:none;margin-top:10px}
+  .kitout{display:none;margin-top:10px;scroll-margin-top:20px}   /* the page scrolls to the kit: leave its heading clear of the top edge */
   .kitout.on{display:block}
   .kit-top{display:flex;justify-content:space-between;align-items:center;gap:12px 16px;flex-wrap:wrap;margin:26px 0 12px}
   .kit-top h2{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
   .kit-actions{display:flex;gap:8px;flex-wrap:wrap}
   .checkline{margin-top:0}
+  /* The example kit ("Try an example"): shown as an example, with nothing that would treat it as
+     the reader's own. No email, no rebuild or fix, no "saved in this browser". */
+  .kit-ex{display:none}
+  .kitout.sample .kit-ex{display:inline}
+  .kitout.sample .kit-mine{display:none}
+  .kitout.sample .samplenote{display:block;margin-top:0}
+  .kitout.sample .checkline,.kitout.sample .mailkit,.kitout.sample #regen,.kitout.sample #fixbtn,.kitout.sample .fixform,.kitout.sample .whisper{display:none}
   .fixform{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin:10px 0 4px;padding:12px 14px;border:1px dashed var(--divider);border-radius:var(--r-md);background:var(--surface)}
   .fixform label{font-size:13px;color:var(--soft)}
   .fixform .input{flex:1;min-width:150px;width:auto;min-height:36px;padding:6px 10px}
@@ -194,7 +201,7 @@
 
     <section class="kitout" id="kitout" aria-label="Your Fight Pack">
       <div class="kit-top">
-        <h2>Your Fight Pack <span id="strength" class="tag" style="display:none"></span></h2>
+        <h2><span class="kit-mine">Your Fight Pack</span><span class="kit-ex">Example Fight Pack</span> <span id="strength" class="tag" style="display:none"></span></h2>
         <div class="kit-actions">
           <button class="btn btn-secondary btn-sm" id="copyall" type="button"><svg class="ic" style="width:15px;height:15px" aria-hidden="true"><use href="#i-copy"/></svg><span>Copy everything</span></button>
           <button class="btn btn-secondary btn-sm" id="printbtn" type="button"><svg class="ic" style="width:15px;height:15px" aria-hidden="true"><use href="#i-printer"/></svg><span>Print or save as PDF</span></button>
@@ -202,6 +209,7 @@
           <button class="btn btn-secondary btn-sm" id="fixbtn" type="button" aria-expanded="false" aria-controls="fixform"><svg class="ic" style="width:15px;height:15px" aria-hidden="true"><use href="#i-wand"/></svg><span>Fix a detail everywhere</span></button>
         </div>
       </div>
+      <p class="alert note samplenote">This is an example. The Fight Pack wrote every document below from the made-up denial letter in the box above, so you can see what you get. Paste your own letter and press <strong>Build my Fight Pack</strong> to get yours.</p>
       <p class="alert note on checkline">Before you send anything, check every number under <strong>“Read from your letter”</strong> against your actual letter, especially if you uploaded a photo. If one is off, fix it once with <strong>Fix a detail everywhere</strong>.</p>
       <div class="panel tint mailkit" id="mailkit">
         <div><strong>Keep this kit.</strong> It lives only in this browser — email yourself a copy.</div>
