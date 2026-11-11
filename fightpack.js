@@ -113,8 +113,12 @@
 
   // ---------- markdown-lite ----------
   function escapeHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  // **bold**, *italics* and [blanks to fill in]. Italics use the pattern plain() takes off, so a
+  // list's "* " and a lone asterisk are never read as emphasis.
   function inline(s){
-    return s.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>').replace(/\[([^\[\]]{1,160})\]/g, function(m, inner){ return '<span class="ph">[' + inner + ']</span>'; });
+    return s.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>')
+            .replace(/(^|[^*\w])\*([^\s*](?:[^*\n]*[^\s*])?)\*(?![*\w])/g, '$1<em>$2</em>')
+            .replace(/\[([^\[\]]{1,160})\]/g, function(m, inner){ return '<span class="ph">[' + inner + ']</span>'; });
   }
   function renderBody(md){
     var lines = escapeHtml(md).split(/\r?\n/);
@@ -461,7 +465,16 @@
       return;
     }
     mailmsg.className = 'wait-msg'; mailbtn.disabled = true; mailbtn.textContent = 'Sending…';
-    postJSON('/api/email-kit', { email: mailemail.value, kit: kitText(), token: token }, 30000).then(function(res){
+    var mail = { email: mailemail.value, kit: kitText() };
+    function send(tok){ mail.token = tok; return postJSON('/api/email-kit', mail, 30000); }
+    // The kit goes out under this browser's session, found the way a build finds it: the saved one if it
+    // is still good (a page that was reloaded has the kit but has not looked for it), otherwise a new one.
+    // A session the server no longer takes - it has had its share of calls - is replaced once, as for a part.
+    freeToken().then(send).then(function(res){
+      return !res.ok && res.status === 401 && free ? renewFree().then(send) : res;
+    }).catch(function(e){
+      return { ok: false, data: { message: e && e.message } };   // no session to be had: the server's reason
+    }).then(function(res){
       mailbtn.disabled = false; mailbtn.textContent = 'Email me my kit';
       mailmsg.className = 'wait-msg ' + (res.ok ? 'ok' : 'err');
       mailmsg.textContent = (res.data && res.data.message) || (res.ok ? 'Sent. Check your inbox.' : "Couldn't send it — try again in a minute.");

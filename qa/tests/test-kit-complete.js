@@ -8,6 +8,11 @@
 // letter that stopped mid-sentence when the writer ran out of room: the handler reports that
 // (stop: "max_tokens"), but the page never read it. Each time the page answered "Sent."
 //
+// The other way round failed too: a whole kit that could not be emailed. After a reload the page
+// showed the saved kit but had not looked for its saved session, sent no token, and the reader was
+// told "Your free session has ended. Rebuild the kit, then email it." The same happened whenever
+// the session the kit was built in had used up its calls.
+//
 // These tests run fightpack.js itself, whole, against a browser small enough to read: the
 // elements it looks up, a fetch that answers from a script, and timers that do not wait.
 // None of the page's own logic is replaced. The kit is a stored one from qa/evidence.
@@ -30,14 +35,24 @@ for (const p of Object.keys(OWN)) PART[p] = OWN[p].map(section).join('\n\n');   
 assert(Object.keys(at).length === 10 && /```json/.test(PART[6]), 'the stored kit has ten sections and its json block');
 const LABEL = { 2: 'Your appeal letter', 3: "Your doctor's letter and the note for the office", 4: 'Peer-to-peer brief and the insurer phone script' };
 
-// What the page's API answers, part by part: plan[part] is a list used in order, last one repeating.
+// What the page's API answers. Like the real one it takes only a session token it handed out itself
+// (/api/unlock) that still has calls left, and a kit counts as sent only if it was accepted.
+// Part by part, plan[part] is a list used in order, last one repeating:
 // 'ok' a whole answer · 'hold' no answer until release() · 500 a server error ·
 // 'cut' the writer ran out of room · 'missing' the part's second section is not there.
-function server(plan) {
-  const held = [];
+const NO_SESSIONS = "You've built several kits in the last hour. Please try again in a little while.";
+const SESSION_OVER = 'Your free session has ended. Rebuild the kit, then email it.';
+function server(plan = {}) {
+  const held = [], live = new Set();
   const answer = (url, body, nth) => {
-    if (url === '/api/unlock') return { status: 200, data: { token: 'test-token' } };
-    if (url === '/api/email-kit') return { status: 200, data: { ok: true, message: 'Sent.' } };
+    if (url === '/api/unlock') {
+      if (answer.noSessions) return { status: 429, data: { error: 'busy', message: NO_SESSIONS } };
+      const t = 'session-' + (++answer.sessions);
+      live.add(t);
+      return { status: 200, data: { token: t } };
+    }
+    if (answer.takesNone || !live.has(body.token)) return { status: 401, data: { error: 'locked', message: SESSION_OVER } };
+    if (url === '/api/email-kit') { answer.sent.push(body.kit); return { status: 200, data: { ok: true, message: 'Sent.' } }; }
     const p = body.part, list = plan[p] || ['ok'], a = list[Math.min(nth, list.length) - 1];
     const whole = { status: 200, data: { part: p, text: PART[p], stop: 'end_turn', missing: [] } };
     if (a === 'hold') return new Promise((r) => held.push(() => r(whole)));
@@ -47,6 +62,8 @@ function server(plan) {
     return whole;
   };
   answer.release = () => held.splice(0).forEach((f) => f());
+  answer.useUp = () => live.clear();          // every session so far has had its share of calls
+  answer.sessions = 0; answer.sent = []; answer.noSessions = false; answer.takesNone = false;
   return answer;
 }
 
@@ -83,7 +100,8 @@ function open(answer, saved = {}) {
   return {
     $, saved,
     asksFor: (p) => asked.filter((c) => c.url === '/api/fightpack' && c.body.part === p).length,
-    mailed: () => asked.filter((c) => c.url === '/api/email-kit').map((c) => c.body.kit)
+    asksToEmail: () => asked.filter((c) => c.url === '/api/email-kit').length,
+    mailed: () => answer.sent
   };
 }
 const settle = async () => { for (let i = 0; i < 25; i++) await new Promise((r) => setImmediate(r)); };
@@ -175,33 +193,70 @@ const notSent = (page, msg, what) => {
   sentWhole(page, 'missing section, there on the second ask');
 
   // ---------- 6. the kit comes back from this browser the way it was left ----------
-  page = open(server({ 2: ['cut'] }));
+  // A reload is the same browser and the same server: a new page over what the old one saved.
+  let api = server({ 2: ['cut'] });
+  page = open(api);
   await build(page);
-  page = open(server({}), page.saved);                                   // the same browser, the page loaded again
+  page = open(api, page.saved);
   ok(page.$('kitout').classList.contains('on'), 'reload: the saved kit is shown again');
   notSent(page, await email(page), 'reload of a kit that stops short');
 
-  page = open(server({ 2: ['cut'] }));
+  api = server({ 2: ['cut'] });
+  page = open(api);
   await build(page);
   page.$('fixfrom').value = 'PRIYA S. RAMANATHAN'; page.$('fixto').value = 'PRIYA RAMANATHAN';
   page.$('fixform').fire('submit');
-  page = open(server({}), page.saved);
+  page = open(api, page.saved);
   notSent(page, await email(page), 'reload after "Fix a detail everywhere" on a kit that stops short');
 
-  page = open(server({}));
+  kit = { parts: Object.assign({}, PART, { 6: PART[6].replace(/```json[\s\S]*?```/, '').trim() }), meta: null, ts: Date.now() };
+  delete kit.parts[4];
+  page = open(server(), { dmj_fp_kit: JSON.stringify(kit) });
+  notSent(page, await email(page), 'a saved kit with a part that never arrived');
+
+  // ---------- 7. a whole kit on the page can be emailed, whatever became of its session ----------
+  api = server();
+  page = open(api);
   await build(page);
-  page = open(server({}), page.saved);
+  page = open(api, page.saved);
   await email(page);
   sentWhole(page, 'reload of a whole kit');
+  same(api.sessions, 1, 'reload of a whole kit: the saved session is used, a new one is not asked for');
 
-  // A kit saved before this check existed carries no note of what was short; all six parts there = whole.
-  kit = { parts: Object.assign({}, PART, { 6: PART[6].replace(/```json[\s\S]*?```/, '').trim() }), meta: null, ts: Date.now() };
-  page = open(server({}), { dmj_fp_kit: JSON.stringify(kit) });
+  // A kit saved by the page as it was before carries no note of what was short (all six parts there
+  // = whole), and here no session either: the page asks for one.
+  kit.parts[4] = PART[4];
+  api = server();
+  page = open(api, { dmj_fp_kit: JSON.stringify(kit) });
   await email(page);
-  sentWhole(page, 'a kit saved by the page as it was before');
-  delete kit.parts[4];
-  page = open(server({}), { dmj_fp_kit: JSON.stringify(kit) });
-  notSent(page, await email(page), 'a saved kit with a part that never arrived');
+  sentWhole(page, 'a saved kit with no saved session');
+  same(api.sessions, 1, 'a saved kit with no saved session: one is asked for');
+
+  api = server();
+  page = open(api);
+  await build(page);
+  api.useUp();                                                           // four kits' worth of calls, say
+  msg = await email(page);
+  sentWhole(page, 'the session has used up its calls');
+  ok(msg.classList.contains('ok'), 'the session has used up its calls: the reader is told it was sent');
+  same(page.asksToEmail(), 2, 'the session has used up its calls: refused once, sent on the second ask with a new session');
+
+  api = server();
+  api.noSessions = true;                                                 // this visitor has had the hour's share
+  page = open(api, { dmj_fp_kit: JSON.stringify(kit) });
+  msg = await email(page);
+  notSent(page, msg, 'no session to be had');
+  ok(msg.textContent.includes(NO_SESSIONS), 'no session to be had: the reader is told why, in the server\'s words ("' + msg.textContent + '")');
+  same(page.$('mailbtn').disabled, false, 'no session to be had: the button works again');
+
+  api = server();
+  page = open(api);
+  await build(page);
+  api.takesNone = true;                                                  // a new session is refused as well
+  msg = await email(page);
+  notSent(page, msg, 'no session is taken');
+  same(page.asksToEmail(), 2, 'no session is taken: the page asks twice and stops');
+  same(page.$('mailbtn').disabled, false, 'no session is taken: the button works again');
 
   assert(fails.length === 0, fails.length + ' of ' + n + ' checks failed:\n  - ' + fails.join('\n  - '));
   console.log('kit-complete tests passed (' + n + ' checks)');
