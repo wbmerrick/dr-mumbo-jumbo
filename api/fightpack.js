@@ -417,6 +417,46 @@ function upstreamTrouble(status, detail) {
   return { status: 502, error: 'upstream', message: 'The kit engine hiccuped. Try again in a moment.' };
 }
 
+// ---------- from the model's text to what the reader gets ----------
+// Everything code does to a part's text once the model has written it, in one place: this part's own
+// sections, the guards, the rewrites that depend on the decode, the facts code states itself. The
+// finished part comes from here, and so do the lines of part 1 shown while it is still being written
+// (api/_lib/fightpack-live.js): there is no second, lighter set of guards for text shown early.
+// raw: the model's text, trimmed. c: part · safety, funding, decode (read from the decode; parts 2-6) ·
+// denial, extra (the reader's own text) · files (anything was attached) · records (records were attached).
+function guardPart(raw, c) {
+  const { part, denial, extra, decode } = c;
+  const norm = normalizeSections(raw, part);
+  const post = postProcess(norm.text, { part, safety: c.safety, known: [denial, extra, decode].join('\n'), attachments: !!c.files, records: !!c.records });
+  const routed = part > 1 ? oneRoute(post.text, c.funding) : post.text;
+  const built = part === 6 ? fixMeta(routed, decodeFacts(decode), fallbackFacts(decode)) : part === 1 ? expeditedFirst(twoRequests(post.text, fundingOf(post.text, denial)), post.level) : routed;
+  const text = stateFacts(built, part, { denial, extra, decode, files: !!c.files, level: post.level });
+  return { text, norm, post };
+}
+// The decode (part 1) as the reader gets it, from the model's text so far or from all of it.
+function decodeText(raw, c) {
+  return guardPart(String(raw).trim(), { part: 1, safety: null, decode: '', funding: null, denial: c.denial, extra: c.extra, files: c.files, records: c.records }).text;
+}
+// What the endpoint answers once the model has finished a part: the guarded text, what is missing from
+// it, and the count. model: { stop_reason, usage } as the model API names them. c: guardPart's, plus
+// kid, src, sid, urgent, deadline, clock - and redo, the corrections a live part 1 sent (a number).
+async function finish(raw, model, c) {
+  if (!raw) return { status: 502, body: { error: 'upstream', message: 'That part came back empty. Try again in a moment.' } };
+  const { part } = c;
+  const { text, norm, post } = guardPart(raw, c);
+  const missing = PARTS[part].slots.filter((alts) => !alts.some((h) => text.includes(h))).map((alts) => alts[0]);
+  const u = model && model.usage;
+  const usage = u ? { in: u.input_tokens, out: u.output_tokens, cache_read: u.cache_read_input_tokens || 0, cache_write: u.cache_creation_input_tokens || 0 } : null;
+  // One line per part that actually succeeded, tagged with its kit.
+  // Kits built = distinct kid with all 6 parts; part 6 alone does NOT mean a whole kit
+  // (parts 2-6 run in parallel, so 6 can land while 3 fails) and part 6 is re-asked
+  // when sections come back missing, which would double-count a single kit.
+  const line = { kid: c.kid, part, src: c.src, safety: post.level, urgent: c.urgent === true, missing: missing.length };
+  if (typeof c.redo === 'number') line.redo = c.redo;
+  await count('kit_part', line);
+  return { status: 200, body: { part, text, sid: c.sid, stop: (model && model.stop_reason) || null, missing, trimmed: norm.trimmed, safety: post.level, ...post.counts, usage, deadline: c.deadline ? isoOf(c.deadline.date) : null, urgent: c.urgent, clock: c.clock } };
+}
+
 module.exports = async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
   if (req.method !== 'POST') {
@@ -533,6 +573,9 @@ module.exports = async (req, res) => {
   ask += `${KIT_MAP} You are writing part ${part} of 6: ONLY ${one ? 'the section' : `the ${P.headings.length} sections`} below${part === 6 ? ', then the fenced json block' : ''} — no title, no preface, no other section. Start ${one ? 'it' : 'each'} with its exact "## " heading line, write ${one ? 'it' : 'every one of them'} in full, then stop.\n\n${F.specFor(P.spec, { original })}${part === 3 || part === 4 ? '\n\n' + CLINICIAN_CHECK : ''}`;
   content.push({ type: 'text', text: ask });
 
+  // what turns the model's text into the reply (guardPart, finish)
+  const c = { part, safety, denial, extra, decode, files: !!(denialFile || recordsFile), records: !!recordsFile, funding, kid, src, sid: auth.sid === 'preview' || auth.sid === 'free' ? auth.sid : 'paid', urgent, deadline, clock };
+
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 110000);
 
@@ -571,23 +614,8 @@ module.exports = async (req, res) => {
       .map((b) => b.text)
       .join('\n')
       .trim();
-    if (!raw) {
-      res.status(502).json({ error: 'upstream', message: 'That part came back empty. Try again in a moment.' });
-      return;
-    }
-    const norm = normalizeSections(raw, part);
-    const post = postProcess(norm.text, { part, safety, known: [denial, extra, decode].join('\n'), attachments: !!(denialFile || recordsFile), records: !!recordsFile });
-    const routed = part > 1 ? oneRoute(post.text, funding) : post.text;
-    const built = part === 6 ? fixMeta(routed, decodeFacts(decode), fallbackFacts(decode)) : part === 1 ? expeditedFirst(twoRequests(post.text, fundingOf(post.text, denial)), post.level) : routed;
-    const text = stateFacts(built, part, { denial, extra, decode, files: !!(denialFile || recordsFile), level: post.level });
-    const missing = P.slots.filter((alts) => !alts.some((h) => text.includes(h))).map((alts) => alts[0]);
-    const usage = data.usage ? { in: data.usage.input_tokens, out: data.usage.output_tokens, cache_read: data.usage.cache_read_input_tokens || 0, cache_write: data.usage.cache_creation_input_tokens || 0 } : null;
-    // One line per part that actually succeeded, tagged with its kit.
-    // Kits built = distinct kid with all 6 parts; part 6 alone does NOT mean a whole kit
-    // (parts 2-6 run in parallel, so 6 can land while 3 fails) and part 6 is re-asked
-    // when sections come back missing, which would double-count a single kit.
-    await count('kit_part', { kid, part, src, safety: post.level, urgent: urgent === true, missing: missing.length });
-    res.status(200).json({ part, text, sid: auth.sid === 'preview' || auth.sid === 'free' ? auth.sid : 'paid', stop: data.stop_reason || null, missing, trimmed: norm.trimmed, safety: post.level, ...post.counts, usage, deadline: deadline ? isoOf(deadline.date) : null, urgent, clock });
+    const r = await finish(raw, data, c);
+    res.status(r.status).json(r.body);
   } catch (e) {
     clearTimeout(timer);
     res.status(e && e.name === 'AbortError' ? 504 : 500).json({ error: 'server', message: 'That took too long. Try again — the kit builds in short passes.' });
@@ -595,4 +623,4 @@ module.exports = async (req, res) => {
 };
 
 // exposed for unit tests
-module.exports._test = Object.assign({ computeDeadline, parseDate, factOf, urgencyOf, planTypeOf, originalMedicare, fundingOf, p2pOf, careStatusOf, effectiveUrgency, decisionClock, decodeFacts, fallbackFacts, fixMeta, twoRequests, expeditedFirst, oneRoute, stateFacts, normalizeSections, canonicalHeading }, G);
+module.exports._test = Object.assign({ computeDeadline, parseDate, factOf, urgencyOf, planTypeOf, originalMedicare, fundingOf, p2pOf, careStatusOf, effectiveUrgency, decisionClock, decodeFacts, fallbackFacts, fixMeta, twoRequests, expeditedFirst, oneRoute, stateFacts, normalizeSections, canonicalHeading, decodeText }, G);
