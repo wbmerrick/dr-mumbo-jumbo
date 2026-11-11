@@ -15,6 +15,7 @@ let calls = [];
 let resendOk = true, supabaseStatus = 201;
 let resendStatus = 401, resendBody = '';   // used when resendOk is false
 let resendHang = false;                    // never answers: the timeout must cut it
+let checkinPlan = [];                      // what Resend answers to each scheduled (check-in) email, in order
 
 // what the counter wrote, so the diagnosis can be asserted
 const counted = [];
@@ -26,6 +27,16 @@ global.fetch = async (url, opts) => {
   if (String(url).includes('/rpc/dmj_count')) return { ok: true, status: 204 };
   calls.push({ url: String(url), opts });
   if (String(url).includes('api.resend.com')) {
+    // A scheduled email is a check-in (see the last section). Each is answered from checkinPlan, in
+    // order: 'ok' · 'hang' · [status, body, retry-after seconds]. 'ok' once the plan runs out.
+    let scheduled = null;
+    try { scheduled = JSON.parse(opts.body).scheduled_at || null; } catch (e) { scheduled = null; }
+    if (scheduled) {
+      const a = checkinPlan.length ? checkinPlan.shift() : 'ok';
+      if (a === 'hang') return new Promise((_, rej) => opts.signal.addEventListener('abort', () => rej(Object.assign(new Error('aborted'), { name: 'AbortError' }))));
+      if (a === 'ok') return { ok: true, status: 200, text: async () => '{"id":"5f1c0a52-7d0e-4f0b-9d0c-1b8f6f0e2a11"}' };
+      return { ok: false, status: a[0], headers: { get: (h) => (String(h).toLowerCase() === 'retry-after' && a[2] ? String(a[2]) : null) }, text: async () => a[1] };
+    }
     if (resendHang) return new Promise((_, rej) => opts.signal.addEventListener('abort', () => rej(Object.assign(new Error('aborted'), { name: 'AbortError' }))));
     if (resendOk) return { ok: true, status: 200, text: async () => '{"id":"49a3999c-0ce1-4ea6-ab68-afcd6dc2e794"}' };
     return { ok: false, status: resendStatus, text: async () => resendBody };
@@ -168,6 +179,196 @@ const sentJson = () => JSON.parse(resendCall().opts.body);
   assert.strictEqual(counted.find(c => c.evt === 'kit_email_failed').why, 'network_or_timeout', 'hang diagnosed as timeout');
   resendHang = false;
 
+  // ---------- check-ins: two emails later, only if the reader asked ----------
+  // Why this is here: an emailed kit was the last thing the site ever heard about an appeal. A
+  // reader can now tick a box and be asked, 3 days on, whether it was sent, and about four weeks
+  // on, what happened (lib/checkin.js writes the two emails; qa/tests/test-checkin.js checks them).
+  // They are scheduled with Resend at the moment the kit goes out, so nothing on our side keeps a
+  // list of who asked. What must hold: nobody gets one who did not ask; the kit email is never
+  // held up or failed by them; the first email promises the second, so it only goes out if the
+  // second is set; pressing the button twice does not double them; and the address stays out of
+  // every count, as it always has.
+  const ci = require('../../lib/checkin.js');
+  const DAY = 86400000;
+  const KID = 'usp722atowp1';
+  const resendCalls = () => calls.filter(c => c.url.includes('api.resend.com'));
+  const scheduledCalls = () => resendCalls().filter(c => JSON.parse(c.opts.body).scheduled_at);
+  const lastCount = (evt) => counted.filter(c => c.evt === evt).pop();
+  const linksIn = (text) => [...text.matchAll(/https:\/\/dr-mumbo-jumbo\.com\/checkin#\S+/g)].map(m => Object.fromEntries(new URLSearchParams(new URL(m[0]).hash.slice(1))));
+  const send = async (more) => { const r = mockRes(); await handler({ method:'POST', body: Object.assign({ email:'will@example.com', kit:KIT, token }, more || {}) }, r); return r; };
+  const fresh = () => { calls = []; counted.length = 0; checkinPlan = []; resendOk = true; resendHang = false; supabaseStatus = 201; };
+  const PLAIN = 'Sent. Check your inbox — and spam, the first time.';
+
+  // not asked: one email, as before
+  for (const [what, more] of [['no word about check-ins', {}], ['check-ins declined', { checkin: false }], ['a "true" that is text, not a tick', { checkin: 'true' }], ['a 1', { checkin: 1 }]]) {
+    fresh();
+    res = await send(Object.assign({ kid: KID, src: 'reddit' }, more));
+    assert.strictEqual(res.code, 200, what + ': the kit is sent');
+    assert.strictEqual(resendCalls().length, 1, what + ': one email goes to Resend, the kit');
+    assert.strictEqual(res.body.message, PLAIN, what + ': the reader is told what they were always told');
+    assert.deepStrictEqual(lastCount('kit_emailed'), { evt: 'kit_emailed', src: 'reddit', checkins: 0 }, what + ': counted as a kit emailed, with the word for its source, and no check-ins');
+  }
+  fresh();
+  res = await send({});
+  assert.deepStrictEqual(lastCount('kit_emailed'), { evt: 'kit_emailed', src: 'unknown', checkins: 0 }, 'a page that names no source is counted as unknown');
+  fresh();
+  res = await send({ kid: '../../etc/passwd; DROP TABLE x', src: 'Reddit Thread?id=5&name=John Smith' });
+  assert.deepStrictEqual(lastCount('kit_emailed'), { evt: 'kit_emailed', src: 'redditthreadid5namejohns', checkins: 0 }, 'the source word is cut down exactly as the build counter cuts it');
+  // The kit's tag is not counted here, asked for or not. This request is the one that carries the
+  // reader's address, and the address is kept (for launch news) in the same second: a tag in this
+  // count line would sit beside it by time. The tag goes into the check-in links and nowhere else.
+  assert(!JSON.stringify(counted).includes('etcpasswd'), 'the kit\'s tag is not written into the emailed-kit count');
+
+  // asked: the kit, then the two check-ins
+  fresh();
+  const sent0 = Date.now();
+  res = await send({ checkin: true, kid: KID, src: 'reddit' });
+  const sent1 = Date.now();
+  assert.strictEqual(res.code, 200, 'asked: the kit is sent');
+  assert.strictEqual(resendCalls().length, 3, 'asked: three emails go to Resend');
+  assert.strictEqual(JSON.parse(resendCalls()[0].opts.body).scheduled_at, undefined, 'asked: the kit goes first and goes now');
+  assert.deepStrictEqual(Object.keys(JSON.parse(resendCalls()[0].opts.body)).sort(), ['from', 'html', 'subject', 'text', 'to'], 'asked: the kit email itself is unchanged, the same five fields');
+  const sched = scheduledCalls();
+  assert.strictEqual(sched.length, 2, 'asked: two check-ins are scheduled');
+  const byStage = {};
+  for (const c of sched) {
+    const m = JSON.parse(c.opts.body);
+    assert.strictEqual(c.url, RESEND_URL, 'check-in: sent to Resend\'s single-email endpoint, where scheduling is documented');
+    assert.strictEqual(c.opts.method, 'POST', 'check-in: POST');
+    assert.strictEqual(c.opts.headers.Authorization, 'Bearer re_test_key', 'check-in: bearer auth');
+    assert.strictEqual(c.opts.headers['Content-Type'], 'application/json', 'check-in: json');
+    assert(/\S/.test(c.opts.headers['User-Agent'] || ''), 'check-in: User-Agent set');
+    assert.deepStrictEqual(Object.keys(m).sort(), ['from', 'html', 'scheduled_at', 'subject', 'text', 'to'], 'check-in: the five fields and the time, nothing else');
+    assert.deepStrictEqual(m.to, ['will@example.com'], 'check-in: goes to the address the kit went to');
+    assert.strictEqual(m.from, DEFAULT_FROM, 'check-in: from the same sender as the kit');
+    assert(!m.text.includes('LETTER OF MEDICAL NECESSITY') && !m.html.includes('LETTER OF MEDICAL NECESSITY') && !/Dear reviewer|2027-03-13/.test(m.text + m.html), 'check-in: no part of the kit is in it');
+    const links = linksIn(m.text);
+    assert(links.length >= 2 && links.every(l => l.k === KID), 'check-in: its links carry the kit\'s own tag');
+    const stage = Number(links[0].s);
+    assert(links.every(l => { const k = ci.check(l); return k.ok && k.kid === KID && k.stage === stage; }), 'check-in: every link in it is one the answer endpoint takes');
+    const due = Date.parse(m.scheduled_at) - ci.STAGES[stage].days * DAY;
+    assert(due >= sent0 && due <= sent1, 'check-in ' + stage + ': scheduled ' + ci.STAGES[stage].days + ' days from now (' + m.scheduled_at + ')');
+    const key = c.opts.headers['Idempotency-Key'];
+    assert(typeof key === 'string' && key.length > 20 && key.length <= 256, 'check-in: carries an idempotency key');
+    assert(!/@|will|example/.test(key), 'check-in: the key does not spell out the address (' + key + ')');
+    byStage[stage] = { m, key };
+  }
+  assert.deepStrictEqual(Object.keys(byStage), ['1', '2'], 'asked: one check-in for each question');
+  assert(byStage[1].key !== byStage[2].key, 'asked: each has its own idempotency key');
+  // The first email says another is coming. So the second is set first, and the first only after it.
+  assert.strictEqual(linksIn(JSON.parse(sched[0].opts.body).text)[0].s, '2', 'the week-4 email is scheduled before the day-3 one that promises it');
+  assert(/check in/i.test(res.body.message) && /3 days/.test(res.body.message) && res.body.message.startsWith(PLAIN), 'asked: the reader is told the kit is sent and when the first check-in comes ("' + res.body.message + '")');
+  assert.strictEqual(res.body.checkins, 2, 'asked: the page is told two were set');
+  assert.deepStrictEqual(lastCount('kit_emailed'), { evt: 'kit_emailed', src: 'reddit', checkins: 2 }, 'asked: counted with how many check-ins were set');
+  assert(!JSON.stringify(counted).includes(KID), 'asked: the tag in the links is in no count from this request, which is the one that holds the address');
+  assert(!counted.some(c => c.evt === 'checkin_failed'), 'asked: nothing is counted as failed');
+  assert.strictEqual(calls.filter(c => c.url.includes('supabase')).length, 1, 'asked: the address is kept once, as for any emailed kit');
+  const firstKeys = [byStage[1].key, byStage[2].key];
+
+  // pressing the button twice: the same keys, so Resend sets each check-in once
+  fresh();
+  res = await send({ checkin: true, kid: KID, src: 'reddit' });
+  assert.deepStrictEqual(scheduledCalls().map(c => c.opts.headers['Idempotency-Key']).sort(), firstKeys.slice().sort(), 'the same kit to the same address carries the same idempotency keys');
+  fresh();
+  res = await send({ checkin: true, kid: KID, email: 'other@example.com' });
+  assert(scheduledCalls().every(c => !firstKeys.includes(c.opts.headers['Idempotency-Key'])), 'the same kit to a corrected address is a different pair of check-ins');
+  fresh();
+  res = await send({ checkin: true, kid: 'c78pt31832ma' });
+  assert(scheduledCalls().every(c => !firstKeys.includes(c.opts.headers['Idempotency-Key'])), 'and so is another kit to the same address');
+  // Resend answers a repeat of a key it has already taken, with a new time in it, with a 409: it is already set.
+  fresh();
+  checkinPlan = [[409, '{"statusCode":409,"name":"invalid_idempotent_request","message":"Same idempotency key used with a different request payload."}'], [409, '{"statusCode":409,"name":"invalid_idempotent_request","message":"Same idempotency key used with a different request payload."}']];
+  res = await send({ checkin: true, kid: KID });
+  assert.strictEqual(res.body.checkins, 2, 'a check-in Resend already holds counts as set');
+  assert(!counted.some(c => c.evt === 'checkin_failed'), 'and is not a failure');
+  assert(/check in/i.test(res.body.message), 'and the reader is told they are coming');
+
+  // a kit with no usable tag still gets its check-ins, under a fresh one
+  fresh();
+  res = await send({ checkin: true, kid: 'untagged' });
+  const tags = [...new Set(scheduledCalls().flatMap(c => linksIn(JSON.parse(c.opts.body).text).map(l => l.k)))];
+  assert(tags.length === 1 && /^[a-z0-9]{12}$/.test(tags[0]) && tags[0] !== 'untagged', 'a kit with no tag of its own: both emails carry one fresh tag (' + tags.join(',') + ')');
+
+  // RESEND_FROM applies to them as it does to the kit
+  process.env.RESEND_FROM = 'Dr Mumbo Jumbo <onboarding@resend.dev>'; fresh();
+  res = await send({ checkin: true, kid: KID });
+  assert(scheduledCalls().length === 2 && scheduledCalls().every(c => JSON.parse(c.opts.body).from === 'Dr Mumbo Jumbo <onboarding@resend.dev>'), 'RESEND_FROM is honoured for the check-ins too');
+  delete process.env.RESEND_FROM;
+
+  // the kit did not go out: nothing is scheduled
+  fresh(); resendOk = false; resendStatus = 500; resendBody = '{"statusCode":500,"name":"application_error","message":"An unexpected error occurred."}';
+  res = await send({ checkin: true, kid: KID });
+  assert.strictEqual(res.code, 502, 'kit failed: still a 502');
+  assert.strictEqual(scheduledCalls().length, 0, 'kit failed: no check-in is scheduled for a kit that was not sent');
+
+  // The check-ins could not be set: the kit is still sent, the reader is told the truth, and the count says why.
+  fresh();
+  checkinPlan = [[422, '{"statusCode":422,"name":"validation_error","message":"The `scheduled_at` field must be within 30 days. Sent to will@example.com."}']];
+  res = await send({ checkin: true, kid: KID });
+  assert.strictEqual(res.code, 200, 'check-ins refused: the kit is still sent, and the reader still gets a 200');
+  assert.strictEqual(res.body.ok, true, 'check-ins refused: ok');
+  assert.strictEqual(scheduledCalls().length, 1, 'check-ins refused: when the week-4 email cannot be set, the day-3 one that promises it is not tried');
+  assert.strictEqual(res.body.checkins, 0, 'check-ins refused: the page is told none were set');
+  assert(/could not be set up/.test(res.body.message) && res.body.message.startsWith('Sent.') && !/3 days/.test(res.body.message), 'check-ins refused: the reader is told the kit went and the check-ins did not ("' + res.body.message + '")');
+  assert.deepStrictEqual(lastCount('kit_emailed'), { evt: 'kit_emailed', src: 'unknown', checkins: 0 }, 'check-ins refused: the kit is counted as emailed, with none set');
+  const cf = lastCount('checkin_failed');
+  assert(cf, 'check-ins refused: the failure is counted');
+  assert.deepStrictEqual(Object.keys(cf).sort(), ['detail', 'evt', 'fix', 'name', 'stage', 'status', 'why'], 'a failed check-in is counted as: which one, Resend\'s status and error name, the diagnosis. Nothing else');
+  assert.deepStrictEqual([cf.stage, cf.status, cf.name, cf.why], [2, 422, 'validation_error', 'bad_request'], 'check-ins refused: which one, and why');
+  assert(/<email>/.test(cf.detail) && !/will@example/.test(JSON.stringify(cf)), 'check-ins refused: an address Resend echoes back is scrubbed from the count');
+  assert.strictEqual(calls.filter(c => c.url.includes('supabase')).length, 1, 'check-ins refused: the address is still kept, since the kit did go out');
+
+  // the week-4 one is set and the day-3 one is not: one check-in, and the message says which
+  fresh();
+  checkinPlan = ['ok', [403, '{"statusCode":403,"name":"validation_error","message":"The dr-mumbo-jumbo.com domain is not verified."}']];
+  res = await send({ checkin: true, kid: KID });
+  assert.strictEqual(res.body.checkins, 1, 'day-3 refused: one check-in is set');
+  assert(/four weeks/.test(res.body.message) && !/3 days/.test(res.body.message), 'day-3 refused: the reader is told about the one that is coming ("' + res.body.message + '")');
+  assert.deepStrictEqual([lastCount('checkin_failed').stage, lastCount('checkin_failed').why], [1, 'domain_not_verified'], 'day-3 refused: counted with its diagnosis');
+  assert.strictEqual(lastCount('kit_emailed').checkins, 1, 'day-3 refused: the kit is counted with one check-in');
+
+  // too fast for Resend, or Resend having a moment: wait and ask once more
+  for (const [what, refusal] of [
+    ['rate limited', [429, '{"statusCode":429,"name":"rate_limit_exceeded","message":"Too many requests. Please limit the number of requests per second."}', 1]],
+    ['a server error', [500, '{"statusCode":500,"name":"application_error","message":"An unexpected error occurred."}']]
+  ]) {
+    fresh();
+    checkinPlan = [refusal];
+    const w0 = Date.now();
+    res = await send({ checkin: true, kid: KID });
+    assert.strictEqual(res.body.checkins, 2, what + ': both check-ins are set in the end');
+    assert.strictEqual(scheduledCalls().length, 3, what + ': the refused one is asked for once more');
+    assert.strictEqual(scheduledCalls()[0].opts.headers['Idempotency-Key'], scheduledCalls()[1].opts.headers['Idempotency-Key'], what + ': with the same idempotency key, so it cannot be set twice');
+    assert(Date.now() - w0 >= 900 && Date.now() - w0 < 5000, what + ': after a short wait (' + (Date.now() - w0) + ' ms)');
+    assert(!counted.some(c => c.evt === 'checkin_failed'), what + ': nothing is counted as failed');
+  }
+  fresh();
+  checkinPlan = [[500, 'upstream connect error'], [500, 'upstream connect error']];
+  res = await send({ checkin: true, kid: KID });
+  assert.strictEqual(scheduledCalls().length, 2, 'refused twice: asked twice and no more');
+  assert.deepStrictEqual([res.code, res.body.checkins, lastCount('checkin_failed').why], [200, 0, 'resend_down'], 'refused twice: the kit is sent, no check-in is set, and the count says Resend was down');
+
+  // a check-in call that never answers is cut off; the reader's kit is not held hostage to it
+  fresh();
+  checkinPlan = ['hang'];
+  const h0 = Date.now();
+  res = await send({ checkin: true, kid: KID });
+  assert.deepStrictEqual([res.code, res.body.ok, res.body.checkins], [200, true, 0], 'hanging check-in: the kit is sent and the reader is answered');
+  assert(Date.now() - h0 < 9000, 'hanging check-in: cut off well inside the function\'s 30 seconds (' + (Date.now() - h0) + ' ms)');
+  assert.strictEqual(lastCount('checkin_failed').why, 'network_or_timeout', 'hanging check-in: counted as a timeout');
+
+  // Across everything this file sent: no count line holds an address, or a field nobody named.
+  fresh();
+  await send({ checkin: true, kid: KID, src: 'reddit' });
+  checkinPlan = [[422, '{"statusCode":422,"name":"validation_error","message":"bad"}']];
+  await send({ checkin: true, kid: KID, src: 'reddit' });
+  const HOLDS = { kit_emailed: ['evt', 'src', 'checkins'], checkin_failed: ['evt', 'stage', 'status', 'name', 'why', 'fix', 'detail'] };
+  for (const c of counted) {
+    assert(HOLDS[c.evt], 'a count this file did not expect: ' + c.evt);
+    assert.deepStrictEqual(Object.keys(c).filter(k => !HOLDS[c.evt].includes(k)), [], c.evt + ' holds only ' + HOLDS[c.evt].join(', '));
+    assert(!/[^\s@"<>]+@[^\s@"<>]+\.[a-z]{2,}/i.test(JSON.stringify(c)), c.evt + ': no address in a count');
+  }
+
   console.log = realLog;
-  console.log('test-email-kit: ok (including 502 diagnosis)');
+  console.log('test-email-kit: ok (including 502 diagnosis and check-ins)');
 })().catch(e => { console.error(e); process.exit(1); });

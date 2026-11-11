@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Check-in | Dr Mumbo Jumbo</title>
+<meta name="description" content="Answer a Fight Pack check-in.">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#07080C">
+<link rel="icon" href="/favicon.svg?v=2" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/nocturne.css">
+<style>
+
+  /* The page a check-in email opens: one question, an answer to tap, then a thank-you. */
+  .checkin{padding:34px 0 60px;max-width:640px}
+  .checkin h1{margin:12px 0 0}
+  .checkin .lead{margin-top:14px}
+  .answers{display:flex;flex-direction:column;gap:10px;margin-top:24px;max-width:420px}
+  .answers .btn{width:100%;justify-content:flex-start;text-align:left}
+  .checkin .alert{margin-top:16px}
+  .checkin .after{margin-top:22px}
+
+</style>
+<script defer src="/_vercel/insights/script.js"></script>
+</head>
+<body>
+<header class="site-header">
+  <div class="wrap bar">
+    <a class="brand" href="/" aria-label="Dr Mumbo Jumbo, home"><span class="mark" aria-hidden="true"><svg viewBox="0 0 64 48" width="38" height="29"><g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M10 34C12 20 16 10 20 10c3 0 2 14 4 20 2 6 5-12 9-14 3-1 3 10 7 11 4 1 8-3 14-5" stroke="currentColor" stroke-width="3.2"/><path d="M7 41h50" stroke="var(--accent)" stroke-width="3.6"/></g></svg></span><span class="wm">Dr Mumbo <span class="lime">Jumbo</span></span></a>
+    <nav class="nav" aria-label="Main">
+      <a href="/how-its-tested">How it's tested</a>
+      <a class="btn btn-primary btn-sm" href="/">Build my kit</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="wrap wrap-narrow">
+    <section class="checkin">
+      <span class="kicker">Check-in</span>
+
+      <div id="ask">
+        <h1 id="q"></h1>
+        <p class="lead">Tap your answer. It is counted without your name or your address.</p>
+        <div class="answers" id="answers"></div>
+        <div class="alert err" id="msg" role="alert"></div>
+      </div>
+
+      <div id="done" hidden>
+        <h1 id="thanks"></h1>
+        <p class="lead" id="next"></p>
+        <p class="small after">You can close this page. <a href="/">Back to the Fight Pack</a></p>
+      </div>
+
+      <div id="nolink" hidden>
+        <h1>This page opens from a check-in email<span class="lime">.</span></h1>
+        <p class="lead">Open the link in the email again. If the link was cut in two, copy the whole of it into your browser's address bar.</p>
+        <p class="small after"><a href="/">Back to the Fight Pack</a></p>
+      </div>
+
+      <noscript><p class="lead">This page needs JavaScript to count your answer. You can also just reply to the email.</p></noscript>
+    </section>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="hr full"></div>
+    <div class="cols">
+      <div><h4>Tools</h4><ul><li><a href="/">Fight Pack</a></li><li><a href="/translate">Translator</a></li><li><a href="/appeal">Appeal letter</a></li></ul></div>
+      <div><h4>Learn</h4><ul><li><a href="/denials">Denial Playbook</a></li><li><a href="/codes/">Code library</a></li><li><a href="/how-its-tested">How it's tested</a></li></ul></div>
+      <div class="about"><h4>About</h4><p>Built by a practicing physician.</p><p>Nothing you paste or upload is stored.</p><p><a href="mailto:hello@dr-mumbo-jumbo.com">hello@dr-mumbo-jumbo.com</a></p></div>
+      <div><h4>Legal</h4><ul><li><a href="/privacy">Privacy</a></li><li><a href="/terms">Terms</a></li></ul></div>
+    </div>
+    <p class="legal">Dr Mumbo Jumbo is an educational self-advocacy tool, not medical, legal or financial advice, and it does not create a doctor–patient relationship. Letters and kits are drafts for you and your clinician to review, complete and send yourselves; they are written by AI and can contain mistakes, so read every line before you send it. Appeal rights and deadlines vary by plan and state; your denial letter and plan documents control. In an emergency, call 911.</p>
+    <p class="copy"><span class="mark" aria-hidden="true"><svg viewBox="0 0 64 48" width="38" height="29"><g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M10 34C12 20 16 10 20 10c3 0 2 14 4 20 2 6 5-12 9-14 3-1 3 10 7 11 4 1 8-3 14-5" stroke="currentColor" stroke-width="3.2"/><path d="M7 41h50" stroke="var(--accent)" stroke-width="3.6"/></g></svg></span>© 2026 Dr Mumbo Jumbo</p>
+  </div>
+</footer>
+
+<script>
+// The page a check-in email opens (lib/checkin.js writes the emails; api/checkin.js takes the answer).
+// Nothing is sent when the page opens: mail scanners open every link in a message, and an answer
+// counted on arrival would be theirs, not the reader's. Only a tap on an answer is an answer.
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  // The two questions, as the emails ask them. Each answer: [the word that is counted, the words on the button].
+  // Kept the same as STAGES in lib/checkin.js (qa/tests/test-checkin-page.js checks).
+  var STAGES = {
+    1: { ask: 'Has your appeal been sent?', answers: [['sent', "Yes, it's sent"], ['notyet', 'Not yet']] },
+    2: { ask: 'What happened with your appeal?', answers: [['won', 'They approved it'], ['lost', 'They denied it again'], ['waiting', 'Still waiting'], ['nosend', 'I never sent it']] }
+  };
+  // What the reader is told once their answer is counted: a heading, then the next step.
+  var AFTER = {
+    sent: ['Counted. Thank you.', "The insurer's clock is running now, and the deadlines at the end of your kit show when their written answer is due. One more email will come, about four weeks after you built the kit, to ask how it turned out."],
+    notyet: ['Counted. Thank you.', 'An appeal only counts once it is sent, and the deadline printed on your letter is the one that matters. If you are waiting for someone else to sign or send a letter, section 4 of your kit is the note to hand them with it. The kit is in the email we sent you.'],
+    won: ['Counted. That is a denial overturned.', 'Thank you for telling us. If you would like to say how it went, reply to the check-in email.'],
+    lost: ['Counted. Thank you for telling us.', 'A second no is not the last word. Section 9 of your kit is written for this, and the time you have to act is printed on the letter you just received.'],
+    waiting: ['Counted. Thank you.', "The deadlines at the end of your kit show when the insurer's written answer is due. If that date has passed, section 6 of your kit is the script for calling them. If the answer comes later, you can reply to the check-in email and tell us."],
+    nosend: ['Counted. Thank you for saying so.', 'If the deadline on your letter has not passed, the kit in your inbox still works. If something in the kit got in the way, reply to the check-in email and tell us what.']
+  };
+  var ask = $('ask'), done = $('done'), nolink = $('nolink'), answers = $('answers'), msg = $('msg');
+
+  // One value from the link. '' when it is not there; null when it cannot be read.
+  // Our links carry their details after the #, which the browser does not send to the server.
+  // A mail gateway that rewrites links can move them to after a ?: that is read too.
+  var loc = window.location || {};
+  var carried = String(loc.hash || '').replace(/^#/, '') || String(loc.search || '').replace(/^\?/, '');
+  function param(name){
+    var m = new RegExp('(?:^|&)' + name + '=([^&]*)').exec(carried);
+    if(!m) return '';
+    try{ return decodeURIComponent(m[1].replace(/\+/g, ' ')); }catch(e){ return null; }
+  }
+  var link = { k: param('k'), s: param('s'), d: param('d'), t: param('t') }, picked = param('a');
+  // Read once, the link comes out of the address bar: before the analytics script below this one
+  // in loading order (it is deferred) can see it, and so it is not left in the browser's history.
+  try{ if(carried && window.history && window.history.replaceState) window.history.replaceState(null, '', loc.pathname || '/checkin'); }catch(e){}
+  var stage = link.s && Object.prototype.hasOwnProperty.call(STAGES, link.s) ? STAGES[link.s] : null;
+
+  done.hidden = true;
+  if(!stage || !link.k || !link.d || !link.t){ ask.hidden = true; nolink.hidden = false; return; }
+  nolink.hidden = true; ask.hidden = false;
+  $('q').textContent = stage.ask;
+
+  var buttons = [], counted = false, busy = false;
+  function say(text){ msg.textContent = text; if(text) msg.classList.add('on'); else msg.classList.remove('on'); }
+  function send(key){
+    if(counted || busy) return;
+    busy = true; say('');
+    buttons.forEach(function(b){ b.disabled = true; });
+    fetch('/api/checkin', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ k: link.k, s: link.s, d: link.d, t: link.t, a: key }) })
+      .then(function(r){ return r.json().then(function(d){ return { ok: r.ok && !!d && d.ok === true, data: d || {} }; }, function(){ return { ok: false, data: {} }; }); })
+      .catch(function(){ return { ok: false, data: {} }; })
+      .then(function(res){
+        busy = false;
+        if(res.ok){
+          counted = true;
+          $('thanks').textContent = AFTER[key][0]; $('next').textContent = AFTER[key][1];
+          ask.hidden = true; done.hidden = false;
+          return;
+        }
+        buttons.forEach(function(b){ b.disabled = false; });
+        say(res.data.message || "That didn't go through. Check your connection and try again.");
+      });
+  }
+  stage.answers.forEach(function(a){
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'btn btn-lg ' + (a[0] === picked ? 'btn-primary' : 'btn-secondary');   // the answer followed from the email is picked out; any can be tapped
+    b.textContent = a[1];
+    b.addEventListener('click', function(){ send(a[0]); });
+    answers.appendChild(b);
+    buttons.push(b);
+  });
+})();
+</script>
+</body>
+</html>

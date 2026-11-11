@@ -117,6 +117,12 @@ const errorBox = (page) => (page.$('error').classList.contains('on') ? page.$('e
 // Marks (hashes, asterisks, rule lines) and white space are layout; everything else is the kit.
 const bare = (s) => s.split(/\r?\n/).filter((l) => !/^-{3,}$/.test(l.trim())).join('').replace(/[#*\s]/g, '');
 const WHOLE = bare(stored.replace(/```json[\s\S]*?```/, ''));
+// One line in the email is the page's own and not the writers': where the kit came from, added to
+// the note for the office (document 4) as the kit is put on the page. test-checkin-page.js pins
+// that line down (which document, where, once). Here it is the single allowance in "the email is
+// the stored kit": it must be there once, and with it taken out the rest must be the kit exactly.
+const ORIGIN = bare(JSON.parse(/var ORIGIN_LINE = ("(?:[^"\\]|\\.)*");/.exec(js)[1]));
+assert(ORIGIN.length > 60 && !WHOLE.includes(ORIGIN), 'the page\'s own line is read from fightpack.js, and the stored kit does not already carry it');
 const kitOf = (text) => text.slice(0, text.indexOf('\n\n\nYOUR DEADLINES'));
 const inOrder = (text) => { let from = 0; for (let k = 1; k <= 10; k++) { const i = ('\n' + text + '\n').indexOf('\n' + TITLE[k] + '\n', from); if (i < 0) return k; from = i + 1; } return 0; };
 
@@ -129,7 +135,9 @@ const sentWhole = (page, what) => {
   same(kits.length, 1, what + ': the kit is emailed, once');
   if (kits.length !== 1) return;
   same(inOrder(kits[0]), 0, what + ': all ten sections are in the email, in order (first one not found)');
-  ok(bare(kitOf(kits[0])) === WHOLE, what + ': every character of the stored kit is in the email');
+  const got = bare(kitOf(kits[0]));
+  same(got.split(ORIGIN).length - 1, 1, what + ': the line saying where the kit came from is in the email, once');
+  ok(got.replace(ORIGIN, '') === WHOLE, what + ': every character of the stored kit is in the email, and but for that line nothing else is');
   ok(/\n\n\nYOUR DEADLINES\n- /.test(kits[0]), what + ': the deadlines follow the last section');
 };
 const notSent = (page, msg, what) => {
