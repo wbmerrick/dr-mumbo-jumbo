@@ -113,8 +113,12 @@
 
   // ---------- markdown-lite ----------
   function escapeHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  // **bold**, *italics* and [blanks to fill in]. Italics use the pattern plain() takes off, so a
+  // list's "* " and a lone asterisk are never read as emphasis.
   function inline(s){
-    return s.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>').replace(/\[([^\[\]]{1,160})\]/g, function(m, inner){ return '<span class="ph">[' + inner + ']</span>'; });
+    return s.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>')
+            .replace(/(^|[^*\w])\*([^\s*](?:[^*\n]*[^\s*])?)\*(?![*\w])/g, '$1<em>$2</em>')
+            .replace(/\[([^\[\]]{1,160})\]/g, function(m, inner){ return '<span class="ph">[' + inner + ']</span>'; });
   }
   function renderBody(md){
     var lines = escapeHtml(md).split(/\r?\n/);
