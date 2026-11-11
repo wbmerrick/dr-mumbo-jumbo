@@ -364,7 +364,12 @@
     var kid = Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
     track('kit_start', { files: !!(inp.file || inp.records) });
     parts = {}; meta = null; gaps = {};
-    sample = false; kitout.classList.remove('sample');   // from here on the kit is the reader's own
+    // From here on the kit is the reader's own. If the example was up, the tracker holds its notice date
+    // and its 180 days: those go, or a letter that prints no date would be given the example's deadline.
+    // (Dates the reader entered for their own kit stay, as they always have.)
+    if(sample) [dlDenial, dlStated, dlDays, dlFiled].forEach(function(el){ el.value = ''; });
+    sample = false; kitout.classList.remove('sample');
+    $('strength').style.display = 'none';   // the rating beside the heading is the last kit's; this kit's decode sets its own
     resetSteps(); progress.classList.add('on'); startMorph(morphEl, MORPH); kitout.classList.remove('on');
     progress.scrollIntoView({ behavior:'smooth', block:'start' });
     buy.disabled = true;
@@ -481,6 +486,7 @@
       hideError(); progress.classList.remove('on');
       // the tracker shows the example's dates, not ones left from a kit that was on the page before
       [dlDenial, dlStated, dlDays, dlFiled].forEach(function(el){ el.value = ''; });
+      $('strength').style.display = 'none';
       renderKit(); applyMeta();
       if(own && own.parts && own.ts && Date.now() - own.ts < 72*3600*1000) showNotice('This is the example kit. The kit you built is still saved in this browser: reload the page to see it.');
       else hideNotice();

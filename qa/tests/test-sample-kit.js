@@ -92,6 +92,9 @@ for (const m of stored.matchAll(/^## (\d{1,2})\. .*$/gm)) at[m[1]] = m.index;
 const cut = (k) => stored.slice(at[k], k < 10 ? at[k + 1] : stored.length).trim();
 const MINE = {};
 for (const p of Object.keys(OWN)) MINE[p] = OWN[p].map(cut).join('\n\n');
+const NO_DATES = Object.assign(JSON.parse(MINE[6].match(/```json\s*(\{[\s\S]*?\})\s*```/)[1]), { denial_date: null, stated_appeal_deadline: null, appeal_window_days: null });
+const UNRATED = Object.assign({}, NO_DATES, { case_strength: null });
+assert(/case strength/i.test(MINE[1]), 'the stored decode rates the case');
 const MY_LETTER = 'NOTICE OF ADVERSE DETERMINATION. Prior authorization for infliximab is denied: step therapy with an immunomodulator is required first.';
 
 function element() {
@@ -111,7 +114,9 @@ function element() {
 }
 // file: 'ok' the sample is served · 'missing' the deploy does not have it · 'offline' the request fails ·
 // 'broken' what comes back is not a whole kit. page.serve() changes it while the page is open.
-function open({ file = 'ok', saved = {}, hash = '', hold = false } = {}) {
+// dateless: the reader's letter printed no dates, so their kit's tracker data has none (as in corpus case A)
+// unrated: the decode that came back carries no case-strength line, and neither does the tracker data
+function open({ file = 'ok', saved = {}, hash = '', hold = false, dateless = false, unrated = false } = {}) {
   const els = {};
   const $ = (id) => els[id] || (els[id] = element());
   const posts = [], gets = [], events = [], held = [];
@@ -128,7 +133,8 @@ function open({ file = 'ok', saved = {}, hash = '', hold = false } = {}) {
     posts.push({ url, body });
     const answer = url === '/api/unlock' ? { token: 'session-1' }
       : url === '/api/email-kit' ? { ok: true, message: 'Sent.' }
-      : { part: body.part, text: MINE[body.part], stop: 'end_turn', missing: [] };
+      : { part: body.part, stop: 'end_turn', missing: [], text: body.part === 6 && (dateless || unrated) ? MINE[6].replace(/```json[\s\S]*?```/, '```json\n' + JSON.stringify(unrated ? UNRATED : NO_DATES) + '\n```')
+        : body.part === 1 && unrated ? MINE[1].replace(/^.*case strength.*$/gim, '') : MINE[body.part] };
     const res = { ok: true, status: 200, json: () => Promise.resolve(answer) };
     return hold && url === '/api/fightpack' && body.part > 1 ? new Promise((r) => held.push(() => r(res))) : Promise.resolve(res);
   };
@@ -266,6 +272,35 @@ const ownKit = () => JSON.stringify({ parts: MINE, meta: { denial_date: '2026-10
     same(mine.$('extra').value, 'Two flares this year; on prednisone now.', "a reader's own note is never cleared");
     await mine.choose('file');
     same([mine.$('denial').value, mine.$('extra').value].join('|'), MY_LETTER + '|Two flares this year; on prednisone now.', "and choosing a file leaves a reader's own letter and note where they are");
+  }
+
+  // ---------- 9c. nor do the example's dates: a wrong deadline is the worst thing a kit can say ----------
+  // The example fills the tracker with its notice date and its 180 days. A reader whose own letter
+  // prints no date must get an empty tracker, not "file by March 31, 2027".
+  {
+    const page = open({ dateless: true });
+    await press(page, 'example');
+    same(page.$('dlDenial').value, '2026-10-02', "the tracker shows the example's notice date while the example is up");
+    type(page, MY_LETTER); page.$('denial').fire('input');
+    await press(page, 'buy');
+    ok(!page.asExample() && page.shown().length === 10, "the reader's kit is built");
+    same([page.$('dlDenial').value, page.$('dlStated').value, page.$('dlDays').value].join(' / '), ' /  / ', "its tracker has no dates, because the reader's letter gave none: none of the example's are left in it");
+    // what the reader then enters is theirs, and an ordinary rebuild keeps it
+    page.$('dlDenial').value = '2026-11-01'; page.$('dlDays').value = '60';
+    await press(page, 'regen');
+    same(page.posts('/api/fightpack'), 12, 'Rebuild with edits writes the kit again');
+    same([page.$('dlDenial').value, page.$('dlDays').value].join(' / '), '2026-11-01 / 60', 'and the dates the reader entered in the tracker are still there');
+  }
+
+  // The same for the rating beside the heading: "Case strength: Good" belongs to the example.
+  {
+    const page = open({ unrated: true });
+    await press(page, 'example');
+    ok(page.$('strength').style.display !== 'none' && /Good/.test(page.$('strength').textContent), "the example's case strength is shown with the example");
+    type(page, MY_LETTER); page.$('denial').fire('input');
+    await press(page, 'buy');
+    ok(!page.asExample() && page.shown().length === 10, "the reader's kit is built");
+    same(page.$('strength').style.display, 'none', "a kit that came back without a rating shows none: the example's is not left beside it");
   }
 
   // ---------- 10. a kit the reader built stays theirs ----------
