@@ -78,6 +78,10 @@
       "destination": "/how-its-tested.html"
     },
     {
+      "source": "/checkin",
+      "destination": "/checkin.html"
+    },
+    {
       "source": "/codes",
       "destination": "/api/codelibrary"
     },

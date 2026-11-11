@@ -7,6 +7,9 @@
   var attachRec = $('attachrec'), recInput = $('recfile'), recchip = $('recchip'), recname = $('recname'), recclear = $('recclear');
   var progress = $('progress'), kitout = $('kitout'), docsEl = $('docs');
   var attached = null, records = null, token = null, parts = {}, meta = null;
+  // The throwaway tag the kit on the page was built under (see build). Kept with the saved kit so
+  // that check-in links, if the reader asks for check-ins, carry the tag its build was counted under.
+  var kitTag = null;
   // What each part that arrived is still short of (see shortOf). Empty for a whole kit; saved with it.
   var gaps = {};
   // The example kit on the page (sample-kit.json): what the site wrote earlier for the example
@@ -30,7 +33,7 @@
   function load(key){ try{ var v = localStorage.getItem(key); return v ? JSON.parse(v) : null; }catch(e){ return null; } }
   function drop(key){ try{ localStorage.removeItem(key); }catch(e){} }
   // The reader's kit, kept in this browser. The example kit is not theirs and is never kept.
-  function stash(){ if(sample) return; save('dmj_fp_kit', { parts: parts, meta: meta, gaps: gaps, ts: Date.now() }); }
+  function stash(){ if(sample) return; save('dmj_fp_kit', { parts: parts, meta: meta, gaps: gaps, kid: kitTag, ts: Date.now() }); }
   // ---------- where this reader came from ----------
   // One word for the visit. It goes with a kit's build calls, so the kit count can say which place
   // sent the people who built one (api/fightpack.js keeps it beside the count). The word is:
@@ -238,6 +241,34 @@
       .trim();
   }
 
+  // ---------- where the kit came from ----------
+  // The one line in a kit that the writers did not write. It goes in the note the reader hands over
+  // with the letter someone else has to sign (document 4: the doctor's office, the billing office,
+  // or HR): whoever signs a letter should know a tool drafted it, and where that tool is. It is
+  // added as the kit is put on the page, so what is shown, copied, printed and emailed all carry
+  // it, and the kit saved in this browser stays exactly what the writers wrote. No other document
+  // gets it: the letters go to the insurer and say nothing about us.
+  var ORIGIN_LINE = "- **Where this came from:** These drafts were written with the Fight Pack, a free tool built by a practicing physician: dr-mumbo-jumbo.com. It writes the same kit from any denial letter.";
+  function withOrigin(sec){
+    if(!/^\s*4\.\s*Note for /i.test(sec.title) || sec.body.indexOf(ORIGIN_LINE) >= 0) return sec;
+    var lines = sec.body.split(/\r?\n/);
+    // blank lines, or a rule the writers left under the note, do not stay below the line
+    while(lines.length && (!lines[lines.length - 1].trim() || /^-{3,}$/.test(lines[lines.length - 1].trim()))) lines.pop();
+    // Keep the note's own layout: bullets set apart by blank lines, or one under the other.
+    var spaced = /\n[ \t]*\n[ \t]*[-•*][ \t]/.test('\n' + lines.join('\n'));
+    var last = lines.length - 1;
+    // A note that closes with a thank-you keeps it last: the line goes just above it.
+    if(last >= 0 && /^(?:[-•*]\s+)?\**\s*thank/i.test(lines[last].trim())){
+      var closing = lines[last], isBullet = /^[-•*]\s/.test(closing.trim());
+      var cut = last;
+      while(cut > 0 && !lines[cut - 1].trim()) cut--;
+      lines = lines.slice(0, cut).concat(spaced ? ['', ORIGIN_LINE] : [ORIGIN_LINE], (spaced || !isBullet) ? [''] : [], [closing]);
+    } else {
+      lines = lines.concat(spaced ? ['', ORIGIN_LINE] : [ORIGIN_LINE]);
+    }
+    return { title: sec.title, body: lines.join('\n') };
+  }
+
   // ---------- rendering the kit ----------
   var sectionOrder = [];
   function renderKit(){
@@ -250,6 +281,7 @@
         return;
       }
       splitSections(parts[p]).forEach(function(sec){
+        sec = withOrigin(sec);
         var tag = /medical necessity|emergency attestation/i.test(sec.title) ? 'For your doctor' : /corrected-claim/i.test(sec.title) ? 'For the billing office' : /coverage facts/i.test(sec.title) ? 'For HR / benefits' : '';
         var isStar = !!tag;
         // Documents a person sends (letters and requests) render on paper; the decode, scripts and notes stay on the dark surface.
@@ -303,7 +335,7 @@
     toast('Replaced in every section');
     fixfrom.value = ''; fixto.value = '';
   });
-  $('forget').addEventListener('click', function(){ drop('dmj_fp_kit'); drop('dmj_fp_token'); parts = {}; meta = null; sample = false; kitout.classList.remove('on'); kitout.classList.remove('sample'); showNotice('Cleared from this browser.'); });
+  $('forget').addEventListener('click', function(){ drop('dmj_fp_kit'); drop('dmj_fp_token'); parts = {}; meta = null; kitTag = null; sample = false; kitout.classList.remove('on'); kitout.classList.remove('sample'); showNotice('Cleared from this browser.'); });
 
   // ---------- deadlines ----------
   var dlDenial = $('dlDenial'), dlStated = $('dlStated'), dlFiled = $('dlFiled'), dlType = $('dlType'), dlList = $('dlList'), dlDays = $('dlDays'), dlPlan = $('dlPlan');
@@ -412,8 +444,10 @@
     var inp = inputs();
     if(!inp.denial && !inp.file){ showError('Paste the denial letter — or add a photo or PDF of it — then rebuild.'); return; }
     building = true; hideError(); hideNotice();
-    // One throwaway tag for this build's six calls. Random, not stored, never reused.
+    // One throwaway tag for this build's six calls. Random, and tied to nobody. It is kept with the
+    // saved kit (kitTag) for one later use: the links of the check-in emails, if the reader asks for them.
     var kid = Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+    kitTag = kid;
     track('kit_start', { files: !!(inp.file || inp.records) });
     parts = {}; meta = null; gaps = {};
     // From here on the kit is the reader's own. If the example was up, the tracker holds its notice date
@@ -571,7 +605,7 @@
   });
 
   // email me my kit
-  var mailform = $('mailform'), mailemail = $('mailemail'), mailbtn = $('mailbtn'), mailmsg = $('mailmsg');
+  var mailform = $('mailform'), mailemail = $('mailemail'), mailbtn = $('mailbtn'), mailmsg = $('mailmsg'), mailcheckin = $('mailcheckin');
   function kitText(){ return sectionOrder.map(function(s){ return plain(s.title + '\n\n' + s.body); }).join('\n\n\n') + '\n\n\n' + deadlinesText(); }
   mailform.addEventListener('submit', function(ev){
     ev.preventDefault();
@@ -587,7 +621,10 @@
       return;
     }
     mailmsg.className = 'wait-msg'; mailbtn.disabled = true; mailbtn.textContent = 'Sending…';
-    var mail = { email: mailemail.value, kit: kitText() };
+    // Check-ins (an email in 3 days, one in 4 weeks) only for a tick. The kit's tag goes with the
+    // request only then: it is for their links, and nothing else in this request needs it.
+    var mail = { email: mailemail.value, kit: kitText(), checkin: mailcheckin.checked === true, src: source };
+    if(mail.checkin) mail.kid = kitTag || '';
     function send(tok){ mail.token = tok; return postJSON('/api/email-kit', mail, 30000); }
     // The kit goes out under this browser's session, found the way a build finds it: the saved one if it
     // is still good (a page that was reloaded has the kit but has not looked for it), otherwise a new one.
@@ -600,7 +637,7 @@
       mailbtn.disabled = false; mailbtn.textContent = 'Email me my kit';
       mailmsg.className = 'wait-msg ' + (res.ok ? 'ok' : 'err');
       mailmsg.textContent = (res.data && res.data.message) || (res.ok ? 'Sent. Check your inbox.' : "Couldn't send it — try again in a minute.");
-      if(res.ok) track('kit_emailed');
+      if(res.ok) track('kit_emailed', { checkin: mail.checkin });
       if(res.ok) mailform.reset();
     });
   });
@@ -613,7 +650,7 @@
 
     var saved = load('dmj_fp_kit');
     if(saved && saved.parts && saved.ts && Date.now() - saved.ts < 72*3600*1000){
-      parts = saved.parts; meta = saved.meta || null; gaps = saved.gaps || {}; renderKit(); applyMeta();
+      parts = saved.parts; meta = saved.meta || null; gaps = saved.gaps || {}; kitTag = typeof saved.kid === 'string' ? saved.kid : null; renderKit(); applyMeta();
       showNotice('Here\'s the Fight Pack you built ' + new Date(saved.ts).toLocaleDateString('en-US', {month:'short', day:'numeric'}) + '. Edit your text and click "Rebuild with edits" to regenerate.');
     }
     // A link straight to the example (dr-mumbo-jumbo.com/#sample): its letter in the boxes, its kit on the page.

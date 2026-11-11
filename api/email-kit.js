@@ -11,7 +11,14 @@
 // The address is kept in the same table as the waitlist (source 'kit-email'), only after the email
 // actually went out. The key below is Supabase's publishable (anon) key, public by design; the table
 // is protected by row-level security that allows inserts only.
+//
+// Check-ins. A reader who ticks the box is asked, 3 days on, whether the appeal was sent, and about
+// four weeks on, what happened (lib/checkin.js writes the two emails). They are scheduled with Resend
+// here, right after the kit goes out, so nothing on our side keeps a list of who asked or when.
+// They never hold up or fail the kit: whatever happens to them, a kit that was sent is a 200.
+const crypto = require('crypto');
 const { verify } = require('../lib/unlock.js');
+const checkin = require('../lib/checkin.js');
 const count = require('./_lib/count.js');
 
 const SUPABASE_URL = 'https://jodcpflzbmhnnivtwghw.supabase.co';
@@ -72,7 +79,7 @@ function diagnose(status, name, detail) {
   if (/api key is invalid|missing api key|key is not active|key is suspended|restricted to only send/i.test(d) || /api_key/.test(n)) return { why: 'key_rejected', fix: 'RESEND_API_KEY missing, wrong, inactive or suspended: check resend.com/api-keys and the Vercel env var (Production + Preview), then redeploy' };
   if (n === 'daily_quota_exceeded' || /daily (?:email )?(?:sending )?quota/i.test(d)) return { why: 'daily_quota_exceeded', fix: 'Free plan sends 100/day: wait for the 24h reset or upgrade at resend.com/settings/billing' };
   if (n === 'monthly_quota_exceeded' || /monthly (?:email )?(?:sending )?quota/i.test(d)) return { why: 'monthly_quota_exceeded', fix: 'Free plan sends 3,000/month: upgrade at resend.com/settings/billing' };
-  if (n === 'rate_limit_exceeded' || /too many requests|requests per second/i.test(d)) return { why: 'rate_limited', fix: 'Over Resend\'s 2 requests/second: retry' };
+  if (n === 'rate_limit_exceeded' || /too many requests|requests per second/i.test(d)) return { why: 'rate_limited', fix: 'Over Resend\'s requests-per-second limit: retry' };
   if ((status === 400 || status === 422) && /^(?:validation_error|missing_required_field|invalid_parameter|invalid_attachment)$/.test(n)) return { why: 'bad_request', fix: 'Resend rejected the message itself: check from/to/subject/text/html in api/email-kit.js' };
 
   // Status fallback, for a refusal whose body says nothing recognisable (or is not JSON).
@@ -80,23 +87,30 @@ function diagnose(status, name, detail) {
   if (status === 403) return { why: 'forbidden', fix: 'Resend refused the send: check at resend.com that the domain is Verified, that the from address uses exactly that domain, that the key is active and not restricted to another domain, and that the request carried a User-Agent (error 1010)' };
   if (status === 404) return { why: 'endpoint_not_found', fix: 'Resend endpoint not found: the send URL in api/email-kit.js is wrong' };
   if (status === 400 || status === 422) return { why: 'bad_request', fix: 'Resend rejected the message itself: check from/to/subject/text/html in api/email-kit.js' };
-  if (status === 429) return { why: 'rate_limited', fix: 'Over Resend\'s 2 requests/second: retry' };
+  if (status === 429) return { why: 'rate_limited', fix: 'Over Resend\'s requests-per-second limit: retry' };
+  // A conflict. Only a check-in carries an idempotency key, so in practice only a check-in gets one.
+  if (status === 409) {
+    return /^(?:concurrent_idempotent_requests|resource_locked)$/.test(n)
+      ? { why: 'already_in_progress', fix: 'Another request was setting the same check-in at the same moment and had not finished after a wait, so this one could not tell whether it was set. Nothing to fix unless it keeps happening' }
+      : { why: 'conflict', fix: 'Resend answered 409 for a reason this code does not know: the name and detail beside this say which (resend.com/docs/api-reference/errors)' };
+  }
   if (status >= 500) return { why: 'resend_down', fix: 'Resend server error: retry' };
   return { why: 'http_' + status, fix: 'Unmapped Resend status' };
 }
 
 const SEND_TIMEOUT_MS = 15000;
+const CHECKIN_TIMEOUT_MS = 6000;   // the kit is already sent by then: a check-in gets less patience
 
-async function sendKit(cfg, to, kit) {
-  // Exactly these five fields. Nothing else about the visitor goes to Resend.
-  const body = JSON.stringify({ from: cfg.from, to: [to], subject: SUBJECT, text: kit + FOOTER, html: toHtml(kit + FOOTER) });
+// One POST to Resend. { ok: true } when it took the email; otherwise its status, its error name
+// and its reason (scrubbed), which is what diagnose() reads. status 0 = it never answered.
+async function resendPost(cfg, payload, ms, headers) {
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), SEND_TIMEOUT_MS);
+  const timer = setTimeout(() => ctrl.abort(), ms);
   try {
     const r = await fetch(RESEND_URL, {
       method: 'POST',
-      headers: { Authorization: 'Bearer ' + cfg.key, 'Content-Type': 'application/json', 'User-Agent': USER_AGENT },
-      body,
+      headers: Object.assign({ Authorization: 'Bearer ' + cfg.key, 'Content-Type': 'application/json', 'User-Agent': USER_AGENT }, headers || {}),
+      body: JSON.stringify(payload),
       signal: ctrl.signal
     });
     if (r.ok) return { ok: true };
@@ -106,10 +120,64 @@ async function sendKit(cfg, to, kit) {
     try { text = await r.text(); } catch (e) { text = ''; }
     let name = null;
     try { name = String(JSON.parse(text).name || '') || null; } catch (e) { name = null; }
-    return { ok: false, status: r.status, name, detail: scrub(text) };
+    let after = NaN;
+    try { after = Number(r.headers && r.headers.get && r.headers.get('retry-after')); } catch (e) { after = NaN; }
+    return { ok: false, status: r.status, name, detail: scrub(text), after };
+  } catch (e) {
+    return { ok: false, status: 0, name: null, detail: e && e.name === 'AbortError' ? 'aborted after ' + ms + 'ms' : scrub(e && e.message) };
   } finally {
     clearTimeout(timer);
   }
+}
+
+function sendKit(cfg, to, kit) {
+  // Exactly these five fields. Nothing else about the visitor goes to Resend.
+  return resendPost(cfg, { from: cfg.from, to: [to], subject: SUBJECT, text: kit + FOOTER, html: toHtml(kit + FOOTER) }, SEND_TIMEOUT_MS);
+}
+
+const pause = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// Schedules the kit's two check-ins with Resend. Returns the questions that are set (2 = week 4,
+// 1 = day 3), and counts each one that is not, with what to fix.
+//
+// The week-4 email is set first. The day-3 email says "we will write once more", so it only
+// goes out if that is true: if the week-4 one cannot be set, the day-3 one is not tried.
+//
+// Each carries an idempotency key made from the kit's tag, the question and a hash of the address,
+// so the same kit sent to the same address twice in a day is set once. Resend keeps the key of a
+// request that succeeded for 24 hours and answers a repeat with a 409. Its 409s are not all alike
+// (resend.com/docs/api-reference/errors), and only one of them is good news:
+//   invalid_idempotent_request      the key is taken (our repeat has a new time in it, so its body
+//                                   differs): the check-in is already set. That counts as set.
+//   concurrent_idempotent_requests  another request is setting it at this very moment and has not
+//   resource_locked                 finished. It may still fail, so that is not "set" yet: wait and
+//                                   ask once more, and if it is still mid-way, do not claim it.
+//   anything else (forge_not_enabled, or no name at all): a refusal like any other.
+// The hash is only ever sent to Resend, which has the address itself; it is not logged or kept.
+const ALREADY_SET = 'invalid_idempotent_request';
+const MID_WAY = /^(?:concurrent_idempotent_requests|resource_locked)$/;
+async function scheduleCheckins(cfg, to, kid) {
+  const mails = checkin.emails(kid);
+  if (!mails) return [];
+  const who = crypto.createHash('sha256').update('dmj-checkin|' + to).digest('hex').slice(0, 16);
+  const set = [];
+  for (const m of mails.slice().sort((a, b) => b.stage - a.stage)) {
+    // The kit email's five fields, and the time. Nothing else.
+    const payload = { from: cfg.from, to: [to], subject: m.subject, text: m.text, html: m.html, scheduled_at: m.scheduled_at };
+    const headers = { 'Idempotency-Key': 'dmj-checkin/' + kid + '/' + m.stage + '/' + who };
+    let r = await resendPost(cfg, payload, CHECKIN_TIMEOUT_MS, headers);
+    // Too fast for Resend, Resend having a moment, or another request mid-way through setting this
+    // same check-in: wait as long as Resend asks (a second, if it does not say) and ask once more.
+    if (!r.ok && (r.status === 429 || r.status >= 500 || (r.status === 409 && MID_WAY.test(r.name || '')))) {
+      await pause(Math.min(3000, Math.max(1000, (r.after > 0 ? r.after : 1) * 1000)));
+      r = await resendPost(cfg, payload, CHECKIN_TIMEOUT_MS, headers);
+    }
+    if (r.ok || (r.status === 409 && r.name === ALREADY_SET)) { set.push(m.stage); continue; }
+    const d = diagnose(r.status, r.name, r.detail);
+    await count('checkin_failed', { stage: m.stage, status: r.status, name: r.name || null, why: d.why, fix: d.fix, detail: r.detail || null });
+    if (m.stage === 2) break;
+  }
+  return set;
 }
 
 async function keepAddress(email) {
@@ -132,12 +200,21 @@ module.exports = async (req, res) => {
     return;
   }
 
-  let email = '', kit = '', token = '';
+  let email = '', kit = '', token = '', asked = false, kid = null, src = 'unknown';
   try {
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
     email = String(body.email || '').trim().toLowerCase().slice(0, 200);
     kit = String(body.kit || '');
     token = String(body.token || '');
+    // Check-ins only for a tick: the page sends true, and nothing else turns them on.
+    asked = body.checkin === true;
+    // The kit's throwaway tag is read only for check-ins, where it goes into their links so an
+    // answer lands beside that kit's build counts (a kit with no usable tag gets a fresh one).
+    // It is never counted here: this request holds the reader's address, which is kept for launch
+    // news in the same second, and a tag in this request's count line would sit beside it by time.
+    if (asked) kid = checkin.tagFor(body.kid);
+    // The one word for where the reader came from, cut down exactly as api/fightpack.js cuts it.
+    src = (typeof body.src === 'string' ? body.src : '').toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 24) || 'unknown';
   } catch {
     res.status(400).json({ error: 'bad_request', message: "Couldn't read that — try again." });
     return;
@@ -168,12 +245,7 @@ module.exports = async (req, res) => {
     return;
   }
 
-  let sent;
-  try {
-    sent = await sendKit(cfg, email, kit);
-  } catch (e) {
-    sent = { ok: false, status: 0, name: null, detail: e && e.name === 'AbortError' ? 'aborted after ' + SEND_TIMEOUT_MS + 'ms' : scrub(e && e.message) };
-  }
+  const sent = await sendKit(cfg, email, kit);
   if (!sent.ok) {
     // Why it failed, in the counter, so the next failure is one query away instead of a guess.
     const d = diagnose(sent.status, sent.name, sent.detail);
@@ -183,6 +255,20 @@ module.exports = async (req, res) => {
   }
 
   await keepAddress(email);
-  await count('kit_emailed');
-  res.status(200).json({ ok: true, message: 'Sent. Check your inbox — and spam, the first time.' });
+
+  // The kit is out. From here nothing can turn this into a failure: check-ins that cannot be set
+  // are counted and the reader is told, and the kit is still sent.
+  let set = [];
+  if (asked) {
+    try { set = await scheduleCheckins(cfg, email, kid); } catch (e) { set = []; }
+  }
+  await count('kit_emailed', { src, checkins: set.length });
+
+  let message = 'Sent. Check your inbox — and spam, the first time.';
+  if (asked) {
+    message += set.includes(1) ? " We'll check in with you in 3 days."
+      : set.includes(2) ? " We'll check in with you in about four weeks."
+      : ' The check-ins could not be set up, so none will come; your kit is not affected.';
+  }
+  res.status(200).json({ ok: true, checkins: set.length, message });
 };
