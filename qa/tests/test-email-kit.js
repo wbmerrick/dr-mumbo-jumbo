@@ -283,6 +283,52 @@ const sentJson = () => JSON.parse(resendCall().opts.body);
   assert(!counted.some(c => c.evt === 'checkin_failed'), 'and is not a failure');
   assert(/check in/i.test(res.body.message), 'and the reader is told they are coming');
 
+  // The other 409: the same check-in is being set by another request at this very moment (two tabs,
+  // a retried request), and that one has not finished. It may still fail, so this is not yet "set":
+  // wait and ask once more. By then the other request has either succeeded (and Resend says the key
+  // is taken: set), or failed (Resend does not keep the key of a failed request, so this one sets it).
+  const BUSY = [409, '{"statusCode":409,"name":"concurrent_idempotent_requests","message":"Same idempotency key used while original request is still in progress."}'];
+  const TAKEN = [409, '{"statusCode":409,"name":"invalid_idempotent_request","message":"Same idempotency key used with a different request payload."}'];
+  for (const [what, then] of [['the other request then failed, and this one sets it', 'ok'], ['the other request then succeeded', TAKEN]]) {
+    fresh();
+    checkinPlan = [BUSY, then];
+    const b0 = Date.now();
+    res = await send({ checkin: true, kid: KID });
+    assert.strictEqual(res.body.checkins, 2, 'another request mid-way, ' + what + ': both check-ins are set');
+    assert.strictEqual(scheduledCalls().length, 3, 'another request mid-way, ' + what + ': the busy one is asked for once more');
+    assert(Date.now() - b0 >= 900, 'another request mid-way, ' + what + ': after a wait, not at once');
+    assert(!counted.some(c => c.evt === 'checkin_failed'), 'another request mid-way, ' + what + ': nothing is counted as failed');
+  }
+  // Still mid-way on the second ask: nobody knows yet whether it will be set, so it is not reported as set.
+  fresh();
+  checkinPlan = [BUSY, BUSY];
+  res = await send({ checkin: true, kid: KID });
+  assert.strictEqual(res.body.checkins, 0, 'still mid-way on the second ask: not counted as set, since the other request may yet fail');
+  assert(!/3 days|four weeks/.test(res.body.message) && res.body.message.startsWith('Sent.'), 'still mid-way: the reader is promised nothing that is not known ("' + res.body.message + '")');
+  assert.strictEqual(scheduledCalls().length, 2, 'still mid-way: the day-3 email is not tried while the week-4 one is unknown');
+  assert.deepStrictEqual([lastCount('checkin_failed').stage, lastCount('checkin_failed').status, lastCount('checkin_failed').name, lastCount('checkin_failed').why], [2, 409, 'concurrent_idempotent_requests', 'already_in_progress'], 'still mid-way: counted as what it was');
+  assert(/another request/i.test(lastCount('checkin_failed').fix), 'still mid-way: and the count says what that means ("' + lastCount('checkin_failed').fix + '")');
+
+  // Not every 409 means "Resend already holds it". Only the one that says the key is taken does.
+  // Resend has others (its error reference lists forge_not_enabled and resource_locked), and one
+  // with no name at all cannot be read as good news either.
+  for (const [what, refusal, why] of [
+    ['a 409 about something else', [409, '{"statusCode":409,"name":"forge_not_enabled","message":"Forge is not enabled on this domain."}'], 'conflict'],
+    ['a 409 that says nothing', [409, 'Conflict'], 'conflict']
+  ]) {
+    fresh();
+    checkinPlan = [refusal];
+    res = await send({ checkin: true, kid: KID });
+    assert.strictEqual(res.body.checkins, 0, what + ': is not taken for a check-in already set');
+    assert(/could not be set up/.test(res.body.message), what + ': the reader is told none will come ("' + res.body.message + '")');
+    assert.deepStrictEqual([lastCount('checkin_failed').status, lastCount('checkin_failed').why], [409, why], what + ': counted as a failure, with Resend\'s reason kept');
+  }
+  // "Another request is already updating this resource" is a busy signal like the first: ask once more.
+  fresh();
+  checkinPlan = [[409, '{"statusCode":409,"name":"resource_locked","message":"Another request is already updating this resource."}'], 'ok'];
+  res = await send({ checkin: true, kid: KID });
+  assert.deepStrictEqual([res.body.checkins, scheduledCalls().length], [2, 3], 'a locked resource: asked once more, and set');
+
   // a kit with no usable tag still gets its check-ins, under a fresh one
   fresh();
   res = await send({ checkin: true, kid: 'untagged' });

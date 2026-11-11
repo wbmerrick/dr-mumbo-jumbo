@@ -79,7 +79,7 @@ function diagnose(status, name, detail) {
   if (/api key is invalid|missing api key|key is not active|key is suspended|restricted to only send/i.test(d) || /api_key/.test(n)) return { why: 'key_rejected', fix: 'RESEND_API_KEY missing, wrong, inactive or suspended: check resend.com/api-keys and the Vercel env var (Production + Preview), then redeploy' };
   if (n === 'daily_quota_exceeded' || /daily (?:email )?(?:sending )?quota/i.test(d)) return { why: 'daily_quota_exceeded', fix: 'Free plan sends 100/day: wait for the 24h reset or upgrade at resend.com/settings/billing' };
   if (n === 'monthly_quota_exceeded' || /monthly (?:email )?(?:sending )?quota/i.test(d)) return { why: 'monthly_quota_exceeded', fix: 'Free plan sends 3,000/month: upgrade at resend.com/settings/billing' };
-  if (n === 'rate_limit_exceeded' || /too many requests|requests per second/i.test(d)) return { why: 'rate_limited', fix: 'Over Resend\'s 2 requests/second: retry' };
+  if (n === 'rate_limit_exceeded' || /too many requests|requests per second/i.test(d)) return { why: 'rate_limited', fix: 'Over Resend\'s requests-per-second limit: retry' };
   if ((status === 400 || status === 422) && /^(?:validation_error|missing_required_field|invalid_parameter|invalid_attachment)$/.test(n)) return { why: 'bad_request', fix: 'Resend rejected the message itself: check from/to/subject/text/html in api/email-kit.js' };
 
   // Status fallback, for a refusal whose body says nothing recognisable (or is not JSON).
@@ -87,7 +87,13 @@ function diagnose(status, name, detail) {
   if (status === 403) return { why: 'forbidden', fix: 'Resend refused the send: check at resend.com that the domain is Verified, that the from address uses exactly that domain, that the key is active and not restricted to another domain, and that the request carried a User-Agent (error 1010)' };
   if (status === 404) return { why: 'endpoint_not_found', fix: 'Resend endpoint not found: the send URL in api/email-kit.js is wrong' };
   if (status === 400 || status === 422) return { why: 'bad_request', fix: 'Resend rejected the message itself: check from/to/subject/text/html in api/email-kit.js' };
-  if (status === 429) return { why: 'rate_limited', fix: 'Over Resend\'s 2 requests/second: retry' };
+  if (status === 429) return { why: 'rate_limited', fix: 'Over Resend\'s requests-per-second limit: retry' };
+  // A conflict. Only a check-in carries an idempotency key, so in practice only a check-in gets one.
+  if (status === 409) {
+    return /^(?:concurrent_idempotent_requests|resource_locked)$/.test(n)
+      ? { why: 'already_in_progress', fix: 'Another request was setting the same check-in at the same moment and had not finished after a wait, so this one could not tell whether it was set. Nothing to fix unless it keeps happening' }
+      : { why: 'conflict', fix: 'Resend answered 409 for a reason this code does not know: the name and detail beside this say which (resend.com/docs/api-reference/errors)' };
+  }
   if (status >= 500) return { why: 'resend_down', fix: 'Resend server error: retry' };
   return { why: 'http_' + status, fix: 'Unmapped Resend status' };
 }
@@ -138,9 +144,18 @@ const pause = (ms) => new Promise((r) => setTimeout(r, ms));
 // goes out if that is true: if the week-4 one cannot be set, the day-3 one is not tried.
 //
 // Each carries an idempotency key made from the kit's tag, the question and a hash of the address,
-// so the same kit sent to the same address twice in a day is set once (Resend keeps a key for 24
-// hours; it answers the repeat with a 409, which here means "already set"). The hash is only ever
-// sent to Resend, which has the address itself; it is not logged or kept.
+// so the same kit sent to the same address twice in a day is set once. Resend keeps the key of a
+// request that succeeded for 24 hours and answers a repeat with a 409. Its 409s are not all alike
+// (resend.com/docs/api-reference/errors), and only one of them is good news:
+//   invalid_idempotent_request      the key is taken (our repeat has a new time in it, so its body
+//                                   differs): the check-in is already set. That counts as set.
+//   concurrent_idempotent_requests  another request is setting it at this very moment and has not
+//   resource_locked                 finished. It may still fail, so that is not "set" yet: wait and
+//                                   ask once more, and if it is still mid-way, do not claim it.
+//   anything else (forge_not_enabled, or no name at all): a refusal like any other.
+// The hash is only ever sent to Resend, which has the address itself; it is not logged or kept.
+const ALREADY_SET = 'invalid_idempotent_request';
+const MID_WAY = /^(?:concurrent_idempotent_requests|resource_locked)$/;
 async function scheduleCheckins(cfg, to, kid) {
   const mails = checkin.emails(kid);
   if (!mails) return [];
@@ -151,12 +166,13 @@ async function scheduleCheckins(cfg, to, kid) {
     const payload = { from: cfg.from, to: [to], subject: m.subject, text: m.text, html: m.html, scheduled_at: m.scheduled_at };
     const headers = { 'Idempotency-Key': 'dmj-checkin/' + kid + '/' + m.stage + '/' + who };
     let r = await resendPost(cfg, payload, CHECKIN_TIMEOUT_MS, headers);
-    // Too fast for Resend, or Resend having a moment: wait as long as it asks (a second, if it does not say) and ask once more.
-    if (!r.ok && (r.status === 429 || r.status >= 500)) {
+    // Too fast for Resend, Resend having a moment, or another request mid-way through setting this
+    // same check-in: wait as long as Resend asks (a second, if it does not say) and ask once more.
+    if (!r.ok && (r.status === 429 || r.status >= 500 || (r.status === 409 && MID_WAY.test(r.name || '')))) {
       await pause(Math.min(3000, Math.max(1000, (r.after > 0 ? r.after : 1) * 1000)));
       r = await resendPost(cfg, payload, CHECKIN_TIMEOUT_MS, headers);
     }
-    if (r.ok || r.status === 409) { set.push(m.stage); continue; }
+    if (r.ok || (r.status === 409 && r.name === ALREADY_SET)) { set.push(m.stage); continue; }
     const d = diagnose(r.status, r.name, r.detail);
     await count('checkin_failed', { stage: m.stage, status: r.status, name: r.name || null, why: d.why, fix: d.fix, detail: r.detail || null });
     if (m.stage === 2) break;
