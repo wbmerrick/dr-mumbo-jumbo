@@ -59,6 +59,28 @@ for (const run of fs.readdirSync(path.join(root, 'qa/evidence')).filter((d) => /
 }
 const DENIAL = 'NOTICE OF ADVERSE DETERMINATION. Prior authorization denied.';
 
+// The model API's event stream for a text, in its documented format: message_start, the text in
+// deltas of `step` characters inside one content block, message_delta, message_stop, with a ping on
+// the way. Each event is an "event:" line, a "data:" line and a blank line.
+function sse(text, { step = 20, crlf = false } = {}) {
+  const events = [
+    { type: 'message_start', message: { id: 'msg_test', type: 'message', role: 'assistant', content: [], model: 'claude-test', stop_reason: null, stop_sequence: null, usage: { input_tokens: 11, output_tokens: 1 } } },
+    { type: 'content_block_start', index: 0, content_block: { type: 'text', text: '' } },
+    { type: 'ping' }
+  ];
+  for (let i = 0; i < text.length; i += step) events.push({ type: 'content_block_delta', index: 0, delta: { type: 'text_delta', text: text.slice(i, i + step) } });
+  events.push({ type: 'content_block_stop', index: 0 });
+  events.push({ type: 'message_delta', delta: { stop_reason: 'end_turn', stop_sequence: null }, usage: { output_tokens: 7 } });
+  events.push({ type: 'message_stop' });
+  const nl = crlf ? '\r\n' : '\n';
+  return Buffer.from(events.map((e) => 'event: ' + e.type + nl + 'data: ' + JSON.stringify(e) + nl + nl).join(''), 'utf8');
+}
+// The stream as a connection delivers it: pieces of `size` bytes, cut wherever that falls.
+function chunks(buffer, size) {
+  return (async function* () { for (let i = 0; i < buffer.length; i += size) yield new Uint8Array(buffer.subarray(i, i + size)); })();
+}
+const all = async (it) => { const out = []; for await (const ev of it) out.push(ev); return out; };
+
 // A request for part 1 the way it has always been made: no live flag.
 async function plain(text, { denial = DENIAL, body = {} } = {}) {
   reply = text;
@@ -77,6 +99,45 @@ async function plain(text, { denial = DENIAL, body = {} } = {}) {
     ok(res.code === 200 && res.body.text === T.decodeText(s.text, { denial: DENIAL, extra: '', files: false, records: false }),
       s.file + ': the reply is what decodeText gives');
   }
+
+  // ---------- 2. reading the AI's stream, and deciding which lines can be shown ----------
+  const L = require('../../api/_lib/fightpack-live.js');
+  // The stream arrives in pieces cut anywhere: inside an event, inside a character.
+  const T2 = '## 1. Title\n**Type of denial:** medical necessity — “not medically necessary”\n';
+  const whole = await all(L.modelEvents(chunks(sse(T2), 1e6)));
+  ok(whole.filter((e) => e.type === 'content_block_delta').map((e) => e.delta.text).join('') === T2, 'the text comes back whole');
+  for (const size of [1, 2, 3, 7, 64]) same(await all(L.modelEvents(chunks(sse(T2), size))), whole, 'the same events when the stream arrives ' + size + ' bytes at a time');
+  same(await all(L.modelEvents(chunks(sse(T2, { crlf: true }), 5))), whole, 'and when its lines end with CRLF');
+  same(await all(L.modelEvents(chunks(Buffer.concat([Buffer.from(': keep-alive\n\ndata: [DONE]\n\n'), sse(T2)]), 11))), whole, 'a comment line and a data line that is not JSON are passed over');
+
+  // What may be shown of a guarded text: nothing before the heading, never the newest line (the
+  // next line can still change it), never the two lines code rewrites at the end, nor anything after them.
+  same(L.showable(''), [], 'nothing to show before any text');
+  same(L.showable('Here is the section you asked for.\nMore.\n'), [], 'a sentence before the heading is never shown');
+  same(L.showable('\n\n## 1. T\na\nb'), ['## 1. T', 'a'], 'leading blank lines are not shown, and the newest line is held back');
+  same(L.showable('## 1. T\na\nb\n\n'), ['## 1. T', 'a'], 'a line break after the newest line does not release it');
+  same(L.showable('## 1. T\na\n\n\nb'), ['## 1. T', 'a'], 'no blank lines trail what is shown');
+  same(L.showable('## 1. T\na\n**What you may actually owe:** x\n\n**Do this first:** y\nz'), ['## 1. T', 'a'], 'the held lines and everything after them wait');
+  same(L.showable('## 1. T\na\n- **Do this first:** y\nz'), ['## 1. T', 'a'], 'held with or without a bullet');
+
+  // The reader: text in as the AI writes it, "from line N, these lines" out.
+  const r = L.liveReader((p) => p.replace(/RAW/g, 'SAFE'));
+  same(r.push('## 1. T\nfirst RAW li'), null, 'the heading waits for the line after it');
+  same(r.push('ne\nsecond\n'), { from: 0, lines: ['## 1. T', 'first SAFE line'] }, 'lines are sent complete, guarded, and one line behind');
+  same(r.push('third'), null, 'an unfinished line changes nothing');
+  same(r.push('\n'), { from: 2, lines: ['second'] }, 'later lines are appended');
+  same(r.redo(), 0, 'nothing was corrected');
+  same(r.raw(), '## 1. T\nfirst RAW line\nsecond\nthird\n', 'the reader keeps the text as the AI wrote it');
+
+  // A line already sent that the guards later change or remove is sent again, and counted.
+  const flip = L.liveReader((p) => (/later/.test(p) ? p.replace('early', 'EARLY') : p));
+  flip.push('## 1. T\nearly\nmiddle\n');
+  same(flip.push('later\nend\n'), { from: 1, lines: ['EARLY', 'middle', 'later'] }, 'a changed line is sent again from where it changed');
+  same(flip.redo(), 1, 'and counted');
+  const cut = L.liveReader((p) => (/stop/.test(p) ? '## 1. T\na\nz' : p));
+  cut.push('## 1. T\na\nb\nc\n');
+  same(cut.push('stop\n'), { from: 2, lines: [] }, 'lines the guards removed are taken back');
+  same(cut.redo(), 1, 'and counted');
 
   console.log = realLog;
   assert(fails.length === 0, fails.length + ' of ' + n + ' checks failed:\n  - ' + fails.slice(0, 16).join('\n  - ') + (fails.length > 16 ? '\n  … and ' + (fails.length - 16) + ' more' : ''));
