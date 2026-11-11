@@ -104,7 +104,7 @@ These must hold, and each has a test:
 
 ## Off switch
 
-Setting `FIGHTPACK_LIVE=off` in Vercel makes the server ignore `live`. The site then behaves as it does today, with no deploy.
+Setting `FIGHTPACK_LIVE=off` in Vercel and redeploying makes the server ignore `live`. The site then behaves as it does today, with no code change. (Corrected while building: a changed setting reaches the running site only after a redeploy.)
 
 ## Counting and privacy
 

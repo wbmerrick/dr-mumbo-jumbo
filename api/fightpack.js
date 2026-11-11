@@ -23,6 +23,7 @@ const G = require('./_lib/fightpack-guards.js');
 const { SAFETY_LABEL_RULE, SAFETY_EMERGENCY, SAFETY_TODAY, MA_PHYSICIAN, MEDICAID_RULES, URGENT_EXTERNAL, ORIGINAL_MEDICARE, FUNDING_INSURED, FUNDING_SELF, P2P_HEAD, P2P_TAIL, PHONE_ROLES_HEAD, CLINICIAN_CHECK } = require('./_lib/fightpack-rules.js');
 const { fieldOf, safetyOf, phoneRoles, postProcess } = G;
 const F = require('./_lib/fightpack-facts.js');
+const { modelEvents, liveReader } = require('./_lib/fightpack-live.js');
 
 // ---------- deterministic facts from the decode ----------
 // The decode's "Read from your letter" list and its Urgent line are the kit's single source
@@ -576,8 +577,39 @@ module.exports = async (req, res) => {
   // what turns the model's text into the reply (guardPart, finish)
   const c = { part, safety, denial, extra, decode, files: !!(denialFile || recordsFile), records: !!recordsFile, funding, kid, src, sid: auth.sid === 'preview' || auth.sid === 'free' ? auth.sid : 'paid', urgent, deadline, clock };
 
+  // The live first read: the page may ask for the decode line by line as it is written, so a reader sees
+  // something true about their own letter in seconds instead of a progress panel. Only the decode, only
+  // when asked with live: true, and FIGHTPACK_LIVE=off in the environment switches it off with no code change.
+  // Every line sent early has been through decodeText, the function the finished decode comes from.
+  const live = body.live === true && part === 1 && !/^off$/i.test(process.env.FIGHTPACK_LIVE || '');
+
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 110000);
+
+  // A live reply turns into a stream of messages when there is a first line to send (streaming), not
+  // before: until then it is answered, and fails, exactly as a plain request does. If the reader leaves
+  // (gone), the model is told to stop, and nothing more is written or counted.
+  let streaming = false;
+  let gone = false;
+  if (live) res.on('close', () => { if (!res.writableEnded) { gone = true; ctrl.abort(); } });
+  const say = (message) => {
+    if (gone) return;
+    if (!streaming) {
+      streaming = true;
+      res.status(200);
+      res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
+      res.setHeader('Cache-Control', 'no-store, no-transform'); // nothing on the way may hold lines back to compress them
+      res.setHeader('X-Accel-Buffering', 'no');
+    }
+    res.write('data: ' + JSON.stringify(message) + '\n\n');
+  };
+  // The answer, or an error: the whole reply while no line has been sent, the stream's last message after.
+  const answer = (status, payload) => {
+    if (gone) return;
+    if (!streaming) { res.status(status).json(payload); return; }
+    say(status === 200 ? { done: payload } : { error: Object.assign({ status }, payload) });
+    res.end();
+  };
 
   try {
     const request = {
@@ -588,6 +620,7 @@ module.exports = async (req, res) => {
     };
     // A writer that starts the next part's first section is stopped right there.
     if (P.stopAt) request.stop_sequences = [`\n## ${P.stopAt}.`, `\n# ${P.stopAt}.`];
+    if (live) request.stream = true;
     const upstream = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -598,13 +631,50 @@ module.exports = async (req, res) => {
       signal: ctrl.signal,
       body: JSON.stringify(request)
     });
-    clearTimeout(timer);
+    // A plain answer is whole by now. A live one has only begun: its time limit runs until it has been read.
+    if (!live || !upstream.ok) clearTimeout(timer);
 
     if (!upstream.ok) {
       let detail = null;
       try { detail = await upstream.json(); } catch { detail = null; }
       const t = upstreamTrouble(upstream.status, detail);
       res.status(t.status).json({ error: t.error, message: t.message });
+      return;
+    }
+
+    if (live) {
+      // The model's text as it arrives. Each time a line is completed, the text so far goes through the
+      // guards and the reader hands back the lines that are settled (api/_lib/fightpack-live.js).
+      const reader = liveReader((soFar) => decodeText(soFar, c));
+      const model = { stop_reason: null, usage: null };
+      let textBlocks = 0;
+      let trouble = null;
+      const take = (text) => { const change = reader.push(text); if (change) say(change); };
+      for await (const ev of modelEvents(upstream.body)) {
+        if (ev.type === 'message_start') {
+          if (ev.message && ev.message.usage) model.usage = Object.assign({}, ev.message.usage);
+        } else if (ev.type === 'message_delta') {
+          if (ev.delta && ev.delta.stop_reason) model.stop_reason = ev.delta.stop_reason;
+          if (ev.usage) model.usage = Object.assign({}, model.usage, ev.usage); // the counts in a delta are running totals
+        } else if (ev.type === 'content_block_start') {
+          // a second text block starts on a new line, as join('\n') puts it for a plain answer
+          if (ev.content_block && ev.content_block.type === 'text' && textBlocks++) take('\n');
+        } else if (ev.type === 'content_block_delta') {
+          if (ev.delta && ev.delta.type === 'text_delta') take(ev.delta.text);
+        } else if (ev.type === 'error') {
+          trouble = ev;
+          break;
+        }
+      }
+      clearTimeout(timer);
+      if (gone) return;
+      if (trouble) {
+        const t = upstreamTrouble(500, trouble);
+        answer(t.status, { error: t.error, message: t.message });
+        return;
+      }
+      const r = await finish(reader.raw().trim(), model, Object.assign({}, c, { redo: reader.redo() }));
+      answer(r.status, r.body);
       return;
     }
 
@@ -618,7 +688,7 @@ module.exports = async (req, res) => {
     res.status(r.status).json(r.body);
   } catch (e) {
     clearTimeout(timer);
-    res.status(e && e.name === 'AbortError' ? 504 : 500).json({ error: 'server', message: 'That took too long. Try again — the kit builds in short passes.' });
+    answer(e && e.name === 'AbortError' ? 504 : 500, { error: 'server', message: 'That took too long. Try again — the kit builds in short passes.' });
   }
 };
 

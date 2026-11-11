@@ -38,6 +38,7 @@ Set these in Vercel → Project → Settings → Environment Variables, then red
 | `ANTHROPIC_MODEL` | no | Override the default model for the free tools. |
 | `FIGHTPACK_MODEL` | no | Model for the Fight Pack (default `claude-sonnet-4-5`). |
 | `FIGHTPACK_FREE` | no | The Fight Pack is free unless this is `0` (or `false` / `off`). Set it to `0` when payments go live. |
+| `FIGHTPACK_LIVE` | no | The kit's first section is shown line by line as it is written unless this is `off` (see "Live first read" below). |
 | `STRIPE_SECRET_KEY` | for payments | Stripe secret key (`sk_test_…` to rehearse, `sk_live_…` to sell). |
 | `STRIPE_PRICE_ID` | for payments | The one-time price (`price_…`) from the Stripe product. |
 | `FIGHTPACK_SECRET` | yes (any random string) | Signs the unlock tokens (free or paid), combined with the Stripe key when there is one. |
@@ -75,6 +76,18 @@ with k as (
 select coalesce(src, '(before sources)') as source, count(*) as started, count(*) filter (where parts = 6) as built
 from k where coalesce(src, '') <> 'qa' group by 1 order by built desc, started desc;
 ```
+
+### Live first read
+
+The kit's first section (the decode) is shown line by line while it is being written, so a reader sees something about their own letter within seconds instead of watching a progress panel for about 25.
+
+- The page adds `live: true` to its first request for part 1. `api/fightpack.js` then asks the model for a streamed answer and replies with a stream of small messages: `{"from": N, "lines": [...]}` as lines settle, and last `{"done": {...}}`, the same object the endpoint has always returned (or `{"error": {...}}`).
+- A line is sent only after the text so far has been through the same guards as the finished section (`decodeText`). The newest line is always held back, and the section's two closing lines, "What you may actually owe" and "Do this first", arrive only with the finished section, because code can rewrite them (`api/_lib/fightpack-live.js`).
+- A request without `live`, parts 2–6, and anything that fails before the first line are answered exactly as before.
+- A live first section adds one number to its count line: `redo`, how many times a line already on screen had to be corrected. It should always be 0; the guards are written so that a line's rewrite depends only on that line and the ones above it.
+- If the reader leaves while the first section is being written, the model call is stopped and that part is not counted.
+
+**Off switch:** set `FIGHTPACK_LIVE=off` in Vercel → Environment Variables and redeploy. The server then ignores `live` and the site behaves as it did before. No code change is needed.
 
 ### Switching on Fight Pack payments (later)
 
