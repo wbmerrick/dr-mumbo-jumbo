@@ -12,6 +12,8 @@
 
 **Checked before writing this plan** (scratch scripts, not in the repo). All 169 stored first sections were replayed through the release rule of Task 2 with today's guards: no shown line was ever corrected, every shown line was a line of the finished section, and how the text was cut up made no difference. The guards cost about 4 ms per section. Each of the eleven raw lines in Task 3 was confirmed to be changed by today's guards and kept off the page. The AI's streaming format was checked against its documentation. The 16 existing suites pass on this branch.
 
+**As built.** The tasks below are the plan as it was approved. Where the code differs, the spec's last section, "Changed while building", says how and why: the kit's controls return when the kit is done rather than when the first section is finished; the page holds the reader's place instead of merely not scrolling; the off switch needs a redeploy; and `postLive` is its own function, without the `r.ok` and `getReader` checks Task 4 lists.
+
 ## Global Constraints
 
 - The AI's instructions do not change: no edit to `api/_lib/fightpack-prompts.js`, `fightpack-sections.js`, `fightpack-preamble.js`, `fightpack-rules.js`, nor to `PARTS`, `max_tokens`, `stop_sequences` or the model name.

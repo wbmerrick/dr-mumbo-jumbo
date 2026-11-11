@@ -77,10 +77,11 @@
   .kitout.sample .kit-mine{display:none}
   .kitout.sample .samplenote{display:block;margin-top:0}
   .kitout.sample .checkline,.kitout.sample .mailkit,.kitout.sample #regen,.kitout.sample #fixbtn,.kitout.sample .fixform,.kitout.sample .whisper{display:none}
-  /* The live first read: while the first section is still being written the progress panel shrinks to its
-     heading and status line, and the kit area shows that section and nothing that would treat it as a kit:
-     no copy, print, rebuild or fix, no email, no "saved in this browser", and no tracker (its dates are the
-     last kit's until this one is in). */
+  /* The live first read: from the first lines of the first section until the kit is done, the progress panel is
+     shrunk to its heading and status line, and the kit area shows the documents and nothing that would treat
+     them as a finished kit: no copy, print, rebuild or fix, no email, no "saved in this browser", and no tracker
+     (its dates are the last kit's until this one is in). All of it comes back when the kit is done, without
+     moving the reader (fightpack.js, holdPlace). */
   .progress.slim .plist,.progress.slim .small{display:none}
   .kitout.live .kit-actions,.kitout.live .copy-btn,.kitout.live .checkline,.kitout.live .mailkit,.kitout.live .fixform,.kitout.live #deadlines,.kitout.live .whisper{display:none}
   .kitout.live .pulse-dot{display:block;margin-top:10px}

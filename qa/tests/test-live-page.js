@@ -75,7 +75,9 @@ function element() {
 //   first       a plain reply to give the first live request, instead of a stream
 //   holdRetry   the plain re-ask for part 1 stays unanswered until page.release()
 //   retryFails  that re-ask is then answered with a server error
-function open({ hash = '', canStream = true, first = null, holdRetry = false, retryFails = false } = {}) {
+//   holdRest    parts 2-6 stay unanswered until page.releaseRest()
+//   later       a plain reply to give every live request after the first
+function open({ hash = '', canStream = true, first = null, holdRetry = false, retryFails = false, holdRest = false, later = null } = {}) {
   const els = {};
   const $ = (id) => els[id] || (els[id] = element());
   const posts = [];
@@ -85,6 +87,16 @@ function open({ hash = '', canStream = true, first = null, holdRetry = false, re
   let stream = null;          // the live reply being fed: { queue, waiting, ended }
   let liveAsked = 0;
   let release = null;
+  const rest = [];
+  // A stand-in for layout: how far down the screen the documents start. Above them, top to bottom, stand the
+  // progress panel (shrunk or full, while it is up), the kit's heading (a row taller once the strength tag is
+  // on it) and the kit's controls (hidden while the kit is built in view of the reader). Less however far the
+  // page has been moved to make up for a change (window.scrollBy).
+  let movedBy = 0;
+  const moves = [];
+  const has = (id, c) => $(id).classList.contains(c);
+  const above = () => (has('progress', 'on') ? (has('progress', 'slim') ? 124 : 392) : 0) + 60 + ($('strength').style.display === 'inline-flex' ? 40 : 0) + (has('kitout', 'live') ? 0 : 540);
+  $('docs').getBoundingClientRect = () => ({ top: above() - movedBy });
   const read = () => new Promise((resolve) => {
     if (stream.queue.length) resolve({ done: false, value: stream.queue.shift() });
     else if (stream.ended) resolve({ done: true, value: undefined });
@@ -104,17 +116,19 @@ function open({ hash = '', canStream = true, first = null, holdRetry = false, re
     posts.push({ url, body });
     if (url === '/api/unlock') return Promise.resolve(plainReply(200, { token: 'session-' + posts.length }));
     if (body.part === 1 && body.live === true) {
-      if (first && !liveAsked++) return Promise.resolve(first);
+      if (first && !liveAsked) { liveAsked++; return Promise.resolve(first); }
+      if (later && liveAsked++) return Promise.resolve(later);
       stream = { queue: [], waiting: null, ended: false };
       return Promise.resolve({ ok: true, status: 200, headers: { get: () => 'text/event-stream; charset=utf-8' }, body: { getReader: () => ({ read, cancel() {}, releaseLock() {} }) }, json: () => Promise.reject(new Error('not json')) });
     }
     const answer = body.part === 1 && retryFails ? plainReply(502, { error: 'upstream', message: HICCUP.message })
       : plainReply(200, { part: body.part, stop: 'end_turn', missing: [], text: ANSWER[body.part] });
     if (body.part === 1 && holdRetry && !release) return new Promise((resolve) => { release = () => resolve(answer); });
+    if (body.part > 1 && holdRest) return new Promise((resolve) => { rest.push(() => resolve(answer)); });
     return Promise.resolve(answer);
   };
   const keeps = (bag) => ({ getItem: (k) => (k in bag ? bag[k] : null), setItem: (k, v) => { bag[k] = String(v); }, removeItem: (k) => { delete bag[k]; } });
-  const win = { matchMedia: () => ({ matches: true }), location: { hash, search: '', hostname: 'dr-mumbo-jumbo.com' }, va() {}, sessionStorage: keeps({}), print() { printed++; } };
+  const win = { matchMedia: () => ({ matches: true }), location: { hash, search: '', hostname: 'dr-mumbo-jumbo.com' }, va() {}, sessionStorage: keeps({}), print() { printed++; }, scrollBy(how) { moves.push(how); movedBy += how.top; } };
   const navigator = { clipboard: { writeText: (text) => { copied.push(text); return Promise.resolve(); } } };
   const soon = (fn, ms) => { if (ms <= 2000) Promise.resolve().then(fn); return 1; };
   class FileReader { readAsDataURL() { this.result = 'data:application/pdf;base64,JVBERi0x'; Promise.resolve().then(() => this.onload()); } }
@@ -129,13 +143,16 @@ function open({ hash = '', canStream = true, first = null, holdRetry = false, re
     copied: () => copied,
     printed: () => printed,
     drawn: () => $('docs').children.map((card) => card.innerHTML).join('\n'),
+    docsTop: () => $('docs').getBoundingClientRect().top,      // where the documents start on screen
+    moves: () => moves,                                        // every time the page was moved to hold the reader's place
     error: () => ($('error').classList.contains('on') ? $('error').textContent : ''),
     bytes: async (piece) => { feed(piece); await settle(); },
     say: async (message) => { feed(frame(message)); await settle(); },
     done: async (text, more) => { feed(frame(whole(text, more))); end(); await settle(); },
     fail: async (error) => { feed(frame({ error })); end(); await settle(); },
     drop: async () => { end(); await settle(); },
-    release: async () => { assert(release, 'a plain re-ask for part 1 is waiting'); release(); await settle(); }
+    release: async () => { assert(release, 'a plain re-ask for part 1 is waiting'); release(); await settle(); },
+    releaseRest: async () => { assert(rest.length === 5, 'parts 2-6 are waiting (' + rest.length + ')'); rest.splice(0).forEach((go) => go()); await settle(); }
   };
   return page;
 }
@@ -154,7 +171,7 @@ const shown = (page) => page.$('strength').style.display === 'inline-flex';
 (async () => {
   // ---------- 1. the first section arrives line by line ----------
   {
-    const page = await started();
+    const page = await started({ holdRest: true });
     same(page.sent()[0].live, true, 'the first request for part 1 asks for the live reply');
     ok(!page.$('kitout').classList.contains('on'), 'nothing of the kit is shown before a line has come');
     await page.say({ from: 0, lines: L.slice(0, 3) });
@@ -163,16 +180,19 @@ const shown = (page) => page.$('strength').style.display === 'inline-flex';
     ok(/Read from your letter/.test(page.drawn()), 'the first lines are on the page');
     ok(/pulse-dot/.test(page.drawn()), 'with a mark that the section is still being written');
     same(page.$('progress').scrolls, 2, 'the page is brought to the panel and the first document');
+    const top = page.docsTop();
     await page.say({ from: 3, lines: L.slice(3, iType + 1) });
     ok(/Type of denial/.test(page.drawn()), 'later lines are added');
     ok(!shown(page), 'no strength tag before its line');
     await page.say({ from: iType + 1, lines: L.slice(iType + 1, iGrade + 1) });
     ok(shown(page) && /Good/.test(page.$('strength').textContent), 'the strength tag appears with its line');
+    same(page.docsTop(), top, 'the tag takes a row above the documents, and they stay where they are on screen');
     await page.say({ from: iGrade, lines: ['**Case strength:** Needs evidence. One record is missing.'] });
     ok(/Needs evidence/.test(page.drawn()) && /Needs evidence/.test(page.$('strength').textContent), 'a corrected line replaces the old one, and the tag follows it');
     await page.say({ from: iGrade, lines: [] });
     ok(!/Case strength/.test(page.drawn()) && !shown(page), 'a line taken back leaves the page, and its tag with it');
-    same(page.$('progress').scrolls, 2, 'the page is not moved again while lines arrive');
+    same(page.docsTop(), top, 'and the documents still have not moved');
+    same(page.$('progress').scrolls, 2, 'the page is not scrolled again while lines arrive');
 
     // not a kit yet
     ok(!('dmj_fp_kit' in page.saved), 'nothing is saved while the section is live');
@@ -188,15 +208,24 @@ const shown = (page) => page.$('strength').style.display === 'inline-flex';
     await settle();
     same(page.posts(), 2, 'and nothing is sent: no email, no second build, none of the other five parts');
 
-    // the finished section takes its place
+    // the finished section takes its place; the rest of the kit is still being written
     await page.done(ANSWER[1]);
-    ok(!page.$('kitout').classList.contains('live'), 'the live mark is gone when the section is finished');
     ok(/Do this first/.test(page.drawn()) && !/pulse-dot/.test(page.drawn()), 'the finished section is drawn, closing lines and all, with no still-writing mark');
     ok(shown(page) && /Good/.test(page.$('strength').textContent), 'the strength tag is the finished section\'s');
     const rest = page.sent().filter((b) => b.part > 1);
     ok(rest.length === 5 && rest.every((b) => b.decode === ANSWER[1].slice(0, 8000) && !('live' in b)), 'the other five parts are asked for with the finished section, and no live flag');
-    ok(page.$('kitout').scrolls === 0 && page.$('progress').scrolls === 2, 'the page does not scroll when the kit finishes');
+    ok(page.$('kitout').classList.contains('live') && page.$('progress').classList.contains('slim'), 'while they are written the kit\'s controls stay away and the panel stays small: nothing above the reader changes');
+    same(page.docsTop(), top, 'the finished section replaces the live one without moving it, though the tag is back above it');
+    ok(!('dmj_fp_kit' in page.saved), 'and nothing is saved until the kit is whole');
+
+    // the kit is done: its controls come back and the panel goes, above the reader, who is not moved
+    const before = page.docsTop();
+    await page.releaseRest();
+    ok(!page.$('kitout').classList.contains('live'), 'when the kit is done its controls are back');
     ok(!page.$('progress').classList.contains('slim') && !page.$('progress').classList.contains('on'), 'the panel is put away, full size for the next build');
+    same(page.docsTop(), before, 'and the documents stay where they are on screen through both changes');
+    ok(page.moves().length > 0 && page.moves().every((m) => m.behavior === 'instant' && m.left === 0), 'the place is held at once, not by a scroll the reader watches');
+    ok(page.$('kitout').scrolls === 0 && page.$('progress').scrolls === 2, 'the page is not sent to the top of the kit');
     ok(/"parts"/.test(page.saved.dmj_fp_kit || ''), 'the finished kit is saved, as today');
     same(page.error(), '', 'and the build raises no error');
     page.$('copyall').fire('click');
@@ -300,12 +329,26 @@ const shown = (page) => page.$('strength').style.display === 'inline-flex';
     ok(built(page) && page.sent().length === 6, 'a plain reply to a live request: the kit builds from it');
     ok(!page.$('kitout').seen.has('live') && !page.$('progress').seen.has('slim'), 'with nothing ever marked live or shrunk');
     ok(page.$('kitout').scrolls === 1 && page.$('progress').scrolls === 1, 'and the page moves as it always did: to the panel, then to the kit');
+    same(page.moves(), [], 'with no holding in place: there was no reader mid-document to hold');
   }
   {
     // a browser that cannot read a reply piece by piece does not ask for one
     const page = await started({ canStream: false });
     ok(!('live' in page.sent()[0]), 'a browser that cannot read a stream sends no live flag');
     ok(built(page) && page.sent().length === 6, 'and its kit builds as before');
+  }
+
+  {
+    // a second build on the same page, this time answered the plain way: nothing is carried over from the live one
+    const page = await started({ later: plainReply(200, { part: 1, stop: 'end_turn', missing: [], text: ANSWER[1] }) });
+    await page.say({ from: 0, lines: L.slice(0, 3) });
+    await page.done(ANSWER[1]);
+    ok(built(page) && page.$('kitout').scrolls === 0, '(a first build, watched live: the page is not sent to the kit)');
+    page.$('regen').fire('click');
+    await settle();
+    same(page.sent().length, 12, 'a second build runs');
+    same(page.$('kitout').scrolls, 1, 'answered the plain way, it ends at the top of the kit, as a plain build always did');
+    ok(!page.$('kitout').classList.contains('live') && !page.$('progress').classList.contains('slim'), 'with nothing marked live');
   }
 
   // ---------- 6. the example kit still asks the server for nothing ----------

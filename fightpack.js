@@ -403,8 +403,19 @@
   // The live first read: the first section's lines, drawn as the server sends them (api/fightpack.js).
   // liveLines holds them while that section is still being written and is null the rest of the time; they are
   // never put in `parts`, so nothing saves them, copies them or hands them to the other five parts.
-  // liveShown: this build's live view has been brought into view, so the page need not move when the kit is done.
+  // liveShown: this build's live view has been brought into view. From then until the kit is done the reader is
+  // taken to be reading it: the kit's controls stay away (index.html, .kitout.live), and nothing moves the
+  // documents on their screen.
   var liveLines = null, liveShown = false;
+  // A change above the documents - the strength tag arriving, the kit's controls coming back, the progress panel
+  // going - made without moving what the reader is reading: the documents stay where they are on screen.
+  // (Some browsers do this by themselves; where one has, there is nothing left to make up.)
+  function holdPlace(change){
+    var before = docsEl.getBoundingClientRect().top;
+    change();
+    var moved = docsEl.getBoundingClientRect().top - before;
+    if(moved) window.scrollBy({ top: moved, left: 0, behavior: 'instant' });
+  }
   // A browser that cannot read a reply piece by piece does not ask for one.
   var canLive = typeof TextDecoder !== 'undefined' && typeof Response !== 'undefined' && 'body' in Response.prototype;
   // What a part's answer is short of, if anything: a section the handler did not find in it, or an
@@ -479,7 +490,7 @@
     if(sample) [dlDenial, dlStated, dlDays, dlFiled].forEach(function(el){ el.value = ''; });
     sample = false; kitout.classList.remove('sample');
     $('strength').style.display = 'none';   // the rating beside the heading is the last kit's; this kit's decode sets its own
-    liveLines = null; liveShown = false; progress.classList.remove('slim'); kitout.classList.remove('live');
+    liveShown = false;
     resetSteps(); progress.classList.add('on'); startMorph(morphEl, MORPH); kitout.classList.remove('on');
     progress.scrollIntoView({ behavior:'smooth', block:'start' });
     buy.disabled = true;
@@ -490,25 +501,24 @@
     // first document opens under it, and the page is brought there once (a build starts there, so this moves
     // only a reader who has scrolled away). Each message says "from line N, these lines".
     function onLines(from, lines){
-      if(!liveLines){
-        liveLines = [];
-        progress.classList.add('slim'); kitout.classList.add('live');
-        progress.scrollIntoView({ behavior:'smooth', block:'start' });
-        liveShown = true;
-      }
+      var first = !liveLines;
+      if(first){ liveLines = []; progress.classList.add('slim'); kitout.classList.add('live'); liveShown = true; }
       liveLines = liveLines.slice(0, from).concat(lines);
-      renderKit(); showStrength();
+      renderKit();
+      if(first){ showStrength(); progress.scrollIntoView({ behavior:'smooth', block:'start' }); }
+      else holdPlace(showStrength);
     }
-    // The live reply is over. A whole section: its lines make way for the finished text, which the caller draws.
-    // Anything else after lines were shown - a failure, a stream that stopped, a section cut short - and the page
-    // goes back to how it is while part 1 is being written: no half-drawn document, the panel full size and in view.
+    // The live reply is over. A whole section: its lines make way for the finished text, which the caller draws;
+    // the page stays as it is (panel small, controls away) until the whole kit is done, so that nothing above the
+    // reader changes while they read. Anything else after lines were shown - a failure, a stream that stopped, a
+    // section cut short - and the page goes back to how it is while part 1 is being written: no half-drawn
+    // document, the panel full size and in view.
     function endLive(whole){
       var had = !!liveLines;
       liveLines = null;
-      kitout.classList.remove('live');
       if(whole || !had) return;
       liveShown = false;
-      kitout.classList.remove('on'); docsEl.innerHTML = '';
+      kitout.classList.remove('live'); kitout.classList.remove('on'); docsEl.innerHTML = '';
       progress.classList.remove('slim');
       $('strength').style.display = 'none';
       progress.scrollIntoView({ behavior:'smooth', block:'start' });
@@ -549,8 +559,8 @@
         parts[p] = text; done[p] = true;
         var gap = shortOf(res.data); if(gap) gaps[p] = gap; else delete gaps[p];
         refreshSteps(done);
-        renderKit();
-        if(p === 6 || (p === 1 && !meta)) applyMeta();
+        var draw = function(){ renderKit(); if(p === 6 || (p === 1 && !meta)) applyMeta(); };
+        if(liveShown) holdPlace(draw); else draw();
       });
     }
     // The decode (part 1) is the plan; parts 2–6 are written in parallel from it.
@@ -562,18 +572,21 @@
       }));
     }).then(function(){
       building = false; buy.disabled = false;
-      progress.classList.remove('on'); progress.classList.remove('slim'); stopMorph(morphEl);
+      // The panel goes and, after a live view, the kit's controls come back: both above the documents. A reader
+      // who watched the first section being written is somewhere in the kit, reading, and is not moved.
+      var putAway = function(){ progress.classList.remove('on'); progress.classList.remove('slim'); kitout.classList.remove('live'); };
+      if(liveShown) holdPlace(putAway); else putAway();
+      stopMorph(morphEl);
       renderKit();
       // A part that arrived short did not finish either; the reader hears about it the same way.
       [1,2,3,4,5,6].forEach(function(p){ if(parts[p] && gaps[p]) failures.push(PART_LABEL[p] + ' (' + gaps[p] + ')'); });
       track('kit_built', { outcome: failures.length ? 'partial' : 'complete' });
       stash();
       if(failures.length){ showError('Most of your kit is below, but these sections did not finish: ' + failures.join('; ') + '. ' + tryAgain()); }
-      // A reader who watched the first section being written is already at the kit, and reading: the page stays put.
       if(!liveShown) kitout.scrollIntoView({ behavior:'smooth', block:'start' });
     }).catch(function(e){
       building = false; buy.disabled = false;
-      progress.classList.remove('on'); progress.classList.remove('slim'); stopMorph(morphEl);
+      progress.classList.remove('on'); stopMorph(morphEl);
       track('kit_failed');
       showError((e && e.message ? e.message : 'Something went wrong.') + ' ' + tryAgain());
       if(parts[1]) kitout.classList.add('on');
