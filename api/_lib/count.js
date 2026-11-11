@@ -8,14 +8,17 @@
 //      function. Permanent, queryable, plan-independent. This is the one you read.
 //
 // WHAT IS NEVER IN HERE: a word of what anyone pasted or uploaded, an email address, an IP,
-// anything that identifies a person. Counts and flags only. privacy.html says exactly this,
-// and qa/tests/test-count.js asserts it.
+// anything that identifies a person. Counts and flags only, and for a kit one word for where its
+// reader came from (src: the tag on the link they followed, or a name for the site that linked
+// here - never an address; api/fightpack.js). privacy.html says exactly this, and
+// qa/tests/test-count.js asserts it, field by field.
 //
 // COUNTING KITS: /api/fightpack is called once per part, parts 2-6 run in parallel, and a
 // part is re-asked when sections come back missing. So:
 //     kits built   = distinct data->>'kid' with all 6 parts
 //     kits started = distinct data->>'kid'
 //   Never count rows or log lines. See qa/tests/test-count.js.
+//   By place: group those kits by data->>'src' (the query is in README.md, "Where kits come from").
 //
 // The key below is Supabase's publishable (anon) key — public by design, same as api/email-kit.js.
 // dmj_events has RLS on with no policies, so no anon request through the REST API can read

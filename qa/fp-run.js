@@ -47,7 +47,8 @@ function attach(name) {
 }
 
 async function fetchPart(p, token, inp, extraBody, dir, log) {
-  const ask = () => postJSON(BASE + '/api/fightpack', Object.assign({ token, part: p }, inp, extraBody || {}));
+  // src: 'qa' marks these kits in the site's own count, so test runs can be left out of "kits built by place".
+  const ask = () => postJSON(BASE + '/api/fightpack', Object.assign({ token, part: p, src: 'qa' }, inp, extraBody || {}));
   const attempts = [];
   const rec = (res, retry) => attempts.push({ status: res.status, ms: res.ms, stop: res.data.stop, missing: res.data.missing, usage: res.data.usage, retry });
   let res = await ask(); rec(res);
