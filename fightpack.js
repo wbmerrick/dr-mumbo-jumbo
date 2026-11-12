@@ -343,7 +343,7 @@
     toast('Replaced in every section');
     fixfrom.value = ''; fixto.value = '';
   });
-  $('forget').addEventListener('click', function(){ drop('dmj_fp_kit'); drop('dmj_fp_token'); parts = {}; meta = null; kitTag = null; sample = false; kitout.classList.remove('on'); kitout.classList.remove('sample'); showNotice('Cleared from this browser.'); });
+  $('forget').addEventListener('click', function(){ drop('dmj_fp_kit'); drop('dmj_fp_token'); parts = {}; meta = null; kitTag = null; sample = false; kitout.classList.remove('on'); kitout.classList.remove('sample'); hideReady(); showNotice('Cleared from this browser.'); });
 
   // ---------- deadlines ----------
   var dlDenial = $('dlDenial'), dlStated = $('dlStated'), dlFiled = $('dlFiled'), dlType = $('dlType'), dlList = $('dlList'), dlDays = $('dlDays'), dlPlan = $('dlPlan');
@@ -444,12 +444,14 @@
   // (Some browsers do this by themselves; where one has, there is nothing left to make up.) The site's pages
   // scroll smoothly (nocturne.css), which here would be a glide the reader watches, so it is switched off for
   // the one move, and put back.
-  // Only a reader who is in the kit is held. Everything these changes touch lies from the progress panel down,
-  // so one who has gone back up the page far enough to see what stands above it (the panel starts below the top
-  // quarter of their screen) is looking at things that do not move, and moving the page would be the jump -
-  // even with the first document still in sight at the foot of the screen.
+  // Only a reader who is in the kit is held, and what decides it is what is in the middle of their screen.
+  // Everything these changes touch lies from the progress panel down. When the panel starts above the middle,
+  // the kit is what they are looking at. When it starts below, most of what they see stands above the kit and
+  // does not move, and moving the page would be the jump - even with the first document still in sight at the
+  // foot of the screen. (The top quarter was the first line drawn, and it was too strict: a reader who moves
+  // the page while it is still gliding into place can stop with the panel a little lower than that, reading.)
   function holdPlace(change){
-    var inKit = progress.getBoundingClientRect().top < window.innerHeight / 4;
+    var inKit = progress.getBoundingClientRect().top < window.innerHeight / 2;
     var before = docsEl.getBoundingClientRect().top;
     change();
     if(!inKit) return;
@@ -523,7 +525,7 @@
     if(building) return;
     var inp = inputs();
     if(!inp.denial && !inp.file){ showError('Paste the denial letter — or add a photo or PDF of it — then rebuild.'); return; }
-    building = true; hideError(); hideNotice();
+    building = true; hideError(); hideNotice(); hideReady();
     // One throwaway tag for this build's six calls. Random, and tied to nobody. It is kept with the
     // saved kit (kitTag) for one later use: the links of the check-in emails, if the reader asks for them.
     var kid = Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
@@ -631,10 +633,10 @@
       track('kit_built', { outcome: failures.length ? 'partial' : 'complete' });
       stash();
       if(failures.length){ showError('Most of your kit is below, but these sections did not finish: ' + failures.join('; ') + '. ' + tryAgain()); }
-      // How the reader learns the build is over. Left where they are, they are told there. With sections
+      // How the reader learns the build is over. Left where they are, they are told there, in the bar. With sections
       // missing after a live view, they are brought to the message. With no live view the page goes to the
       // top of the kit, as it always has.
-      if(held) toast('Your Fight Pack is ready');
+      if(held) showReady();
       else if(liveShown) errbox.scrollIntoView({ behavior:'smooth', block:'center' });
       else kitout.scrollIntoView({ behavior:'smooth', block:'start' });
     }).catch(function(e){
@@ -695,7 +697,7 @@
       [1,2,3,4,5,6].forEach(function(p){ parts[p] = k.parts[p]; });
       var ex = extractJson(parts[6]); parts[6] = ex.text; meta = ex.json;   // as fetchPart does with a part 6 that just arrived
       sample = true; kitout.classList.add('sample');
-      hideError(); progress.classList.remove('on');
+      hideError(); hideReady(); progress.classList.remove('on');
       // the tracker shows the example's dates, not ones left from a kit that was on the page before
       [dlDenial, dlStated, dlDays, dlFiled].forEach(function(el){ el.value = ''; });
       $('strength').style.display = 'none';
@@ -731,6 +733,23 @@
     start();
   });
 
+  // ---------- "your kit is ready" ----------
+  // A reader who watched the first section being written is left where they are reading when the kit is done
+  // (holdPlace), so the kit's controls and the email box come back above them, out of sight. The page says so
+  // in a bar at the foot of the screen that stays until it is used or closed: the notice it replaces was gone
+  // in two seconds and said nothing of where the email box was. Its button takes them to the email box, the
+  // one way to keep a kit beyond this browser. The bar goes when it no longer applies: the kit
+  // has been emailed, another build has started, the example is on the page, or the kit has been cleared.
+  var readybar = $('readybar');
+  function showReady(){ readybar.classList.add('on'); }
+  function hideReady(){ readybar.classList.remove('on'); }
+  $('readymail').addEventListener('click', function(){
+    hideReady();
+    $('mailkit').scrollIntoView({ behavior:'smooth', block:'center' });
+    mailemail.focus({ preventScroll: true });   // the move above is the one the reader sees; a browser that ignores the option still lands on the box
+  });
+  $('readyclose').addEventListener('click', hideReady);
+
   // email me my kit
   var mailform = $('mailform'), mailemail = $('mailemail'), mailbtn = $('mailbtn'), mailmsg = $('mailmsg'), mailcheckin = $('mailcheckin');
   function kitText(){ return sectionOrder.map(function(s){ return plain(s.title + '\n\n' + s.body); }).join('\n\n\n') + '\n\n\n' + deadlinesText(); }
@@ -765,7 +784,7 @@
       mailmsg.className = 'wait-msg ' + (res.ok ? 'ok' : 'err');
       mailmsg.textContent = (res.data && res.data.message) || (res.ok ? 'Sent. Check your inbox.' : "Couldn't send it — try again in a minute.");
       if(res.ok) track('kit_emailed', { checkin: mail.checkin });
-      if(res.ok) mailform.reset();
+      if(res.ok){ mailform.reset(); hideReady(); }
     });
   });
 
