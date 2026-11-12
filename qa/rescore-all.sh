@@ -1,7 +1,7 @@
 #!/bin/bash
 # Re-score every stored run with the current checker, each on the cases that run actually ran.
 # Usage: qa/rescore-all.sh [OUTDIR]
-# The raw part files live in qa/evidence/raw-runs*.tar.gz (runs 9–28); extract them into qa/ first:
+# The raw part files live in qa/evidence/raw-runs*.tar.gz (runs 9–29); extract them into qa/ first:
 #   cd qa && for t in evidence/raw-runs*.tar.gz; do tar xzf "$t"; done
 # Runs whose raw files are not present are skipped.
 cd "$(dirname "$0")"
@@ -28,4 +28,5 @@ for n in 19 20 21 23 24 25; do score runs$n $AJ; done
 score runs26 I-original-medicare-ambulance J-urgent-irf-pdf-records
 score runs27 C-prior-auth-biologic I-original-medicare-ambulance J-urgent-irf-pdf-records
 score runs28 $AJ
+score runs29 I-original-medicare-ambulance
 score runs22-free G-medicaid-mri-redflags J-urgent-irf-pdf-records

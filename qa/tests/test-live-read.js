@@ -67,8 +67,9 @@ function mockRes() {
   return r;
 }
 
-// The first section of every stored kit: what the AI's answer to part 1 looks like, 179 times over (the ten of
-// run 28 were written with the type of denial first; the 169 before them with it after the list).
+// The first section of every stored kit: what the AI's answer to part 1 looks like, 180 times over (the ten of
+// run 28 and the one of run 29 were written with the type of denial first; the 169 before them with it after the
+// list).
 const FIRST = [];
 for (const run of fs.readdirSync(path.join(root, 'qa/evidence')).filter((d) => /^runs/.test(d)).sort()) {
   const dir = path.join(root, 'qa/evidence', run);
@@ -190,7 +191,7 @@ const TOO_LONG = 'That took too long. Try again — the kit builds in short pass
   // ---------- 1. one guard path: the finished section is what decodeText gives ----------
   // The live lines will come from decodeText. If the reply to a plain request came from anywhere
   // else, a guard added to one and not the other would let the two disagree.
-  ok(FIRST.length >= 179, 'the stored kits give their first sections (' + FIRST.length + ')');
+  ok(FIRST.length >= 180, 'the stored kits give their first sections (' + FIRST.length + ')');
   for (const s of FIRST) {
     const res = await plain(s.text);
     ok(res.code === 200 && res.body.text === T.decodeText(s.text, { denial: DENIAL, extra: '', files: false, records: false }),
@@ -311,7 +312,7 @@ const TOO_LONG = 'That took too long. Try again — the kit builds in short pass
   // wrote it after the thirteen-line "Read from your letter" list. It is now asked to write it first, directly
   // under the heading. For that to be safe the instructions must say so, once, and move nothing else; and the
   // guards must not care where the line stands. Every section stored before run 28 was written the old way, so
-  // each stored section is replayed here with its type line moved to the top (run 28's ten already have it there).
+  // each stored section is replayed here with its type line moved to the top (the eleven since already have it there).
   {
     const SEC1 = require('../../api/_lib/fightpack-sections.js').SEC[1];
     const at = (re) => SEC1.search(re);
@@ -345,11 +346,11 @@ const TOO_LONG = 'That took too long. Try again — the kit builds in short pass
       if (first(TYPE) >= 0 && first(TYPE) <= first(/^- /)) early++;
     }
     same(early, FIRST.length, 'and the type of denial reaches the page no later than the first of the reader\'s own details');
-    // Run 28 was the first written this way: ten kits, on the live site. Those sections need no moving. As stored,
+    // Run 28 was the first written this way: ten kits, on the live site; run 29 added one. Those sections need no moving. As stored,
     // the type of denial stands directly under the heading, once, and it is the first line on the page after the
     // heading. (On the live site it arrived at 2.8 to 6.7 seconds; written the old way it took 9.3 to 18.4.)
     const written = FIRST.filter((s) => { const body = s.text.split('\n').filter((l) => l.trim()); return TYPE.test(body[1] || '') && !/^[ \t]*[-*•][ \t]+/.test(body[1]); });
-    ok(written.length >= 10, 'kits written with the type of denial first are stored (' + written.length + ')');
+    ok(written.length >= 11, 'kits written with the type of denial first are stored (' + written.length + ')');
     for (const s of written) {
       same(s.text.split('\n').filter((l) => TYPE.test(l)).length, 1, s.file + ': as written, the type of denial is given once');
       const b = await plain(s.text), c = await live(s.text);
