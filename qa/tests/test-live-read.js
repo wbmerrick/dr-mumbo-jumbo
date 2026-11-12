@@ -67,7 +67,8 @@ function mockRes() {
   return r;
 }
 
-// The first section of every stored kit: what the AI's answer to part 1 looks like, 169 times over.
+// The first section of every stored kit: what the AI's answer to part 1 looks like, 179 times over (the ten of
+// run 28 were written with the type of denial first; the 169 before them with it after the list).
 const FIRST = [];
 for (const run of fs.readdirSync(path.join(root, 'qa/evidence')).filter((d) => /^runs/.test(d)).sort()) {
   const dir = path.join(root, 'qa/evidence', run);
@@ -189,7 +190,7 @@ const TOO_LONG = 'That took too long. Try again — the kit builds in short pass
   // ---------- 1. one guard path: the finished section is what decodeText gives ----------
   // The live lines will come from decodeText. If the reply to a plain request came from anywhere
   // else, a guard added to one and not the other would let the two disagree.
-  ok(FIRST.length >= 169, 'the stored kits give their first sections (' + FIRST.length + ')');
+  ok(FIRST.length >= 179, 'the stored kits give their first sections (' + FIRST.length + ')');
   for (const s of FIRST) {
     const res = await plain(s.text);
     ok(res.code === 200 && res.body.text === T.decodeText(s.text, { denial: DENIAL, extra: '', files: false, records: false }),
@@ -309,8 +310,8 @@ const TOO_LONG = 'That took too long. Try again — the kit builds in short pass
   // Measured on the live site, the type of denial reached a reader at 12 seconds (9 to 18 over four kits): the AI
   // wrote it after the thirteen-line "Read from your letter" list. It is now asked to write it first, directly
   // under the heading. For that to be safe the instructions must say so, once, and move nothing else; and the
-  // guards must not care where the line stands. The stored sections were all written the old way, so each is
-  // replayed here with its type line moved to the top.
+  // guards must not care where the line stands. Every section stored before run 28 was written the old way, so
+  // each stored section is replayed here with its type line moved to the top (run 28's ten already have it there).
   {
     const SEC1 = require('../../api/_lib/fightpack-sections.js').SEC[1];
     const at = (re) => SEC1.search(re);
@@ -344,6 +345,23 @@ const TOO_LONG = 'That took too long. Try again — the kit builds in short pass
       if (first(TYPE) >= 0 && first(TYPE) <= first(/^- /)) early++;
     }
     same(early, FIRST.length, 'and the type of denial reaches the page no later than the first of the reader\'s own details');
+    // Run 28 was the first written this way: ten kits, on the live site. Those sections need no moving. As stored,
+    // the type of denial stands directly under the heading, once, and it is the first line on the page after the
+    // heading. (On the live site it arrived at 2.8 to 6.7 seconds; written the old way it took 9.3 to 18.4.)
+    const written = FIRST.filter((s) => { const body = s.text.split('\n').filter((l) => l.trim()); return TYPE.test(body[1] || '') && !/^[ \t]*[-*•][ \t]+/.test(body[1]); });
+    ok(written.length >= 10, 'kits written with the type of denial first are stored (' + written.length + ')');
+    for (const s of written) {
+      same(s.text.split('\n').filter((l) => TYPE.test(l)).length, 1, s.file + ': as written, the type of denial is given once');
+      const b = await plain(s.text), c = await live(s.text);
+      same(c.done, b.body, s.file + ': as written, the finished live section is the plain reply');
+      same(c.shown, ((c.done || {}).text || '').split('\n').slice(0, c.shown.length), s.file + ': as written, the lines shown are how the finished section begins');
+      same(c.redo, 0, s.file + ': as written, nothing shown had to be corrected');
+      const at = c.messages.findIndex((m) => m.lines && m.lines.some((l) => TYPE.test(l)));
+      ok(at >= 0, s.file + ': as written, the type of denial is shown while the section is written');
+      let shown = [];
+      for (const m of c.messages.slice(0, at + 1)) if (m.lines) shown = shown.slice(0, m.from).concat(m.lines);
+      same(shown.filter((l) => l.trim()).map((l) => l.slice(0, 20)), ['## 1. Your denial, d', '**Type of denial:** '], s.file + ': as written, it is the first line on the page after the heading');
+    }
     // The heading is sent the moment it is complete. Whatever the AI made of it, what is sent is the section's
     // exact heading, and nothing sent is corrected.
     const H1 = '## 1. Your denial, decoded — and how strong your case is';

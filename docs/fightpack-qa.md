@@ -4,7 +4,7 @@ The Fight Pack is the kit on dr-mumbo-jumbo.com that helps a patient overturn on
 
 - how the kit is built;
 - how its correctness is measured;
-- what twenty-four measured runs of the engine showed (runs 3–21 and 23–27), and the first kits built through the free path in production;
+- what twenty-five measured runs of the engine showed (runs 3–21 and 23–28), and the first kits built through the free path in production;
 - what was changed in response, and the evidence for each change;
 - what is still unproven.
 
@@ -13,19 +13,20 @@ Everything here can be re-run from this repository (section 8).
 ## Bottom line
 
 - **Deadlines, decision clocks, urgency, plan type, identifiers and the safety instruction are decided in code, not by the model.**
-  - The computed appeal deadline matched the hand-derived deadline in every kit of every run: 173 of 173 kits in runs 3–27, and both kits built through the free path in production.
-  - Every member and claim identifier was copied exactly: 638 of 638 in runs 3–27, and 8 of 8 in the production kits.
+  - The computed appeal deadline matched the hand-derived deadline in every kit of every run: 183 of 183 kits in runs 3–28, and both kits built through the free path in production.
+  - Every member and claim identifier was copied exactly: 675 of 675 in runs 3–28, and 8 of 8 in the production kits.
 - **Defects fell at least six-fold.** All runs were re-scored with the same final checker, about 100 checks per kit.
-  - On the development cases, run 3 averaged 12.8 defects per kit. The latest engines average 0.3 to 2.0 over the last six full runs (19–25).
+  - On the development cases, run 3 averaged 12.8 defects per kit. The latest engines average 0.3 to 2.0 over the last seven full runs (19–21, 23–25 and 28).
   - Across all ten cases, the last three full runs produced 10 defects (v9.10, run 23), 12 (v9.11, run 24) and 14 (v9.12, run 25): 0.3, 1.2 and 1.7 per development kit, and 2.0, 1.3 and 1.0 per held-out kit.
   - The held-out pair I and J then had 2 defects on v9.12.1 (run 26), and C, I and J had 3 on v9.13 (run 27). Two of those five are one strict check firing on a correct sentence (section 4).
+  - Run 28 (v9.14, which asks the writer for the type of denial first) produced 13 across all ten cases: 1.3 per development kit and 1.3 per held-out kit. It was built on the production site through the free path, with the decode asked for live, the way a visitor's kit is built.
   - Run-to-run noise is several defects (section 4). Compare repeated runs, not one total.
 - **Every Critical defect the audits found was fixed. The stubborn ones were fixed by code.**
-  - The run-6 audit's Critical: a patient with possible cauda equina syndrome was told to call her doctor's office first. It survived three engine versions and two prompt revisions aimed at it. Since v9, code writes the emergency instruction. It has been the first instruction in every run of that case since (runs 8–15 and 19–21) and in the production kit.
+  - The run-6 audit's Critical: a patient with possible cauda equina syndrome was told to call her doctor's office first. It survived three engine versions and two prompt revisions aimed at it. Since v9, code writes the emergency instruction. It has been the first instruction in every run of that case since (runs 8–15, 19–21, 23–25 and 28) and in the production kit.
   - The round-2 audit (run 16) found two Criticals in a new held-out case. The kit dropped the concurrent expedited external review that the denial letter offered. And the doctor's letter made its signer the author of another physician's consult note. Code now adds the concurrent request and turns a first-person clinical act into "[I / Dr. ___]". The run-21 re-audit found no Critical, and the Majors fell from 9 to 4. The third audit (run 26) again found no Critical. The Majors stayed at 4: I fell to 1, and J had two new ones (section 4).
 - **Code alone removes about a third of the old defects.** Replaying today's deterministic layer on the stored outputs of runs 5–20 cuts 244 failures to 163 and adds none. Nothing the model wrote was regenerated.
 - **Held-out cases found the failures that tuning hid.** Four cases were written after tuning. G and H were written after run 5. I and J were written after run 15, with their truth and checks fixed before they were first run. Each round exposed failures the development cases never showed, including both round-2 Criticals.
-- **Code has bugs too, and the checker found them.** Three bugs in the code that reads the model's prose surfaced in runs 11–14 (section 6). Each was fixed and checked against every stored output.
+- **Code has bugs too, and the checker found them.** Three bugs in the code that reads the model's prose surfaced in runs 11–14 (section 6). Each was fixed and checked against every stored output. A fourth, found by reading run 28, is open (section 7).
 - **What remains is mostly prose fidelity.** Typical slips are a lay description relabeled in clinical words, a record described that nobody has seen, or a rule from one plan type applied to another. Code brackets the recurring ones for the clinician. The run-21 re-audit judged both doctor-signed letters signable after a few edits. A clinician must still read the letter before signing it.
 
 ## 1. How the kit is built
@@ -54,17 +55,17 @@ The kit has ten sections, written in six passes.
 
 On the page the live lines are kept apart from the kit: they are not saved, copied, printed or emailed, and parts 2–6 are written from the finished decode only. From the first lines until the kit is done the page shows the documents under a small progress panel and nothing else of the kit; its controls come back when it is done, and the page holds the reader's place whenever something above the documents changes (a reader who has gone back up the page to their letter is left where they are). When the kit is done the page says so in a bar that stays at the foot of the screen, whose button takes the reader to the email box (it has come back above them, with the kit's other controls); with sections missing it takes the reader to the message that names them. If the stream fails, stops before the writer's closing message, or the decode comes back short, the page clears the live text and asks again the plain way. `FIGHTPACK_LIVE=off` turns the live read off (README, "Live first read").
 
-Replayed over the first section of all 169 stored kits, no line that would have been shown was changed afterwards (`redo` is 0), and how the stream was cut up made no difference (`qa/tests/test-live-read.js`). That is evidence, not a proof: two rewrites read lines further down (the line the code adds under "Urgent", and the Original Medicare route), so a decode written in an unusual order could show a line and then correct it. `redo` on the count line, checked as the lines are sent and once more against the finished decode, is how that would be seen. In the same replay, the median point in the section's text at which each line is released:
+Replayed over the first section of all 179 stored kits, no line that would have been shown was changed afterwards (`redo` is 0), and how the stream was cut up made no difference (`qa/tests/test-live-read.js`). That is evidence, not a proof: two rewrites read lines further down (the line the code adds under "Urgent", and the Original Medicare route), so a decode written in an unusual order could show a line and then correct it. `redo` on the count line, checked as the lines are sent and once more against the finished decode, is how that would be seen. In a replay of the 169 sections stored before the order changed, and of the ten written since, the median point in the section's text at which each line is released:
 
-| Line | As first written (through November 11, 2026) | With the type of denial first |
-|---|---|---|
-| The heading | 2% | 1% (shown the moment it is written) |
-| Type of denial | 29% (9 in 10 by 35%) | 8% (9 in 10 by 13%) |
-| The first of the reader's own details ("Read from your letter") | 4% | 9% |
-| What they're really saying | 50% | 50% |
-| Case strength | 69% | 69% |
+| Line | As first written (169 kits, through November 11, 2026) | The same 169 with the type line moved up | Written with the type of denial first (run 28, ten kits) |
+|---|---|---|---|
+| The heading | 2% | 1% (shown the moment it is written) | 1% |
+| Type of denial | 29% (9 in 10 by 35%) | 8% (9 in 10 by 13%) | 8% (6% to 15%) |
+| The first of the reader's own details ("Read from your letter") | 4% | 9% | 9% |
+| What they're really saying | 50% | 50% | 50% |
+| Case strength | 69% | 69% | 68% |
 
-The second column is the stored sections replayed with their type line moved to the top, which is where the writer is now asked to put it; no kit written that way is stored yet.
+The second column was the forecast: the stored sections replayed with their type line moved to the top, which is where the writer is now asked to put it. The third is what the writer then did. In all ten kits of run 28 the type of denial stands directly under the heading, once, with everything after it in the old order, and it is the first line on the page after the heading (`qa/tests/test-live-read.js`, section 3b).
 
 **Measured on the live site, November 11, 2026, with the first order** (four kits through `FP_LIVE=1`, seconds from the request to each line):
 
@@ -75,7 +76,26 @@ The second column is the stored sections replayed with their type line moved to 
 | C, pasted prior-authorization letter | 3.3 | 18.4 | 31.2 | 39.6 |
 | B, phone photo | 3.0 | 14.9 | 32.5 | 46.1 |
 
-The stream is passed through line by line (28 to 30 messages a section), every first section was written once, and no shown line was corrected. The first line met its target (5 seconds). The type of denial did not (10 seconds: the median of the three pasted cases was 12.0), which is why the writer is now asked for it first: replayed on these four sections, it would have arrived at about 4 to 6 seconds. That is a prediction until a run with the new order is in.
+The stream is passed through line by line (28 to 30 messages a section), every first section was written once, and no shown line was corrected. The first line met its target (5 seconds). The type of denial did not (10 seconds: the median of the three pasted cases was 12.0), which is why the writer is now asked for it first: replayed on these four sections, it would have arrived at about 4 to 6 seconds.
+
+**Measured again the same evening, with the type of denial first** (run 28: all ten cases on the production site through the free path, `FP_FREE=1 FP_LIVE=1 FP_CONC=1`, seconds from the request to each line):
+
+| Case | First line | Type of denial | Case strength | Section finished |
+|---|---|---|---|---|
+| A, pasted paraphrase | 2.6 | 4.1 | 19.1 | 27.0 |
+| B, phone photo | 2.4 | 4.3 | 25.8 | 36.0 |
+| C, pasted prior-authorization letter | 2.3 | 6.2 | 28.9 | 36.8 |
+| D, pasted EOB | 2.2 | 3.9 | 21.7 | 30.7 |
+| E, pasted EOB | 2.0 | 4.5 | 24.5 | 32.8 |
+| F, pasted Medicare Advantage notice | 2.2 | 6.2 | 35.1 | 45.9 |
+| G, pasted Medicaid notice | 2.3 | 6.7 | 22.8 | 31.0 |
+| H, pasted EOB | 2.2 | 4.3 | 21.6 | 29.0 |
+| I, pasted Medicare summary notice | 1.9 | 2.8 | 14.6 | 21.7 |
+| J, PDF with records attached | 2.4 | 5.2 | 26.9 | 38.5 |
+
+The type of denial met its target in all ten kits: 2.8 to 6.7 seconds, and 4.4 on the median of the eight pasted cases. On the four cases measured both ways it went from 9.3, 12.0, 18.4 and 14.9 seconds to 4.1, 3.9, 6.2 and 4.3. The first line, now the heading, came at 1.9 to 2.6 seconds. Case strength and the end of the section came about when they did before (22.2 and 30.9 seconds on the pasted median; on A, 19.1 and 27.0 against 19.1 and 26.3): the decode is no longer than it was, and the case is still graded after the argument is written. Every first section was asked for once (27 to 30 messages), and no shown line was corrected. What the new order did to the kits is in section 4 (run 28).
+
+These are times at a script on a server's connection. A phone adds its own network, and no reader's own build has been timed yet.
 
 The writer's rules, the plan rules and the guards live in `api/_lib/`, which the site never serves.
 
@@ -141,10 +161,10 @@ G and H were written after run 5; they informed fixes only after runs 7 and 9. I
 - the kit on the page: the renderer itself, on literal cases and every stored kit. Italics are shown as italics and no text is left wrapped in asterisks;
 - the homepage's first screen: the order the page is read in, and how much stands before the Build button. The tool follows the headline directly (54 words before the button; the suite fails above 75), progress and the kit open right under it, the pitch and the six cards come after and stay off a printed kit, and every element the page script looks up is on the page once. Pixels need a browser: measured in Chrome, the Build button ends 637 px down on a laptop (it was 1,381) and 655 px down on a 390 × 664 phone (it was 2,441);
 - the analytics tags: every page loads Vercel's script once, from the path Vercel serves, and asks for nothing else under `/_vercel/`. The emailed kit carries no tag;
-- the example kit: "Try an example" shows `sample-kit.json`, a kit the site wrote for the example letter, instead of making a visitor wait for one. The file must be exactly what the site returned (the raw answers are in `qa/evidence/sample/`), built from the letter the button uses today, whole, and on the deploy list. The page script, run whole, must show it with no server call, never save or email it, leave a reader's saved kit alone, show it again when Build is pressed on the unchanged example, build for real once a word or the note changes, and fall back to the old behaviour when the file is missing. The example's letter and story must also never ride along into a reader's kit: a letter pasted over the example's clears the example's note, and a file of the reader's own clears both boxes of example text (before this, the example's symptoms went into the reader's requests). The stored kit scored 90 pass, 0 fail on the corpus checker; two earlier builds each failed one check and were discarded, not edited;
+- the example kit: "Try an example" shows `sample-kit.json`, a kit the site wrote for the example letter, instead of making a visitor wait for one. The file must be exactly what the site returned (the raw answers are in `qa/evidence/sample/`), built from the letter the button uses today, whole, and on the deploy list. The page script, run whole, must show it with no server call, never save or email it, leave a reader's saved kit alone, show it again when Build is pressed on the unchanged example, build for real once a word or the note changes, and fall back to the old behaviour when the file is missing. The example's letter and story must also never ride along into a reader's kit: a letter pasted over the example's clears the example's note, and a file of the reader's own clears both boxes of example text (before this, the example's symptoms went into the reader's requests). The stored kit scored 90 pass, 0 fail on the corpus checker; two earlier builds each failed one check and were discarded, not edited. It was built again after the writer was asked for the type of denial first (`built` in the file: 2026-11-12, a UTC date), and that build scored 90 pass, 0 fail at the first try;
 - where a kit's reader came from: the page script, run whole, sends one word with a kit's six build calls. It is the tag on the link they followed (`?utm_source=`), else a name for the site that linked here, `other` for any site not on the short list, `site` for another page of this site and `direct` for none. The word is cut down to letters, digits and dashes in the browser and again on the server; a look-alike host is not the real one; nothing else from the link or the referring address is sent; the first word lasts for the tab and no longer; and a browser that refuses storage still gets its kit. The counter keeps the word beside the kit count, and the suite fails if a count line gains any other field (57 checks on the page, 31 on the counter; 26 deliberate breaks of the new code were each caught). In Chrome, a reader who arrived on a tagged link, read "How it's tested" and came back was still counted by the tag;
 - the check-ins (`test-checkin.js`, `test-email-kit.js`): the two emails a reader can ask for, and the answers that come back. A link is signed for one kit and one question: one made up, moved to another kit or to the other question, or signed with another secret is not taken; it closes after 180 days; a session token cannot stand in for it. What a link carries rides after the `#`, so the address a browser asks the server for is `/checkin` alone. The emails are written from the kit's tag and the time and nothing else, with one link per answer and no part of the kit. An answer is counted only on a POST (a mail scanner that opens every link answers nothing), as kit, question and answer; ten a day per kit and question; and the tap succeeds when the counter is down. On the email side: nobody who did not tick the box gets one; the kit goes first and is never failed or held up by them (refused, rate limited, a server error, a call that never answers); the week-4 email is scheduled before the day-3 email that promises it, and if it cannot be, the day-3 one is not sent; the same kit to the same address carries the same idempotency keys; and no count from that request holds an address or the kit's tag;
-- the check-in box, the page a check-in opens, and the one line the page adds to a kit (`test-checkin-page.js`): the box is not ticked for anybody and the page sends "yes" only for a tick, with the kit's tag only then. The answer page, run whole, asks the email's question in the email's words, sends nothing when it opens, takes the link out of the address bar, sends one POST for a tap, and shows the server's own reason when an answer is refused. The line saying where the drafts came from goes into the note for the office (document 4) and no other document, once, above the note's closing thank-you, on every one of the 169 recorded kits, with nothing else in the note touched; it is in what is shown, copied and emailed, and not in the kit saved in the browser or in `sample-kit.json`. In Chrome, on the preview deployment: the answer page asked the email's question with the linked answer picked out, sent nothing on opening, and left `/checkin` alone in the address bar; a tap on a made-up link was refused by the server (403) and the page showed its reason; the box under "Email me my kit" was not ticked; and the example kit's note carried the line once, above its thank-you. What is unproven: that Resend takes the two scheduled emails from the site's own key, and that it sends them on the day. No check-in has been scheduled against the real service yet; one emailed kit with the box ticked shows the first, and that email arriving 3 days later shows the second;
+- the check-in box, the page a check-in opens, and the one line the page adds to a kit (`test-checkin-page.js`): the box is not ticked for anybody and the page sends "yes" only for a tick, with the kit's tag only then. The answer page, run whole, asks the email's question in the email's words, sends nothing when it opens, takes the link out of the address bar, sends one POST for a tap, and shows the server's own reason when an answer is refused. The line saying where the drafts came from goes into the note for the office (document 4) and no other document, once, above the note's closing thank-you, on every one of the 179 recorded kits, with nothing else in the note touched; it is in what is shown, copied and emailed, and not in the kit saved in the browser or in `sample-kit.json`. In Chrome, on the preview deployment: the answer page asked the email's question with the linked answer picked out, sent nothing on opening, and left `/checkin` alone in the address bar; a tap on a made-up link was refused by the server (403) and the page showed its reason; the box under "Email me my kit" was not ticked; and the example kit's note carried the line once, above its thank-you. What is unproven: that Resend takes the two scheduled emails from the site's own key, and that it sends them on the day. No check-in has been scheduled against the real service yet; one emailed kit with the box ticked shows the first, and that email arriving 3 days later shows the second;
 - check-ins asked for from the app (`test-app-checkin.js`): `POST /api/app-checkin` needs a session token and allows each visitor ten requests a day. It hands back a ticket per question, signed exactly as a link is, and an answer posted with one is counted as any check-in answer. An address is optional, and one that is not an address is refused, not skipped. With an address the two emails are scheduled as the site's are (week 4 first; the same tag and address asked twice carry the same idempotency keys; a refusal is counted with its reason and the reader is promised nothing), in the app's words, with links marked `v=app` so the answer page does not tell an app reader about a kit in their inbox. The address goes to the email provider only: no waitlist row, no count, no answer to the app holds it. With email switched off, or the week-4 email refused, the tickets are still handed back. Eleven deliberate breaks of the new code were each caught. In Chrome: a link marked for the app and one not, each opened and answered, showed the app's and the site's words in turn and posted the same five fields. What is unproven: nothing calls this endpoint yet, so it has not run in production, and no app email has been scheduled against the real service.
 
 **Automated checker** (`qa/fp-check.js` with `qa/manifest.js`, about 100 checks per kit). The checks cover:
@@ -222,6 +242,7 @@ All runs were scored with the same final checker. "Dev" is the six development c
 | 25 | v9.12 | A–J | 14 | 1.7 | 1.0 | 10/10 | 37/37 |
 | 26 | v9.12.1 | I, J | 2 | — | 1.0 | 2/2 | 8/8 |
 | 27 | v9.13 | C, I, J | 3 | 0.0 | 1.5 | 3/3 | 13/13 |
+| 28 | v9.14 | A–J | 13 | 1.3 | 1.3 | 10/10 | 37/37 |
 
 The counts for runs 3–15 are up to one higher than in earlier versions of this document, because some checks added in round 2 also apply to the earlier cases. Three checks added after the run-21 re-audit raise run 17 by one, run 19 by one, run 21 by three and run 23 by one: what the family owes for an ambulance never depends on whether the company participates; a coverage-policy number must be in the documents; and the records go to the family and in with the appeal, never to Medicare on their own. Extending that last check on 30 October to the provider's own offer ("submit additional documentation or appeal"), which its first form missed, raises runs 16, 18, 20 and 24 by one each (section 3).
 
@@ -235,17 +256,34 @@ By case:
 | 25 (v9.12) | 1 | 1 | 1 | 1 | 2 | 4 | 0 | 1 | 2 | 1 |
 | 26 (v9.12.1) | — | — | — | — | — | — | — | — | 1 | 1 |
 | 27 (v9.13) | — | — | 0 | — | — | — | — | — | 2 | 1 |
+| 28 (v9.14) | 1 | 3 | 2 | 0 | 2 | 0 | 1 | 2 | 2 | 0 |
 
-H went 1, 4, 1, 1 and F 3, 0, 4, 4 with no change to the code those cases exercise; that is the noise described below. I went 5, 2, 4 and 2 in runs 21 to 25, then 1 and 2. The records route, one of run 24's four, has passed in every run since v9.12. Of I's three failures in runs 26 and 27, two are its peer-to-peer check firing on the kit's correct sentence that there is no peer-to-peer at this level (below). The production kits were built on 30 October 2026 the way a visitor builds one (a free token from `/api/unlock`, then the six parts). G passed all 104 checks. J passed 104 and missed one depth check: in its decode the doctors "should call the expedited appeal line to support your request", but the kit never says the doctor can request the expedited appeal directly. They cost $0.18 and $0.24 in model usage; J carries a PDF and records. Runs 23, 24 and 25 cost $1.70, $1.64 and $1.67 for ten kits, about $0.17 per kit; runs 26 and 27 cost $0.39 for two kits and $0.59 for three (I and J carry the most text).
+H went 1, 4, 1, 1 and F 3, 0, 4, 4 with no change to the code those cases exercise; that is the noise described below. I went 5, 2, 4 and 2 in runs 21 to 25, then 1 and 2. The records route, one of run 24's four, passed in runs 25 to 27 and failed once more in run 28 (below). Of I's three failures in runs 26 and 27, two are its peer-to-peer check firing on the kit's correct sentence that there is no peer-to-peer at this level (below). The production kits were built on 30 October 2026 the way a visitor builds one (a free token from `/api/unlock`, then the six parts). G passed all 104 checks. J passed 104 and missed one depth check: in its decode the doctors "should call the expedited appeal line to support your request", but the kit never says the doctor can request the expedited appeal directly. They cost $0.18 and $0.24 in model usage; J carries a PDF and records. Runs 23, 24 and 25 cost $1.70, $1.64 and $1.67 for ten kits, about $0.17 per kit; runs 26 and 27 cost $0.39 for two kits and $0.59 for three (I and J carry the most text). Run 28 cost $1.66 for ten.
 
-Replaying today's deterministic layer (v9.13) on stored outputs, with no prompt change, shows what code alone fixes. The defect counts went:
+**Run 28** is the first run written with the type of denial first (v9.14). It is also the first full run built the way a visitor's kit is built: through the free path, with the decode asked for live (the earlier full runs used the preview code and asked for every part the plain way). v9.14 moved one line of the decode's instructions and changed no guard, so the question for the run was whether the kits got worse. By every measure here they did not:
+
+- 13 defects, against 10, 12 and 14 in runs 23 to 25, with every deadline and identifier exact;
+- two of the 13 are checks that had never failed on that case in runs 9 to 27, the runs whose raw files are stored. B's decode says the criteria "require" findings where the notice says only that the documentation does not show them, and I's doctor's letter opens "I am the [specialty …] for Mr. Pruitt", where the check looks for "treating" or "attending". Each full run from 19 to 25, set against the other runs in the same way, has two to four;
+- two of the 13 have their text in the decode, the section whose instruction moved: B's, above, and C's "The policy allows exception", which runs 10, 12 and 25 also had. Counted the same way, the six full runs before had 6, 0, 5, 2, 1 and 2. One run cannot say whether B's comes from the new order; it is the line to look for in the next run;
+- every case got a case strength that runs 20 to 27 had given it, and a type of denial of the kind those runs gave; the wording of the type line varies from run to run, as it did before;
+- the decode is no longer than it was: 7,805 words over the ten cases, against 7,787 to 8,081 in runs 19 to 25;
+- every part was written at the first request (60 of 60). One free session carried all 60 calls: its 24-call budget is counted in each server instance's memory (section 7), and no one instance saw 24 of them.
+
+Two things in I's kit are open (section 7). Neither is in the decode, whose instruction is what moved: I's decode sends every record through the family.
+
+- A defect that code had removed came back in a new form. The insurer script asks: "Can the ambulance company resubmit the claim with the trip report, or do we need to file a redetermination with those records?" On Original Medicare the records go in with the family's own request, and the route guard (v9.12 and v9.12.1) does not know this wording.
+- Reading the kit found a fourth bug in the code that reads the writers' prose, and no check counts it. The billing script says: "I need it by [a date …] so I have time to mail everything to me." The route guard takes "I have time to mail everything to Medicare" for a request made of someone else and turns "to Medicare" into "to me"; replayed on that sentence, it does exactly that. No other stored kit has it.
+
+G's one failure is its label check firing on a consequence the doctor's letter names ("may lead to … chronic urinary retention or incontinence"), which the label guard leaves alone on purpose.
+
+Replaying today's deterministic layer (v9.13; v9.14 changed no guard) on stored outputs, with no prompt change, shows what code alone fixes. The defect counts went:
 
 | Run | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | All |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | As run | 21 | 25 | 14 | 17 | 10 | 9 | 16 | 16 | 14 | 18 | 12 | 18 | 13 | 6 | 22 | 13 | 244 |
 | Replayed | 15 | 14 | 9 | 12 | 6 | 5 | 12 | 11 | 11 | 14 | 9 | 9 | 9 | 2 | 16 | 9 | 163 |
 
-No check that passed as run fails in the replay. Runs 21, 23, 24, 25 and 26 go from 13, 10, 12, 14 and 2 to 10, 9, 11, 14 and 1.
+No check that passed as run fails in the replay. Runs 21, 23, 24, 25 and 26 go from 13, 10, 12, 14 and 2 to 10, 9, 11, 14 and 1. Run 28, written under the same guards, is left as it is: all 60 parts unchanged, 13 defects.
 
 ### Must-pass safety checks
 
@@ -261,6 +299,7 @@ No check that passed as run fails in the replay. Runs 21, 23, 24, 25 and 26 go f
 | 19–21, 23–25 | pass | pass | pass | pass | pass | pass | pass |
 | 26 | — | — | — | — | — | pass | pass |
 | 27 | — | pass | — | — | — | pass | pass |
+| 28 | pass | pass | pass | pass | pass | pass | pass |
 | Production | — | — | pass | pass | pass | — | pass |
 
 **G, runs 5–7.** Each engine before v9 routed the G patient through her doctor's office, in its own words:
@@ -294,8 +333,9 @@ The count is case × term × section cells with one of the guard's nine labels l
 | 24 | v9.11 | 2 | 3 |
 | 25 | v9.12 | 2 | 4 |
 | 26–27 | v9.12.1–v9.13 (C, I, J only) | 0 | 0 |
+| 28 | v9.14 | 4 | 3 |
 
-Every unbracketed cell in the documents sent to the insurer in runs 19–27 and in production is a risk or a possible consequence, which the guard leaves alone on purpose: "placing me at risk for complications, malnutrition", "risks recurrent incontinence", "risks permanent paralysis and incontinence". The cells elsewhere are mostly G's decode and phone scripts, which the guard does not cover (section 7).
+Every unbracketed cell in the documents sent to the insurer in runs 19–28 and in production is a risk or a possible consequence, which the guard leaves alone on purpose: "placing me at risk for complications, malnutrition", "risks recurrent incontinence", "risks permanent paralysis and incontinence". Run 28's four are all in doctor's letters and of the same kind: "with risk of motor vehicle accidents" (A), "with risk of progressive bowel damage, malnutrition" (C), and "may lead to … chronic urinary retention or incontinence" (G, two cells). The cells elsewhere are mostly G's decode and phone scripts, which the guard does not cover (section 7).
 
 ### Reading the numbers
 
@@ -366,6 +406,7 @@ v9.11 and v9.12 answered those three, and the third audit (run 26) confirmed it:
 | v9.12 | On Original Medicare the billing-office script's own spec asks for the records to come to the family and whether the provider will file its own redetermination, in place of "submit a corrected claim, add documentation, or appeal"; code takes the provider route out of what the writers still produce; the records rule says only what to do | The spec outvoted the v9.11 rule: case I's kits asked the ambulance company to send its records to Medicare or file a corrected claim in 7 of the 8 runs from 16 to 24. The diff gate over all 996 stored parts changed 15 lines, all in I; run ungated it would have removed 15 correct corrected-claim lines from A, D and E, so it is gated on the plan. Run 25's billing script asks for the trip report and whether Tri-County will file its own request |
 | v9.12.1 | The route guard also covers the run-21 forms ("ask … to send their records to the Medicare claims office", "to Medicare and to me", the letter's "[I have asked … directly to your office]"), in each section's voice; the doctor's-letter spec on Original Medicare offers no peer-to-peer | Run 21's I-4 lines, the re-audit's own examples, were not caught by v9.12. Run 25's doctor's letter offered "[If peer-to-peer is offered, I am available …]" under the rule that says there is none |
 | v9.13 | The decode's "Two requests at once" line says where the expedited external review goes on an insured plan (the state insurance department, which assigns the reviewer), that the reviewer may want the plan's expedited appeal finished first, and to ask the same day if the plan upholds; the writers are told the same. "[my / Dr. ___'s] October 26 consultation"; "not designed to" for a setting "not validated to" a task; the office's offer to fax the records to the contractor itself comes out; the Original Medicare deadline is a day of arrival, counted from presumed receipt | The third audit (run 26): J-R3-2 (borderline Critical), J-2, J-5, I-4 and I-R3-2. The diff gate changed 3 guard lines, 1 route line and the urgent line of C and J only. Run 27: J's decode and §9 send the request to the state insurance department; I's deadline counts from presumed receipt |
+| v9.14 | The decode's writer is asked for the type of denial first, directly under the heading and ahead of the "Read from your letter" list. Nothing else in the instruction moved, and no guard changed. The page is sent the heading the moment it is written | Shown live, the type of denial reached a reader at 12.0 seconds on the median of three pasted cases (9.3 to 18.4 over four kits), against a target of 10: it was written after the thirteen-line list. Replayed on all 169 stored decodes with the line moved, the guards gave the same lines and nothing shown was corrected. Run 28: 2.8 to 6.7 seconds over ten kits (4.4 on the median of the eight pasted cases), the type line first and once in every decode, 13 defects against 10, 12 and 14 in runs 23 to 25, every deadline and identifier exact |
 | v9.9 (handler only) | The free path: free tokens per visitor, with a lifetime call budget per token. The reader is told plainly when the account's spend limit is reached or a file cannot be read, instead of "try again". The prompts, plan rules and guards moved to `api/_lib/`, which the site does not serve. Later the same day, the free translator and appeal letter got the same plain budget message and a per-visitor allowance of their own | The site went free on 30 October 2026. Until then `/lib/fightpack-preamble.js` and the other engine files were downloadable from the live site. The translator and letter writer share the account's budget, and until then had no limit per visitor, so one script could have spent it for all three tools |
 
 ## 6. What generalizes
@@ -381,7 +422,7 @@ v9.11 and v9.12 answered those three, and the third audit (run 26) confirmed it:
    - "not validated" for a level of care (runs 16–20, through two prompt fixes);
    - the choice and notice arguments in surprise-billing cases;
    - what a family owes for an ambulance on Original Medicare (every run from 16 to 21; gone in run 23 once code wrote it);
-   - where Original Medicare records go (7 of 8 runs from 16 to 24, through the v9.11 rule; gone in runs 25–27 once code decided the section's own spec by plan).
+   - where Original Medicare records go (7 of 8 runs from 16 to 24, through the v9.11 rule; gone in runs 25–27 once code decided the section's own spec by plan, and back once in run 28 in a wording the guard does not know).
 
    Each disappeared only when code enforced it. For relabels, code turns them into prompts for the clinician.
 2. **Negative examples prime the error they name.** The v9.11 records rule quoted the phrases to avoid, "as additional documentation" and "a corrected claim", and run 24 wrote both. v9.12 says only what to do.
@@ -403,6 +444,8 @@ v9.11 and v9.12 answered those three, and the third audit (run 26) confirmed it:
 
    Each surfaced only when the model phrased something in a new way. The checker caught all three, two of them by comparing the tracker's facts with hand-derived truth. Code that parses model output needs the same discipline as the guards: run it on every stored output before it ships.
 
+   A fourth is open, and the checker did not catch it. In run 28 the Original Medicare route guard read the family's own step, "so I have time to mail everything to Medicare", as a request made of someone else, and wrote "to me" (section 4). It was found by reading the kit.
+
 ## 7. Known limits
 
 - **The corpus is small and synthetic.** It has ten cases.
@@ -413,7 +456,12 @@ v9.11 and v9.12 answered those three, and the third audit (run 26) confirmed it:
   - J-R3-2 (the urgent external-review route, borderline Critical), J-2 (the dated consultation in the peer-to-peer script), I-4's last line, J-5's new wording and I's deadline wording are answered in code (v9.12.1–v9.13). Run 27 shows them in the kits; no audit has read them yet.
   - I-3 (a severity upgrade in the doctor's letter) and J-R3-1 (tolerance overstated) are prose: the doctor must read the letter before signing. The bracket tried for I-3 would have damaged correct letters (section 6).
   - Minors remain, among them: the daughter's records requests lean on the CMS-1696 form, which is not a HIPAA authorization (I-N3); J's insurer script names no number and asks for the expedited appeal fifth (J-12); J's doctor's letter carries no EXPEDITED label (J-8).
-  - A fourth audit of I and J, on a v9.13 run, is the next check.
+  - A fourth audit of I and J, on a v9.13 or v9.14 run (27 or 28), is the next check.
+- **Two Original Medicare route items from run 28 are open.**
+  - The insurer script asked whether the ambulance company can "resubmit the claim with the trip report". The route guard knows the forms of runs 16 to 24, not this one.
+  - The same guard turned the family's own step, "so I have time to mail everything to Medicare", into "to me" in the billing script.
+  - Both need a guard change, and a guard change goes through the diff of every stored line before it ships (section 6).
+- **The live decode has been timed from a server, not from a phone.** Run 28's times are a script's, on a server's connection (section 1). No reader's own build has been timed.
 - **Clinician letters still need a clinician's read.**
   - The label guard covers nine recurring relabels. Others, and invented level-of-care rules, are not caught.
   - The relabel usually starts in the decode, which every writer follows. The guard covers the documents sent to the insurer, not the decode, the phone scripts or the notes to the doctor's office. In runs 20 and 21, 10 and 11 cells outside those documents kept a label, mostly in G.
@@ -433,23 +481,24 @@ Two run-15 guard misfires are fixed: "causing foot drop and falls" now brackets 
 for t in qa/tests/*.js; do node "$t" || break; done
 
 # live run of all ten cases against the deployed site (the preview code is never throttled)
-cd qa && FP_CODE=<preview code> FP_RUN=runs28 FP_CONC=3 node fp-run.js
+cd qa && FP_CODE=<preview code> FP_RUN=runs29 FP_CONC=3 node fp-run.js
 # one case the way a visitor builds it, through the free path
-FP_FREE=1 FP_RUN=runs28-free node fp-run.js G-medicaid-mri-redflags
-# all ten through the free path: the runner takes the next free session when one has had its 24 calls
+FP_FREE=1 FP_RUN=runs29-free node fp-run.js G-medicaid-mri-redflags
+# all ten through the free path, with the first section asked for live as the page asks and its lines timed
+# (run 28 was built this way; prints first line, type of denial, case strength, finished section, and redo,
+# which should be 0). The runner takes the next free session when one is refused for having had its 24 calls
 # (three sessions an hour for a visitor, so one ten-case run an hour)
-FP_FREE=1 FP_LIVE=1 FP_CONC=1 FP_RUN=runs28-free node fp-run.js
-# the same, with the first section asked for live as the page asks, and its lines timed
-# (prints: first line, type of denial, case strength, finished section, and redo, which should be 0)
-FP_FREE=1 FP_LIVE=1 FP_RUN=runs28-live node fp-run.js A-sleep-paraphrase
+FP_FREE=1 FP_LIVE=1 FP_CONC=1 FP_RUN=runs29-free node fp-run.js
+# one case the same way
+FP_FREE=1 FP_LIVE=1 FP_RUN=runs29-live node fp-run.js A-sleep-paraphrase
 
 # score it (FP_TODAY pins "today" for the date checks; list the cases a partial run ran)
-FP_TODAY=2026-10-30 node fp-check.js runs28
+FP_TODAY=2026-10-30 node fp-check.js runs29
 
 # the must-pass safety table and the per-run summary
-node safety-table.js runs28 && node run-stats.js runs28
+node safety-table.js runs29 && node run-stats.js runs29
 
-# re-score every stored run on the cases it ran (runs 9–27 reproduce the table in section 4)
+# re-score every stored run on the cases it ran (runs 9–28 reproduce the table in section 4)
 for t in evidence/raw-runs*.tar.gz; do tar xzf "$t"; done && ./rescore-all.sh rescore
 
 # replay the current deterministic layer on a stored run, then score the replay
@@ -470,8 +519,8 @@ node scripts/build-sample-kit.js --check
 
 The evidence is in:
 
-- `qa/evidence/` — the kits and reports from runs 4–21 and 23–27, and the two production kits (`runs22-free`);
-- `qa/evidence/raw-runs9-15.tar.gz`, `raw-runs16-24.tar.gz` and `raw-runs25-27.tar.gz` — the raw part files for runs 9–27, which can be re-scored or replayed (runs 3–8 survive as kits and reports only);
+- `qa/evidence/` — the kits and reports from runs 4–21 and 23–28, and the two production kits (`runs22-free`);
+- `qa/evidence/raw-runs9-15.tar.gz`, `raw-runs16-24.tar.gz`, `raw-runs25-27.tar.gz` and `raw-runs28.tar.gz` — the raw part files for runs 9–28, which can be re-scored or replayed (runs 3–8 survive as kits and reports only). Run 28's logs also hold the time each live line took;
 - `qa/evidence/sample/` — the raw answers, checker report and build date behind `sample-kit.json`;
 - `docs/qa-evidence/` — the seven audits.
 
