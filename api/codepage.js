@@ -121,9 +121,9 @@ function page(entry) {
     ${isDenial ? `<section class="panel tint cta">
       <span class="kicker">Fighting a ${esc(entry.code)} denial?</span>
       <h2 class="mt-1">Fewer than 1 in 100 denials are appealed, and appeals often win.</h2>
-      <p class="lead mt-2">Paste your denial letter and get a ready-to-edit appeal letter back, free. The Fight Pack adds the letter your doctor signs.</p>
+      <p class="lead mt-2">Paste your denial letter and get the whole kit back, free: the appeal, the letter your doctor signs, phone scripts, the records request and every deadline.</p>
       <div class="row mt-3">
-        <a class="btn btn-primary btn-lg" href="/appeal"><svg class="ic" style="width:18px;height:18px" aria-hidden="true"><use href="#i-pen"/></svg> Draft my appeal letter</a>
+        <a class="btn btn-primary btn-lg" href="/"><svg class="ic" style="width:18px;height:18px" aria-hidden="true"><use href="#i-sig"/></svg> Build my Fight Pack</a>
         <a class="btn btn-secondary btn-lg" href="/denials">The Denial Playbook</a>
       </div>
     </section>` : `<section class="panel tint cta">
