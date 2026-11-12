@@ -49,22 +49,33 @@ The kit has ten sections, written in six passes.
 
 **The decode is shown while it is written.** The page asks for part 1 live, and the handler sends its lines as the writer finishes them. A line is sent only after the text so far has been through the same code as the finished decode (`guardPart`, `decodeText`), so no line is shown that has not been through the guards. Two more cautions apply:
 
-- the newest line is always held back, because the next line can still change it;
+- the newest line is always held back, because the next line can still change it (the heading is the exception: the guards have already made it the exact heading, and it is shown the moment it is written);
 - the decode's two closing lines, "What you may actually owe" and "Do this first", arrive only with the finished decode, because code can rewrite them.
 
 On the page the live lines are kept apart from the kit: they are not saved, copied, printed or emailed, and parts 2–6 are written from the finished decode only. From the first lines until the kit is done the page shows the documents under a small progress panel and nothing else of the kit; its controls come back when it is done, and the page holds the reader's place whenever something above the documents changes (a reader who has gone back up the page to their letter is left where they are). When the kit is done the page says so in a bar that stays at the foot of the screen, whose button takes the reader to the email box (it has come back above them, with the kit's other controls); with sections missing it takes the reader to the message that names them. If the stream fails, stops before the writer's closing message, or the decode comes back short, the page clears the live text and asks again the plain way. `FIGHTPACK_LIVE=off` turns the live read off (README, "Live first read").
 
 Replayed over the first section of all 169 stored kits, no line that would have been shown was changed afterwards (`redo` is 0), and how the stream was cut up made no difference (`qa/tests/test-live-read.js`). That is evidence, not a proof: two rewrites read lines further down (the line the code adds under "Urgent", and the Original Medicare route), so a decode written in an unusual order could show a line and then correct it. `redo` on the count line, checked as the lines are sent and once more against the finished decode, is how that would be seen. In the same replay, the median point in the section's text at which each line is released:
 
-| Line | Released when this much of the section has been written |
-|---|---|
-| The heading | 2% |
-| The first of the reader's own details ("Read from your letter") | 4% |
-| Type of denial | 29% (it begins at 19%; a line is released when the line after it is complete) |
-| What they're really saying | 50% |
-| Case strength | 69% |
+| Line | As first written (through November 11, 2026) | With the type of denial first |
+|---|---|---|
+| The heading | 2% | 1% (shown the moment it is written) |
+| Type of denial | 29% (9 in 10 by 35%) | 8% (9 in 10 by 13%) |
+| The first of the reader's own details ("Read from your letter") | 4% | 9% |
+| What they're really saying | 50% | 50% |
+| Case strength | 69% | 69% |
 
-The first section took a median of 25 seconds to arrive whole in runs 16–27. How soon these lines reach a reader on the live site has not been measured yet: that depends on how long the writer takes to start, and on the stream not being held back on the way. `FP_LIVE=1` on the runner measures it (section 8).
+The second column is the stored sections replayed with their type line moved to the top, which is where the writer is now asked to put it; no kit written that way is stored yet.
+
+**Measured on the live site, November 11, 2026, with the first order** (four kits through `FP_LIVE=1`, seconds from the request to each line):
+
+| Case | First line | Type of denial | Case strength | Section finished |
+|---|---|---|---|---|
+| A, pasted paraphrase | 3.1 | 9.3 | 19.1 | 26.3 |
+| D, pasted EOB | 2.8 | 12.0 | 22.4 | 30.3 |
+| C, pasted prior-authorization letter | 3.3 | 18.4 | 31.2 | 39.6 |
+| B, phone photo | 3.0 | 14.9 | 32.5 | 46.1 |
+
+The stream is passed through line by line (28 to 30 messages a section), every first section was written once, and no shown line was corrected. The first line met its target (5 seconds). The type of denial did not (10 seconds: the median of the three pasted cases was 12.0), which is why the writer is now asked for it first: replayed on these four sections, it would have arrived at about 4 to 6 seconds. That is a prediction until a run with the new order is in.
 
 The writer's rules, the plan rules and the guards live in `api/_lib/`, which the site never serves.
 
@@ -425,6 +436,9 @@ for t in qa/tests/*.js; do node "$t" || break; done
 cd qa && FP_CODE=<preview code> FP_RUN=runs28 FP_CONC=3 node fp-run.js
 # one case the way a visitor builds it, through the free path
 FP_FREE=1 FP_RUN=runs28-free node fp-run.js G-medicaid-mri-redflags
+# all ten through the free path: the runner takes the next free session when one has had its 24 calls
+# (three sessions an hour for a visitor, so one ten-case run an hour)
+FP_FREE=1 FP_LIVE=1 FP_CONC=1 FP_RUN=runs28-free node fp-run.js
 # the same, with the first section asked for live as the page asks, and its lines timed
 # (prints: first line, type of denial, case strength, finished section, and redo, which should be 0)
 FP_FREE=1 FP_LIVE=1 FP_RUN=runs28-live node fp-run.js A-sleep-paraphrase

@@ -208,7 +208,11 @@ const TOO_LONG = 'That took too long. Try again — the kit builds in short pass
 
   // What may be shown of a guarded text: nothing before the heading, never the newest line (the
   // next line can still change it), never the two lines code rewrites at the end, nor anything after them.
+  // The heading is the one line that does not wait: the guards have already made it the section's exact
+  // heading, whatever the AI wrote, and no later line changes it.
   same(L.showable(''), [], 'nothing to show before any text');
+  same(L.showable('## 1. T\n'), ['## 1. T'], 'the heading is shown the moment it is complete');
+  same(L.showable('## 1. T\n\n'), ['## 1. T'], 'with or without blank lines after it');
   same(L.showable('Here is the section you asked for.\nMore.\n'), [], 'a sentence before the heading is never shown');
   same(L.showable('\n\n## 1. T\na\nb'), ['## 1. T', 'a'], 'leading blank lines are not shown, and the newest line is held back');
   same(L.showable('## 1. T\na\nb\n\n'), ['## 1. T', 'a'], 'a line break after the newest line does not release it');
@@ -218,8 +222,8 @@ const TOO_LONG = 'That took too long. Try again — the kit builds in short pass
 
   // The reader: text in as the AI writes it, "from line N, these lines" out.
   const r = L.liveReader((p) => p.replace(/RAW/g, 'SAFE'));
-  same(r.push('## 1. T\nfirst RAW li'), null, 'the heading waits for the line after it');
-  same(r.push('ne\nsecond\n'), { from: 0, lines: ['## 1. T', 'first SAFE line'] }, 'lines are sent complete, guarded, and one line behind');
+  same(r.push('## 1. T\nfirst RAW li'), { from: 0, lines: ['## 1. T'] }, 'the heading is sent the moment it is complete');
+  same(r.push('ne\nsecond\n'), { from: 1, lines: ['first SAFE line'] }, 'the lines after it are sent complete, guarded, and one line behind');
   same(r.push('third'), null, 'an unfinished line changes nothing');
   same(r.push('\n'), { from: 2, lines: ['second'] }, 'later lines are appended');
   same(r.redo(), 0, 'nothing was corrected');
@@ -300,6 +304,58 @@ const TOO_LONG = 'That took too long. Try again — the kit builds in short pass
   const em = await live(withLine(S, RAW[0][1]), { size: 9 });
   ok(em.shown.some((l) => l.includes('Go to an emergency department now, or call 911.')), 'the safety line the code writes is shown');
   ok(/\*\*Do this first:\*\* Go to the emergency department now\./.test((em.done || {}).text || '') && !em.shown.some(isHeld), 'the first step the code rewrites arrives only with the finished section');
+
+  // ---------- 3b. the type of denial is written first, and nothing else cares where it stands ----------
+  // Measured on the live site, the type of denial reached a reader at 12 seconds (9 to 18 over four kits): the AI
+  // wrote it after the thirteen-line "Read from your letter" list. It is now asked to write it first, directly
+  // under the heading. For that to be safe the instructions must say so, once, and move nothing else; and the
+  // guards must not care where the line stands. The stored sections were all written the old way, so each is
+  // replayed here with its type line moved to the top.
+  {
+    const SEC1 = require('../../api/_lib/fightpack-sections.js').SEC[1];
+    const at = (re) => SEC1.search(re);
+    ok(at(/\*\*Type of denial:\*\*/) > 0 && at(/\*\*Type of denial:\*\*/) < at(/\*\*Read from your letter/), 'the AI is asked for the type of denial before the "Read from your letter" list');
+    same((SEC1.match(/\*\*Type of denial:\*\*/g) || []).length, 1, 'and asked for it once');
+    const order = ['Read from your letter', 'Safety first:', 'Plan:', 'Urgent:', "What they're really saying:", 'What they have to show:', 'Your strongest argument:', 'Case strength:', 'What would make it decisive:', 'Who fixes this:', 'What you may actually owe:', 'Do this first:'];
+    const places = order.map((label) => SEC1.indexOf('**' + label));
+    ok(places.every((x, i) => x > 0 && (i === 0 || x > places[i - 1])), 'everything else keeps its order: the list, the safety line, the plan and so on down to the first step (' + places.join(',') + ')');
+    ok(SEC1.indexOf('**Your strongest argument:') < SEC1.indexOf('**Case strength:'), 'the case is still graded after the argument is written out');
+
+    const TYPE = /^[ \t]*(?:[-*•][ \t]+)?\*\*Type of denial/;
+    // a stored section as it would be written now: the type line directly under the heading, as a plain labelled line
+    const typeFirst = (text) => {
+      const lines = text.split('\n');
+      const i = lines.findIndex((l) => TYPE.test(l));
+      assert(i > 0 && lines[0].startsWith('## 1.'), 'the stored section has a heading and a type line');
+      const [line] = lines.splice(i, 1);
+      if (i < lines.length && !lines[i].trim() && !lines[i - 1].trim()) lines.splice(i, 1);
+      return [lines[0], '', line.replace(/^[ \t]*[-*•][ \t]+/, ''), ''].concat(lines.slice(lines[1] !== undefined && !lines[1].trim() ? 2 : 1)).join('\n');
+    };
+    const said = (text) => text.split('\n').filter((l) => l.trim()).map((l) => l.replace(/^[ \t]*[-*•][ \t]+(?=\*\*Type of denial)/, '')).sort();
+    let early = 0;
+    for (const s of FIRST) {
+      const moved = typeFirst(s.text);
+      const a = await plain(s.text), b = await plain(moved), c = await live(moved);
+      same(said(b.body.text), said(a.body.text), s.file + ': with the type line first the guards give the same lines');
+      same(c.done, b.body, s.file + ': type line first, the finished live section is the plain reply');
+      same(c.shown, ((c.done || {}).text || '').split('\n').slice(0, c.shown.length), s.file + ': type line first, the lines shown are how the finished section begins');
+      same(c.redo, 0, s.file + ': type line first, nothing shown had to be corrected');
+      const first = (re) => c.messages.findIndex((m) => m.lines && m.lines.some((l) => re.test(l)));
+      if (first(TYPE) >= 0 && first(TYPE) <= first(/^- /)) early++;
+    }
+    same(early, FIRST.length, 'and the type of denial reaches the page no later than the first of the reader\'s own details');
+    // The heading is sent the moment it is complete. Whatever the AI made of it, what is sent is the section's
+    // exact heading, and nothing sent is corrected.
+    const H1 = '## 1. Your denial, decoded — and how strong your case is';
+    const body = S.split('\n').slice(1).join('\n');
+    for (const h of ['## 1. Your denial, decoded', '## 1. Your Denial, Decoded — And How Strong Your Case Is', '# 1. Your denial, decoded — and how strong your case is', 'Here is your decode.\n\n' + H1]) {
+      for (const size of [1, 9]) {
+        const b = await live(h + '\n' + body, { size });
+        same((b.messages[0] || {}).lines, [H1], JSON.stringify(h.slice(0, 44)) + ': the first thing sent is the heading, as the kit always prints it (' + size + ' bytes at a time)');
+        same(b.redo, 0, JSON.stringify(h.slice(0, 44)) + ': and nothing sent is corrected');
+      }
+    }
+  }
 
   // 3.1 the count: a live first section adds one number, how many shown lines were corrected
   {
