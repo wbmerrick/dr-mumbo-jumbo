@@ -125,7 +125,10 @@ const PROVIDER_EDITS = [
   // appeal or submit additional documentation on my behalf, or do I need to …" cut down to "If the plan do I need to …".
   // And what would be (re)submitted is a claim or records: the family's own forms are not ("Should I resubmit the
   // CMS-1696 form, or can I …?" stays). The family's question must stand on its own: "…, or should we?" stays too.
-  [/\b(?:can|could|should|will|would|may|might|does)[ \t]+(?:(?!\b(?:or|not|can|could|should|will|would|may|might|does|do|did)\b)[^?.!;:,\n"“”]){1,70}?[ \t]+((?:re)?submit\b[^?.!;\n]{0,90}?),?[ \t]+or[ \t]+((?:do|does|should|must|will|would|can|could)[ \t]+(?:we|I)\b)(?=[ \t]+[A-Za-z])/gi,
+  // And the one who would (re)submit is someone else, not "I", "we" or "the family": "Can I submit additional
+  // documentation after the request is filed, or do I need to …?" is the family's own step (found by the automated
+  // review of this change).
+  [/\b(?:can|could|should|will|would|may|might|does)(?![ \t]+(?:I|we|the[ \t]+family)\b)[ \t]+(?:(?!\b(?:or|not|can|could|should|will|would|may|might|does|do|did)\b)[^?.!;:,\n"“”]){1,70}?[ \t]+((?:re)?submit\b[^?.!;\n]{0,90}?),?[ \t]+or[ \t]+((?:do|does|should|must|will|would|can|could)[ \t]+(?:we|I)\b)(?=[ \t]+[A-Za-z])/gi,
     (all, x, own, at, line) => (!(providerRoute(x) && CLAIM_OR_RECORDS.test(x)) ? all : /(?:^|[.?!:"“(*])[ \t]*$/.test(line.slice(0, at)) ? own.charAt(0).toUpperCase() + own.slice(1) : own)],
   // a clause that sends the records to Medicare on their own
   [/,?[ \t]+or ask (?:the|your|them|him|her)\b[^.?!;\n]{0,100}?\bto (?:submit|send)\b[^.?!;\n]{0,60}?\bto Medicare\b[^.?!;\n]*/gi, ''],

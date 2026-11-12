@@ -160,8 +160,17 @@ for (const keep of [
   // a form is not a claim: the family's own paperwork is not a resubmission to take out (run 13's case F asked
   // "Do I need to submit an authorized representative form, or can I ask these questions as a family member?")
   'Should I resubmit the CMS-1696 form, or can I sign the request as his daughter?',
+  "Should the doctor's office resubmit the form with his signature, or do we need to start a new one?",
   // nothing would be left of this one but "Should we?"
   'Should the ambulance company submit the trip report, or should we?',
+  // what the family itself would submit is the family's own step, not a provider's resubmission (evidence can be
+  // added to a redetermination after it is filed; it adds time to the decision). The automated review of this
+  // change found that the rule took these out.
+  'Can I submit additional documentation after the request is filed, or do I need to send everything at once?',
+  'Should we submit the hospital records later, or do we need to hold the request until they arrive?',
+  // the same in the doctor's voice, where the family is "the family"
+  'Can the family submit the records with their request, or should I fax them to you now?',
+  'Can the family submit the hospital records later, or should I hold my letter until they have them?',
   // run 20, case D, a real line. The first form of this rule cut it to "If the plan do I need to include …": it began
   // at "does not" and took in two things the office might do. The diff over every stored kit showed it; the rule
   // now takes one helping verb and one thing, and leaves this line as it is.
