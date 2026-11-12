@@ -45,6 +45,8 @@
   .mailkit .mailform{display:flex;gap:8px;flex-wrap:wrap}
   .mailkit .mailform .input{flex:1 1 240px;min-width:0}
   .mailkit .mailkit-note{margin:0}
+  .mailkit .mailcheck{flex:1 1 100%;display:flex;align-items:flex-start;gap:9px;font-size:14px;line-height:1.45;color:var(--soft);cursor:pointer}
+  .mailkit .mailcheck input{flex:none;width:17px;height:17px;margin:2px 0 0;accent-color:var(--accent);cursor:pointer}
   @media (max-width:640px){ .mailkit .mailform .btn{flex:1 1 100%} }
   .wait.on{display:block}
   .wait form{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
@@ -221,8 +223,9 @@
       <p class="alert note on checkline">Before you send anything, check every number under <strong>“Read from your letter”</strong> against your actual letter, especially if you uploaded a photo. If one is off, fix it once with <strong>Fix a detail everywhere</strong>.</p>
       <div class="panel tint mailkit" id="mailkit">
         <div><strong>Keep this kit.</strong> It lives only in this browser — email yourself a copy.</div>
-        <form class="mailform" id="mailform"><input class="input" type="email" id="mailemail" required autocomplete="email" placeholder="you@email.com" aria-label="Email address"><button class="btn btn-primary btn-sm" type="submit" id="mailbtn">Email me my kit</button></form>
-        <p class="small mailkit-note">Sent once from hello@dr-mumbo-jumbo.com. We keep your address for launch news only; the kit itself isn't stored.</p>
+        <form class="mailform" id="mailform"><input class="input" type="email" id="mailemail" required autocomplete="email" placeholder="you@email.com" aria-label="Email address"><button class="btn btn-primary btn-sm" type="submit" id="mailbtn">Email me my kit</button>
+          <label class="mailcheck"><input type="checkbox" id="mailcheckin"><span>Check in with me: one email in 3 days to ask if it's sent, one in 4 weeks to ask how it went. Two emails, then no more.</span></label></form>
+        <p class="small mailkit-note">Sent from hello@dr-mumbo-jumbo.com: the kit once, and the two check-ins only if you tick the box. We keep your address for launch news only; the kit itself isn't stored.</p>
         <div class="wait-msg" id="mailmsg" role="status"></div>
       </div>
       <form class="fixform" id="fixform" hidden>

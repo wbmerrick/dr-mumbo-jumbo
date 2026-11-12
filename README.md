@@ -15,6 +15,7 @@ Live at https://dr-mumbo-jumbo.com (hosted on Vercel; the domain is registered a
 | `/codes/` | Plain-English code library (~190 CPT, ICD-10, and denial-reason codes), one page per code. | `api/codelibrary.js`, `api/codepage.js`, data in `lib/` |
 | `/how-its-tested` | How the Fight Pack is tested, with the bottom-line numbers from `docs/fightpack-qa.md`. | `how-its-tested.html` |
 | `/privacy`, `/terms` | Privacy and terms, in plain words. | `privacy.html`, `terms.html` |
+| `/checkin` | The page a check-in email opens: one question, an answer to tap. Not indexed, not in the sitemap. | `checkin.html` → `POST /api/checkin` |
 | `/sitemap.xml` | Generated sitemap for every page above. | `api/sitemap.js` |
 | `POST /api/lead` | Fight Pack waitlist signup (email + what they're fighting). | `api/lead.js` → Supabase |
 
@@ -77,6 +78,56 @@ select coalesce(src, '(before sources)') as source, count(*) as started, count(*
 from k where coalesce(src, '') <> 'qa' group by 1 order by built desc, started desc;
 ```
 
+### Check-ins: was the appeal sent, and did it win
+
+Under "Email me my kit" there is a box, not ticked. A reader who ticks it gets two more emails: 3 days on, "Has your appeal been sent?", and 28 days on, "What happened with your appeal?". `lib/checkin.js` writes them; `api/email-kit.js` schedules both with Resend (`scheduled_at`) the moment the kit goes out, so nothing on our side keeps a list of who asked. Resend holds a scheduled email for 30 days at most, which is why the second is at four weeks and there is no third.
+
+Each email has one signed link per answer. A link opens `/checkin`, and the answer is counted only when the reader taps it there (`POST /api/checkin`), never when the page opens: mail scanners open every link in a message. What a link carries rides after the `#`, so opening it tells the host only that `/checkin` was opened. The count is one row in `public.dmj_events`: `evt = 'checkin'` with the kit's tag (`kid`), the question (`stage`: 1 or 2) and the `answer` (`sent`, `notyet`; `won`, `lost`, `waiting`, `nosend`). No address is in a link or a count.
+
+The latest answer per kit and question (a reader can change their mind):
+
+```sql
+with a as (
+  select distinct on (data->>'kid', data->>'stage') data->>'kid' as kid, data->>'stage' as stage, data->>'answer' as answer
+  from public.dmj_events where evt = 'checkin' order by data->>'kid', data->>'stage', id desc
+)
+select stage, answer, count(*) as kits from a group by 1, 2 order by 1, 3 desc;
+```
+
+How many emailed kits asked for check-ins (what the answers are a share of), by where the reader came from:
+
+```sql
+select coalesce(data->>'src', '(before sources)') as source, count(*) as emailed,
+       count(*) filter (where (data->>'checkins')::int > 0) as with_checkins
+from public.dmj_events where evt = 'kit_emailed' group by 1 order by 2 desc;
+```
+
+Answers by where the kit's reader came from (the tag ties an answer to its kit's build rows):
+
+```sql
+with a as (
+  select distinct on (data->>'kid', data->>'stage') data->>'kid' as kid, data->>'stage' as stage, data->>'answer' as answer
+  from public.dmj_events where evt = 'checkin' order by data->>'kid', data->>'stage', id desc
+), k as (
+  select data->>'kid' as kid, max(data->>'src') as src from public.dmj_events where evt = 'kit_part' group by 1
+)
+select coalesce(k.src, '(no build row)') as source, a.stage, a.answer, count(*) as kits
+from a left join k using (kid) group by 1, 2, 3 order by 1, 2, 4 desc;
+```
+
+Things to know before relying on them:
+
+- **A reader who replies to the first email asking not to get the second has been promised it will not come** (the email and `privacy.html` both say so). Cancel it by hand: Resend → Emails → the scheduled email to that address → Cancel. The site's key has Sending access only and cannot cancel for you.
+- **A scheduled email is sent with the API key that scheduled it.** If that key is deleted in Resend before the email goes out, it fails. When replacing `RESEND_API_KEY`, add the new key and leave the old one active for 30 days.
+- **Rotating `FIGHTPACK_SECRET` closes every check-in link that is out**, as it ends every session: the links are signed with it. A link also stops taking answers 180 days after its kit was emailed.
+- The first email says a second is coming, so the second is scheduled first; if it cannot be, the first is not sent either. A check-in that could not be scheduled is counted as `checkin_failed` with `stage`, `why` and `fix`, like `kit_email_failed`, and the reader is told. It never fails the kit email.
+- Pressing "Email me my kit" twice does not double them: each carries an idempotency key (kit, question, a hash of the address) that Resend keeps for 24 hours.
+- `kit_emailed` now carries `src` and `checkins` (0, 1 or 2 scheduled). It does not carry the kit's tag: that request is the one holding the reader's address, which is kept for launch news in the same second, and a tag there would sit beside it by time.
+
+### The one line the page adds to a kit
+
+Every document in a kit is written by the model except one line. The fourth document is the note the reader hands over with the letter someone else has to sign (the doctor's office, the billing office, or HR). As the kit is put on the page, `fightpack.js` adds one bullet to that note saying what wrote the drafts and where it is (`ORIGIN_LINE`, added by `withOrigin()`): whoever signs a letter should know a tool drafted it, and that office handles denials every week. It is in what is shown, copied, printed and emailed, above the note's closing thank-you, and not in the kit saved in the browser or in `sample-kit.json`, which stay exactly what the writers wrote. No other document gets it. `qa/tests/test-checkin-page.js` pins it against all the recorded kits.
+
 ### Live first read
 
 The kit's first section (the decode) is shown line by line while it is being written, so a reader sees something about their own letter within seconds instead of watching a progress panel for about 25.
@@ -121,6 +172,7 @@ fightpack.js        the Fight Pack page's client code (passes, retries, kit rend
 denials.html        the Denial Playbook
 how-its-tested.html, privacy.html, terms.html
                     the trust pages
+checkin.html        the page a check-in email opens (one question; counts nothing until an answer is tapped)
 sample-kit.json     the finished kit shown by "Try an example": the site's own answer to the example letter, never edited by hand
 nocturne.css        the shared design system (tokens, components, print styles)
 og.png              the share image
@@ -131,7 +183,8 @@ api/_lib/           the Fight Pack engine, kept out of the public site (Vercel s
                     fightpack-limits.js — settings, vehicles and waits; choice and notice (v9.8.2–v9.8.3)
                     fightpack-facts.js — the ambulance bill, policy numbers, the doctor's expedited request (v9.10), where Original Medicare records go (v9.11–v9.12), the urgent external-review route (v9.13)
                     fightpack-live.js — the live first read: reads the model's stream and decides which guarded lines of the decode can be shown
-lib/                code-library data (CPT in three modules, ICD-10, denial reasons); unlock.js (tokens); files.js (attachments).
+lib/                code-library data (CPT in three modules, ICD-10, denial reasons); unlock.js (tokens); files.js (attachments);
+                    checkin.js (the two check-in emails and their signed links; api/checkin.js takes the answers).
                     These stay publicly readable (static hosting serves them; vercel.json only redirects the plain /lib/ path),
                     so nothing secret or proprietary goes here.
 qa/                 the Fight Pack test corpus, live runner, checker, replay, unit tests and evidence
@@ -145,4 +198,4 @@ robots.txt
 
 ## Privacy posture
 
-Nothing a visitor pastes or uploads is stored. The only data kept is the waitlist table (email + category), which also holds the addresses of people who asked to have a kit emailed to them (source `kit-email`). An emailed kit transits Resend once and is not stored on our side; Resend keeps its copy of the message (contents and delivery records) for its fixed 30-day retention, then deletes it — `privacy.html` says exactly that. Pages ask visitors to leave out names, birthdates, and ID numbers, and the prompts instruct the model not to repeat them. The use counter (`public.dmj_events`) holds counts and flags, and for a kit one word for where its reader came from, never an address; `qa/tests/test-count.js` fails if a count line gains a field.
+Nothing a visitor pastes or uploads is stored. The only data kept is the waitlist table (email + category), which also holds the addresses of people who asked to have a kit emailed to them (source `kit-email`). An emailed kit transits Resend once and is not stored on our side; Resend keeps its copy of the message (contents and delivery records) for its fixed 30-day retention, then deletes it — `privacy.html` says exactly that. Pages ask visitors to leave out names, birthdates, and ID numbers, and the prompts instruct the model not to repeat them. The use counter (`public.dmj_events`) holds counts and flags, and for a kit one word for where its reader came from, never an address; `qa/tests/test-count.js` fails if a count line gains a field. Check-ins are sent only to a reader who ticked the box, are held by Resend and not by us, and contain no part of the kit; an answer is counted with the kit's tag and never with an address (`qa/tests/test-checkin.js`, `test-email-kit.js` and `test-checkin-page.js` hold each of those).
