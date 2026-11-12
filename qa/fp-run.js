@@ -4,13 +4,17 @@
 // Usage: FP_CODE=<preview code> [FP_RUN=runs2] node fp-run.js [caseId ...]
 //    or: FP_FREE=1 node fp-run.js <caseId> — the free path a visitor takes. A free token covers about four kits
 //        and a visitor gets three an hour, so use the preview code (never throttled) for a full ten-case run.
+//    add FP_LIVE=1 to ask for part 1 live, as the page does, and time its lines: how long until the first line,
+//        the type of denial, the case strength and the finished section (qa/live-client.js).
 const fs = require('fs');
 const path = require('path');
 const cases = require('./manifest.js');
+const { readLive } = require('./live-client.js');
 const BASE = process.env.FP_BASE || 'https://dr-mumbo-jumbo.com';
 const RUN = process.env.FP_RUN || 'runs';
 const only = process.argv.slice(2);
 const CONCURRENCY = Number(process.env.FP_CONC || 2);
+const LIVE = /^(1|true|yes)$/i.test(process.env.FP_LIVE || '');
 
 async function postJSON(url, body, ms) {
   const ctrl = new AbortController();
@@ -24,6 +28,23 @@ async function postJSON(url, body, ms) {
   } catch (e) {
     clearTimeout(t);
     return { ok: false, status: 0, data: { message: String(e && e.message) }, ms: Date.now() - started };
+  }
+}
+
+// The same request with live: true, read as the page reads it. The result is postJSON's, plus `live`: the
+// times its lines arrived (null when the server answered the plain way).
+async function postLive(url, body, ms) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms || 125000);
+  const started = Date.now();
+  try {
+    const r = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(Object.assign({}, body, { live: true })), signal: ctrl.signal });
+    const res = await readLive(r, started);
+    clearTimeout(t);
+    return Object.assign(res, { ms: Date.now() - started });
+  } catch (e) {
+    clearTimeout(t);
+    return { ok: false, status: 0, data: { message: String(e && e.message) }, ms: Date.now() - started, live: null };
   }
 }
 
@@ -48,10 +69,20 @@ function attach(name) {
 
 async function fetchPart(p, token, inp, extraBody, dir, log) {
   // src: 'qa' marks these kits in the site's own count, so test runs can be left out of "kits built by place".
-  const ask = () => postJSON(BASE + '/api/fightpack', Object.assign({ token, part: p, src: 'qa' }, inp, extraBody || {}));
+  const body = () => Object.assign({ token, part: p, src: 'qa' }, inp, extraBody || {});
+  const ask = () => postJSON(BASE + '/api/fightpack', body());
   const attempts = [];
-  const rec = (res, retry) => attempts.push({ status: res.status, ms: res.ms, stop: res.data.stop, missing: res.data.missing, usage: res.data.usage, retry });
-  let res = await ask(); rec(res);
+  const rec = (res, retry) => attempts.push({ status: res.status, ms: res.ms, stop: res.data.stop, missing: res.data.missing, usage: res.data.usage, retry, live: res.live || undefined });
+  // FP_LIVE: part 1 is asked for live the first time, as the page asks; asking again is done the plain way.
+  const liveAsk = LIVE && p === 1;
+  let res = await (liveAsk ? postLive(BASE + '/api/fightpack', body()) : ask()); rec(res);
+  if (liveAsk) {
+    const id = path.basename(dir);
+    const sec = (ms) => (ms === null ? 'never' : (ms / 1000).toFixed(1) + 's');
+    if (res.live) console.log(`[${id}] live · first ${sec(res.live.first_ms)} · type ${sec(res.live.type_ms)} · grade ${sec(res.live.grade_ms)} · done ${sec(res.live.done_ms)} · redo ${res.live.redo} · ${res.live.messages} messages`);
+    else console.log(`[${id}] live · the server answered the plain way (status ${res.status}, ${res.ms} ms): no lines to time`);
+    if (!res.ok) console.log(`[${id}] live · FAILED with ${res.status} ${JSON.stringify(res.data).slice(0, 160)}; part 1 is asked for again the plain way, so it is written twice`);
+  }
   if (!res.ok && (res.status === 0 || res.status >= 500)) { await sleep(1500); res = await ask(); rec(res, '5xx'); }
   if (res.ok && res.data.missing && res.data.missing.length) {
     const res2 = await ask(); rec(res2, 'missing');

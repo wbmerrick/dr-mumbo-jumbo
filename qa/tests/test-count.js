@@ -92,7 +92,9 @@ let n = 0; const ok = (c, m) => { assert(c, m); n++; };
   ok(srcOf('kitSRC06') === 'unknown', 'a word with nothing usable in it is counted as unknown (got ' + srcOf('kitSRC06') + ')');
   // What a count line may hold is the whole promise on the privacy page: which action, which part of
   // which kit, a safety label, two flags, and the source word. A field added here is a field kept.
-  const HOLDS = ['evt', 'kid', 'part', 'safety', 'urgent', 'missing', 'src'];
+  // redo is a number, on a first section that was shown live only: how many lines already on screen
+  // had to be corrected (api/fightpack.js; checked in test-live-read.js). Nothing about the reader.
+  const HOLDS = ['evt', 'kid', 'part', 'safety', 'urgent', 'missing', 'src', 'redo'];
   const extra = [...new Set(lines.flatMap((l) => Object.keys(l)))].filter((k) => !HOLDS.includes(k));
   ok(extra.length === 0, 'a count line holds only ' + HOLDS.join(', ') + ' (also found: ' + extra.join(', ') + ')');
 

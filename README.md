@@ -40,6 +40,7 @@ Set these in Vercel → Project → Settings → Environment Variables, then red
 | `ANTHROPIC_MODEL` | no | Override the default model for the free tools. |
 | `FIGHTPACK_MODEL` | no | Model for the Fight Pack (default `claude-sonnet-4-5`). |
 | `FIGHTPACK_FREE` | no | The Fight Pack is free unless this is `0` (or `false` / `off`). Set it to `0` when payments go live. |
+| `FIGHTPACK_LIVE` | no | The kit's first section is shown line by line as it is written unless this is `off` (`0`, `false` and `no` mean the same; see "Live first read" below). |
 | `STRIPE_SECRET_KEY` | for payments | Stripe secret key (`sk_test_…` to rehearse, `sk_live_…` to sell). |
 | `STRIPE_PRICE_ID` | for payments | The one-time price (`price_…`) from the Stripe product. |
 | `FIGHTPACK_SECRET` | yes (any random string) | Signs the unlock tokens (free or paid), combined with the Stripe key when there is one. |
@@ -158,6 +159,22 @@ Things to know:
 
 Every document in a kit is written by the model except one line. The fourth document is the note the reader hands over with the letter someone else has to sign (the doctor's office, the billing office, or HR). As the kit is put on the page, `fightpack.js` adds one bullet to that note saying what wrote the drafts and where it is (`ORIGIN_LINE`, added by `withOrigin()`): whoever signs a letter should know a tool drafted it, and that office handles denials every week. It is in what is shown, copied, printed and emailed, above the note's closing thank-you, and not in the kit saved in the browser or in `sample-kit.json`, which stay exactly what the writers wrote. No other document gets it. `qa/tests/test-checkin-page.js` pins it against all the recorded kits.
 
+### Live first read
+
+The kit's first section (the decode) is shown line by line while it is being written, so a reader sees something about their own letter within seconds instead of watching a progress panel for about 25.
+
+- The page adds `live: true` to its first request for part 1. `api/fightpack.js` then asks the model for a streamed answer and replies with a stream of small messages: `{"from": N, "lines": [...]}` as lines settle, and last `{"done": {...}}`, the same object the endpoint has always returned (or `{"error": {...}}`).
+- A line is sent only after the text so far has been through the same guards as the finished section (`decodeText`). The newest line is always held back, and the section's two closing lines, "What you may actually owe" and "Do this first", arrive only with the finished section, because code can rewrite them (`api/_lib/fightpack-live.js`).
+- A request without `live`, parts 2–6, and anything that fails before the first line are answered exactly as before.
+- On the page (`fightpack.js`), the lines are drawn in the first document while the progress panel shrinks to its heading and status line. They are kept apart from the kit: nothing live is saved, copied, printed, emailed or passed to parts 2–6. From the first lines until the whole kit is done the page shows the documents and nothing else of the kit: the copy, print, email, rebuild and fix controls and the deadline tracker come back when it is done.
+- A reader who is watching is taken to be reading, so nothing moves the documents on their screen: when the strength tag appears above them, when the finished section replaces the live one, and when the kit is done (its controls return and the progress panel goes), the page holds its place (`holdPlace`) instead of scrolling to the top of the kit. A reader who has gone back up the page to their letter is left where they are. Each document's own Copy button is hidden where it stands while the kit is built (`index.html`), not removed, so the text under it does not move when it returns.
+- When the kit is done after a live view, the page says so in a short notice ("Your Fight Pack is ready") and does not move. If some sections did not finish, it takes the reader to the message that names them.
+- If the stream fails part-way or the section comes back short, the page clears the live text and asks again the plain way. A model stream that stops before its closing message is a failure too, never a finished section. A browser that cannot read a reply piece by piece never asks for one.
+- A live first section adds one number to its count line: `redo`, how many times a line already on screen had to be corrected. It is checked as the lines are sent and once more against the finished section. It should always be 0, and was for every one of the 169 recorded kits replayed through the live path. It is a tripwire, not a proof: two rewrites read lines further down (the line the code adds under "Urgent", and the Original Medicare route), so a section written in an unusual order could show a line and then correct it.
+- If the reader leaves while the first section is being written, the server stops the model call and does not count that part, but only where it is told the reader has gone. A plain Node server is told. Vercel tells a function only when request cancellation is switched on for it (`supportsCancellation` in `vercel.json`), and this project has not switched it on. On the deployed site the call therefore most likely runs to its end and the part is counted, exactly as before this change.
+
+**Off switch:** set `FIGHTPACK_LIVE=off` in Vercel → Environment Variables and redeploy (`0`, `false` and `no` mean the same). The server then ignores `live` and the site behaves as it did before. No code change is needed.
+
 ### Switching on Fight Pack payments (later)
 
 1. In Stripe: Products → Add product → "Dr Mumbo Jumbo Fight Pack", one-time, at the chosen price. Copy the price ID (`price_…`).
@@ -196,6 +213,7 @@ api/_lib/           the Fight Pack engine, kept out of the public site (Vercel s
                     fightpack-guards.js — the deterministic text guards and the safety renderer
                     fightpack-limits.js — settings, vehicles and waits; choice and notice (v9.8.2–v9.8.3)
                     fightpack-facts.js — the ambulance bill, policy numbers, the doctor's expedited request (v9.10), where Original Medicare records go (v9.11–v9.12), the urgent external-review route (v9.13)
+                    fightpack-live.js — the live first read: reads the model's stream and decides which guarded lines of the decode can be shown
 lib/                code-library data (CPT in three modules, ICD-10, denial reasons); unlock.js (tokens); files.js (attachments);
                     checkin.js (the two check-in emails and their signed links; api/checkin.js takes the answers;
                     api/app-checkin.js turns them on for the app).

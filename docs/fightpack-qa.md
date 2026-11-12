@@ -47,6 +47,25 @@ The kit has ten sections, written in six passes.
 - stops a writer that drifts into the next part;
 - normalizes every part, so only that part's sections survive, under their exact headings.
 
+**The decode is shown while it is written.** The page asks for part 1 live, and the handler sends its lines as the writer finishes them. A line is sent only after the text so far has been through the same code as the finished decode (`guardPart`, `decodeText`), so no line is shown that has not been through the guards. Two more cautions apply:
+
+- the newest line is always held back, because the next line can still change it;
+- the decode's two closing lines, "What you may actually owe" and "Do this first", arrive only with the finished decode, because code can rewrite them.
+
+On the page the live lines are kept apart from the kit: they are not saved, copied, printed or emailed, and parts 2–6 are written from the finished decode only. From the first lines until the kit is done the page shows the documents under a small progress panel and nothing else of the kit; its controls come back when it is done, and the page holds the reader's place whenever something above the documents changes (a reader who has gone back up the page to their letter is left where they are). When the kit is done the page says so in a short notice; with sections missing it takes the reader to the message that names them. If the stream fails, stops before the writer's closing message, or the decode comes back short, the page clears the live text and asks again the plain way. `FIGHTPACK_LIVE=off` turns the live read off (README, "Live first read").
+
+Replayed over the first section of all 169 stored kits, no line that would have been shown was changed afterwards (`redo` is 0), and how the stream was cut up made no difference (`qa/tests/test-live-read.js`). That is evidence, not a proof: two rewrites read lines further down (the line the code adds under "Urgent", and the Original Medicare route), so a decode written in an unusual order could show a line and then correct it. `redo` on the count line, checked as the lines are sent and once more against the finished decode, is how that would be seen. In the same replay, the median point in the section's text at which each line is released:
+
+| Line | Released when this much of the section has been written |
+|---|---|
+| The heading | 2% |
+| The first of the reader's own details ("Read from your letter") | 4% |
+| Type of denial | 29% (it begins at 19%; a line is released when the line after it is complete) |
+| What they're really saying | 50% |
+| Case strength | 69% |
+
+The first section took a median of 25 seconds to arrive whole in runs 16–27. How soon these lines reach a reader on the live site has not been measured yet: that depends on how long the writer takes to start, and on the stream not being held back on the way. `FP_LIVE=1` on the runner measures it (section 8).
+
 The writer's rules, the plan rules and the guards live in `api/_lib/`, which the site never serves.
 
 ### Decided in code
@@ -399,13 +418,16 @@ Two run-15 guard misfires are fixed: "causing foot drop and falls" now brackets 
 ## 8. How to re-run
 
 ```bash
-# unit tests
+# unit tests (the live first read: test-live-read.js for the server, test-live-page.js for the page)
 for t in qa/tests/*.js; do node "$t" || break; done
 
 # live run of all ten cases against the deployed site (the preview code is never throttled)
 cd qa && FP_CODE=<preview code> FP_RUN=runs28 FP_CONC=3 node fp-run.js
 # one case the way a visitor builds it, through the free path
 FP_FREE=1 FP_RUN=runs28-free node fp-run.js G-medicaid-mri-redflags
+# the same, with the first section asked for live as the page asks, and its lines timed
+# (prints: first line, type of denial, case strength, finished section, and redo, which should be 0)
+FP_FREE=1 FP_LIVE=1 FP_RUN=runs28-live node fp-run.js A-sleep-paraphrase
 
 # score it (FP_TODAY pins "today" for the date checks; list the cases a partial run ran)
 FP_TODAY=2026-10-30 node fp-check.js runs28
