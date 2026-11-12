@@ -5,14 +5,14 @@
       "attempts": [
         {
           "status": 200,
-          "ms": 29555,
+          "ms": 29338,
           "stop": "end_turn",
           "missing": [],
           "usage": {
-            "in": 1548,
-            "out": 950,
-            "cache_read": 5414,
-            "cache_write": 0
+            "in": 1586,
+            "out": 964,
+            "cache_read": 5143,
+            "cache_write": 271
           }
         }
       ],
@@ -21,12 +21,12 @@
         "status": 200,
         "stop": "end_turn",
         "missing": [],
-        "chars": 4389,
+        "chars": 4470,
         "usage": {
-          "in": 1548,
-          "out": 950,
-          "cache_read": 5414,
-          "cache_write": 0
+          "in": 1586,
+          "out": 964,
+          "cache_read": 5143,
+          "cache_write": 271
         }
       }
     },
@@ -35,12 +35,12 @@
       "attempts": [
         {
           "status": 200,
-          "ms": 18992,
+          "ms": 18291,
           "stop": "end_turn",
           "missing": [],
           "usage": {
-            "in": 1957,
-            "out": 647,
+            "in": 1971,
+            "out": 639,
             "cache_read": 5414,
             "cache_write": 0
           }
@@ -51,10 +51,10 @@
         "status": 200,
         "stop": "end_turn",
         "missing": [],
-        "chars": 2778,
+        "chars": 2860,
         "usage": {
-          "in": 1957,
-          "out": 647,
+          "in": 1971,
+          "out": 639,
           "cache_read": 5414,
           "cache_write": 0
         }
@@ -65,12 +65,12 @@
       "attempts": [
         {
           "status": 200,
-          "ms": 23652,
+          "ms": 21182,
           "stop": "end_turn",
           "missing": [],
           "usage": {
-            "in": 2159,
-            "out": 879,
+            "in": 2173,
+            "out": 764,
             "cache_read": 5414,
             "cache_write": 0
           }
@@ -81,10 +81,10 @@
         "status": 200,
         "stop": "end_turn",
         "missing": [],
-        "chars": 3537,
+        "chars": 3017,
         "usage": {
-          "in": 2159,
-          "out": 879,
+          "in": 2173,
+          "out": 764,
           "cache_read": 5414,
           "cache_write": 0
         }
@@ -95,12 +95,12 @@
       "attempts": [
         {
           "status": 200,
-          "ms": 24408,
+          "ms": 28473,
           "stop": "end_turn",
           "missing": [],
           "usage": {
-            "in": 2435,
-            "out": 937,
+            "in": 2449,
+            "out": 1171,
             "cache_read": 5414,
             "cache_write": 0
           }
@@ -111,10 +111,10 @@
         "status": 200,
         "stop": "end_turn",
         "missing": [],
-        "chars": 3817,
+        "chars": 4812,
         "usage": {
-          "in": 2435,
-          "out": 937,
+          "in": 2449,
+          "out": 1171,
           "cache_read": 5414,
           "cache_write": 0
         }
@@ -125,12 +125,12 @@
       "attempts": [
         {
           "status": 200,
-          "ms": 29952,
+          "ms": 30112,
           "stop": "end_turn",
           "missing": [],
           "usage": {
-            "in": 3284,
-            "out": 1302,
+            "in": 3298,
+            "out": 1015,
             "cache_read": 5414,
             "cache_write": 0
           }
@@ -141,10 +141,10 @@
         "status": 200,
         "stop": "end_turn",
         "missing": [],
-        "chars": 5506,
+        "chars": 4301,
         "usage": {
-          "in": 3284,
-          "out": 1302,
+          "in": 3298,
+          "out": 1015,
           "cache_read": 5414,
           "cache_write": 0
         }
@@ -155,12 +155,12 @@
       "attempts": [
         {
           "status": 200,
-          "ms": 36842,
+          "ms": 31155,
           "stop": "end_turn",
           "missing": [],
           "usage": {
-            "in": 2323,
-            "out": 1327,
+            "in": 2337,
+            "out": 1151,
             "cache_read": 5414,
             "cache_write": 0
           }
@@ -171,10 +171,10 @@
         "status": 200,
         "stop": "end_turn",
         "missing": [],
-        "chars": 5762,
+        "chars": 4880,
         "usage": {
-          "in": 2323,
-          "out": 1327,
+          "in": 2337,
+          "out": 1151,
           "cache_read": 5414,
           "cache_write": 0
         }
@@ -182,8 +182,8 @@
     }
   ],
   "wall": {
-    "total_ms": 66398,
-    "decode_ms": 29555,
-    "parallel_ms": 36843
+    "total_ms": 60495,
+    "decode_ms": 29338,
+    "parallel_ms": 31157
   }
 }

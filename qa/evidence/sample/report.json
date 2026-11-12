@@ -65,12 +65,12 @@
       "server decision clock: 60 days for care already received — [\"for employer and marketplace plans, the plan must decide an appeal for care already received within 60 days of receiving it (30 days per level if it has two appeal levels); care already received is never expedited\"]",
       "no regulation or statute cited by number",
       "no \"plan-preferred equivalent\" when the notice names no preferred product",
-      "§1 does not call the plan insured or self-funded unless the documents say so — ** Unknown plan type — the notice does not identify it as employer, marketplace, Medicare ",
+      "§1 does not call the plan insured or self-funded unless the documents say so — ** Unknown from these documents — check with your HR department or the plan document wheth",
       "never asserts a stability nobody reported",
       "never tells the doctor the case is not urgent",
       "no pending step written as already done",
       "appeal letter states no decision timeframe the denial letter did not print",
-      "§1 decides urgency (Urgent: Yes/No) — No — standard review (the MRI was already done in September,",
+      "§1 decides urgency (Urgent: Yes/No) — No — standard review (unless your doctor says waiting could ",
       "json urgent matches the decode — false vs false",
       "urgency decision is right for this case (false) — false",
       "not urgent → no expedited request in §2 or §9",
@@ -81,7 +81,7 @@
       "§3 signature block has NPI",
       "§3 carries the [cite: …] placeholder",
       "§3 does not hedge about necessity",
-      "§4 has 6–8 bullets — 8",
+      "§4 has 6–8 bullets — 6",
       "§2 requests the criteria and the reviewer's credentials",
       "§2 preserves the next level of review",
       "§5 maps criteria and prepares for push-back",
@@ -96,22 +96,24 @@
     ],
     "fail": [],
     "warn": [
-      "§1 long — 679 words (target 560)",
-      "§5 long — 485 words (target 420)"
+      "§1 long — 702 words (target 560)",
+      "§5 long — 441 words (target 420)",
+      "§9 long — 403 words (target 400)",
+      "§10 long — 307 words (target 260)"
     ],
     "stats": {
-      "part1_ms": 29555,
-      "part2_ms": 18992,
-      "part3_ms": 29952,
-      "part4_ms": 36842,
-      "part5_ms": 23652,
-      "part6_ms": 24408,
+      "part1_ms": 29338,
+      "part2_ms": 18291,
+      "part3_ms": 30112,
+      "part4_ms": 31155,
+      "part5_ms": 21182,
+      "part6_ms": 28473,
       "wall": {
-        "total_ms": 66398,
-        "decode_ms": 29555,
-        "parallel_ms": 36843
+        "total_ms": 60495,
+        "decode_ms": 29338,
+        "parallel_ms": 31157
       },
-      "kit_words": 4009,
+      "kit_words": 3801,
       "meta": {
         "denial_date": "2026-10-02",
         "stated_appeal_deadline": null,
@@ -131,21 +133,21 @@
           "2027-03-31"
         ]
       },
-      "placeholders": 84,
+      "placeholders": 89,
       "clock": [
         "for employer and marketplace plans, the plan must decide an appeal for care already received within 60 days of receiving it (30 days per level if it has two appeal levels); care already received is never expedited"
       ],
       "words": {
-        "1": 679,
-        "2": 418,
-        "3": 456,
-        "4": 356,
-        "5": 485,
-        "6": 398,
-        "7": 334,
-        "8": 219,
-        "9": 334,
-        "10": 240
+        "1": 702,
+        "2": 426,
+        "3": 430,
+        "4": 209,
+        "5": 441,
+        "6": 305,
+        "7": 296,
+        "8": 192,
+        "9": 403,
+        "10": 307
       }
     }
   }
