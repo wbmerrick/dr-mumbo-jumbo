@@ -433,6 +433,30 @@ const shown = (page) => page.$('strength').style.display === 'inline-flex';
     same(page.posts(), 0, 'and sends nothing to the server');
   }
 
+  // ---------- 7. the page's styles for the live view (index.html) ----------
+  // The script only marks the kit "live"; what a reader then sees is decided by the styles. Two things
+  // depend on them. The kit's controls must really be away until there is a kit. And nothing INSIDE the
+  // documents may change size when they come back: holdPlace makes up for what changes above the documents,
+  // not for a row appearing inside one. In a real browser each document's own Copy button, taken out
+  // while the kit was built, came back as a row of its own on a phone and pushed the text being read down
+  // 42 px (13 px on a laptop), and the documents further down by more. So that button is hidden where it
+  // stands, keeping its place.
+  {
+    const css = (fs.readFileSync(path.join(root, 'index.html'), 'utf8').match(/<style>([\s\S]*?)<\/style>/) || [])[1] || '';
+    const rules = {};
+    css.replace(/\/\*[\s\S]*?\*\//g, '').replace(/([^{}]+)\{([^{}]*)\}/g, (all, selectors, body) => {
+      selectors.split(',').forEach((sel) => { const k = sel.trim().replace(/\s+/g, ' '); rules[k] = (rules[k] || '') + ';' + body.replace(/\s+/g, ''); });
+      return '';
+    });
+    const says = (sel, decl) => (rules[sel] || '').split(';').includes(decl);
+    ['.kit-actions', '.checkline', '.mailkit', '.fixform', '#deadlines', '.whisper'].forEach((part) => {
+      ok(says('.kitout.live ' + part, 'display:none'), 'while a kit is built in view of the reader, ' + part + ' is away');
+    });
+    ok(says('.kitout.live .copy-btn', 'visibility:hidden'), 'a document\'s own Copy button is hidden while the kit is built');
+    ok(!says('.kitout.live .copy-btn', 'display:none'), 'but keeps its place, so the text under it does not move when it comes back');
+    ok(says('.progress.slim .plist', 'display:none'), 'and the progress panel, made small, loses its list');
+  }
+
   complete = true;
   assert(fails.length === 0, fails.length + ' of ' + n + ' checks failed:\n  - ' + fails.slice(0, 16).join('\n  - ') + (fails.length > 16 ? '\n  … and ' + (fails.length - 16) + ' more' : ''));
   console.log('live-page tests passed (' + n + ' checks)');

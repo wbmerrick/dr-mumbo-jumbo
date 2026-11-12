@@ -83,9 +83,12 @@
      shrunk to its heading and status line, and the kit area shows the documents and nothing that would treat
      them as a finished kit: no copy, print, rebuild or fix, no email, no "saved in this browser", and no tracker
      (its dates are the last kit's until this one is in). All of it comes back when the kit is done, without
-     moving the reader (fightpack.js, holdPlace). */
+     moving the reader (fightpack.js, holdPlace). holdPlace makes up for what changes above the documents; a
+     document's own Copy button is inside one, so it is hidden where it stands and keeps its place: taken
+     out, it came back as a row that pushed the text being read down. */
   .progress.slim .plist,.progress.slim .small{display:none}
-  .kitout.live .kit-actions,.kitout.live .copy-btn,.kitout.live .checkline,.kitout.live .mailkit,.kitout.live .fixform,.kitout.live #deadlines,.kitout.live .whisper{display:none}
+  .kitout.live .kit-actions,.kitout.live .checkline,.kitout.live .mailkit,.kitout.live .fixform,.kitout.live #deadlines,.kitout.live .whisper{display:none}
+  .kitout.live .copy-btn{visibility:hidden}
   .kitout.live .pulse-dot{display:block;margin-top:10px}
   .fixform{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin:10px 0 4px;padding:12px 14px;border:1px dashed var(--divider);border-radius:var(--r-md);background:var(--surface)}
   .fixform label{font-size:13px;color:var(--soft)}

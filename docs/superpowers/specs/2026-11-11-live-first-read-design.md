@@ -163,7 +163,7 @@ If the timing targets are missed because the response is held back, the site sti
 
 ## Changed while building
 
-Ten things turned out differently from the text above. The first four were found while building, by a test or a real-browser run. The last six came from the independent review of the finished branch and the checks that followed it. The code follows this section where the two differ.
+Eleven things turned out differently from the text above. The first four were found while building, by a test or a real-browser run. The last seven came from the independent review of the finished branch and the checks that followed it. The code follows this section where the two differ.
 
 1. **The controls come back when the kit is done, not when the first section is finished.** They sit above the documents. Bringing them back the moment the first section finished pushed the text the reader was reading off the screen (about 540 pixels on a phone, seen in a real browser). Now, from the first lines until the whole kit is done, the page shows the documents under the small progress panel and nothing else.
 2. **The page holds the reader's place.** When the strength tag appears, when the finished section replaces the live one, and when the kit is done (controls return, progress panel goes), the documents stay where they are on screen. This replaces "the page does not scroll again": the page is moved by exactly as much as the layout above the reader changed, at once, so the reader sees no movement.
@@ -176,8 +176,9 @@ Ten things turned out differently from the text above. The first four were found
 8. **Only a reader who is in the kit is held.** A reader who has gone back up the page to their letter (the progress panel starts below the top quarter of their screen) is not moved, because nothing they are looking at changes. In a real browser, before this, a reader part of the way back up was moved by about 400 pixels on a phone when the kit finished.
 9. **The off switch takes `off`, `0`, `false` or `no`**, in any letter case, the same words `FIGHTPACK_FREE` takes.
 10. **Stopping when the reader leaves is best effort.** The server stops the model call, and does not count the part, where it is told the reader has gone. A plain Node server is told. Vercel tells a function only when request cancellation is switched on for it (`supportsCancellation` in `vercel.json`), which this project has not done. On the deployed site the call therefore most likely runs to its end and the part is counted, as before this change.
+11. **Nothing inside a document changes size when the controls come back.** Each document's own Copy button is hidden where it stands while the kit is built, not removed. Removed, it came back as a row of its own on a phone and pushed the text being read down 42 pixels (13 on a laptop), and the documents further down by more. `holdPlace` makes up only for what changes above the documents. Seen in the real-browser screenshots.
 
-Also: `test-source.js`'s list of request fields gains `live`.
+Also: `test-source.js`'s list of request fields gains `live`. The branch was brought up to date with `main` after the check-in emails and the "where this came from" line were merged there; the new check-in box sits inside the email block, which is away while a kit is built.
 
 ## Not in this change
 
