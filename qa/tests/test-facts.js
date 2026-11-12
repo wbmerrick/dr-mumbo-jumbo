@@ -134,6 +134,70 @@ ok(/within 2–3 days of \[my \/ Dr\. ___'s\] October 26 consultation\./.test(g)
 const lim = Gd.postProcess("## 5. Peer-to-peer talking points — for your doctor\n- A skilled nursing facility does not provide three hours of therapy per day. It is not validated to deliver the intensity of therapy she needs.\n- A car is not validated to carry him.", { part: 4, known: 'x' }).text;
 ok(/It is not designed to deliver the intensity/.test(lim) && /A car is not validated to carry him\./.test(lim), '"not validated to": a setting is "not designed to"; a vehicle is left alone');
 
+// ---------- v9.14.1: two things found by reading run 28's kit for case I ----------
+// 1. The insurer script offered Medicare a route the family does not have, in a wording the guard did not know.
+//    The line as run 28 wrote it (section 6).
+const r28ask = '**Then ask:** "Can the ambulance company resubmit the claim with the trip report, or do we need to file a redetermination with those records?"';
+assert.strictEqual(F.medicareRoute(r28ask), '**Then ask:** "Do we need to file a redetermination with those records?"'); n++;
+//    The same shape as the writers have put it for other plans (case E, runs 7, 21, 23, 25 and 28). The site does not run
+//    this guard on those plans, where a corrected claim is often the right fix; the sentences are here to show the
+//    rule on real prose. What is left is the family's own question, with a capital only where it starts a sentence.
+const sameShape = [
+  ['**Ask:** "Does the billing office need to correct and resubmit the claim, or should I file a member appeal?"', '**Ask:** "Should I file a member appeal?"'],
+  ['Can you verify whether the visit note documents the shoulder problem as a separately identifiable service? If it does, will you submit a corrected claim with that documentation, or do I need to appeal this myself?',
+   'Can you verify whether the visit note documents the shoulder problem as a separately identifiable service? If it does, do I need to appeal this myself?'],
+  ['**Ask:** "Should the provider\'s billing office submit a corrected claim, or do I need to file a formal appeal?"', '**Ask:** "Do I need to file a formal appeal?"'],
+  // run 7, after a full stop; run 28 (case E), after a list number
+  ['**Then ask:** "This appears to be a coding or billing issue. Should the billing office submit a corrected claim, or do I need to file a formal appeal?"', '**Then ask:** "This appears to be a coding or billing issue. Do I need to file a formal appeal?"'],
+  ['3. Will your office submit a corrected claim, or do I need to file an appeal myself?', '3. Do I need to file an appeal myself?'],
+];
+for (const [a, b] of sameShape) { assert.strictEqual(F.medicareRoute(a), b); n++; }
+for (const s of [r28ask].concat(sameShape.map((x) => x[0]))) ok(F.medicareRoute(F.medicareRoute(s)) === F.medicareRoute(s), 'idempotent: ' + s.slice(0, 40));
+for (const keep of [
+  'Can the ambulance company file its own redetermination request, or do we need to file ours first?',
+  'Can the ambulance company submit the trip report with its own redetermination request, or do we need to file ours first?',
+  'Can you send me the denial details by mail, or do we need to request them in writing?',
+  // a form is not a claim: the family's own paperwork is not a resubmission to take out (run 13's case F asked
+  // "Do I need to submit an authorized representative form, or can I ask these questions as a family member?")
+  'Should I resubmit the CMS-1696 form, or can I sign the request as his daughter?',
+  // nothing would be left of this one but "Should we?"
+  'Should the ambulance company submit the trip report, or should we?',
+  // run 20, case D, a real line. The first form of this rule cut it to "If the plan do I need to include …": it began
+  // at "does not" and took in two things the office might do. The diff over every stored kit showed it; the rule
+  // now takes one helping verb and one thing, and leaves this line as it is.
+  'If the plan does not reprocess it correctly, will your office appeal or submit additional documentation on my behalf, or do I need to include the ER records with my appeal?',
+]) ok(F.medicareRoute(keep) === keep, 'a question the rule is not for stays: ' + keep.slice(0, 50));
+// 2. The guard read the family's own step as a request made of someone else. Run 28's billing script (section 7)
+//    came out as "... so I have time to mail everything to me." The first line here is that line with its last
+//    word as the writer had it (put through the handler with the guard as it was, it came out "to me" again). The
+//    deadline lines are written for this test in the kits' own turns of phrase; run 24's deadlines said "ask how to
+//    submit additional documentation to the redetermination already in process". What the family itself sends to
+//    Medicare is never redirected.
+const r28own = [
+  "## 7. Phone script — calling the hospital or doctor's billing office",
+  'Second, I need a copy of the ambulance trip report for August 26, 2026 to send with the redetermination request. Can you send that to me at [your mailing address]? I need it by [a date at least 2 weeks before February 11, 2027] so I have time to mail everything to Medicare.',
+  '## 10. Your deadlines and next moves',
+  '- You have until February 11, 2027 to mail the request to the Medicare address on the notice.',
+  '- You have 120 days from the day you receive the notice to send your redetermination request to Medicare.',
+  '- If a record arrives late, call 1-800-MEDICARE and ask how to submit additional documentation to Medicare for a redetermination already in process.',
+  '- If you are asked to send anything more to Medicare, send it with a copy of the notice.',
+].join('\n');
+assert.strictEqual(F.medicareRoute(r28own), r28own); n++;
+// a request made of someone else is still redirected, in the perfect tense too ("I have asked …" is reached
+// through "asked"); these three are written for this test
+const asked = [
+  '## 2. Your appeal letter',
+  'I have asked Tri-County Emergency Medical Services to send the trip report to Medicare.',
+  "## 7. Phone script — calling the hospital or doctor's billing office",
+  "I'm asking you to fax the trip report directly to Medicare this week.",
+  '## 10. Your deadlines and next moves',
+  '- Ask whether they would be willing to send the trip report to the Medicare address on the notice.',
+].join('\n').split('\n');
+const askedFixed = F.medicareRoute(asked.join('\n')).split('\n');
+ok(askedFixed[1] === 'I have asked Tri-County Emergency Medical Services to send the trip report to me.', 'letter: "I have asked X to send it to Medicare" still comes to the family ("me")');
+ok(askedFixed[3] === "I'm asking you to fax the trip report to me this week.", 'billing script: "I\'m asking you to fax it to Medicare" still comes to the family');
+ok(askedFixed[5] === '- Ask whether they would be willing to send the trip report to you.', 'deadlines: "ask whether they would be willing to send it to Medicare" still comes to the family ("you")');
+
 // ---------- through the handler ----------
 let reply = '', lastAsk = '';
 global.fetch = async (url, opts) => {
@@ -192,5 +256,15 @@ const decodeI = ['## 1. Your denial, decoded — and how strong your case is', '
   reply = '## 1. Your denial, decoded — and how strong your case is\n- **Plan:** Original Medicare (Part B)\n**Who fixes this:** You file the appeal with the ambulance records enclosed, or ask the ambulance company to submit them to Medicare with a corrected claim.';
   r = await call({ part: 1, denial: iSource });
   ok(/\*\*Who fixes this:\*\* You file the appeal with the ambulance records enclosed\.$/m.test(r.body.text), 'part 1 (the decode every writer follows): the route is fixed there too');
-  console.log(`v9.10-v9.13 facts tests passed (${n} assertions)`);
+  // v9.14.1 through the handler: run 28's two lines, on Original Medicare and on a commercial plan
+  reply = '## 5. Peer-to-peer talking points — for your doctor\n- The contractor decides on the written record.\n## 6. Phone script — calling the insurer\n' + r28ask;
+  r = await call({ part: 4, denial: iSource, decode: decodeI });
+  ok(r.code === 200 && r.body.text.includes('**Then ask:** "Do we need to file a redetermination with those records?"') && !/resubmit/.test(r.body.text), 'part 4, Original Medicare: the insurer script no longer offers Medicare a resubmission');
+  r = await call({ part: 4, denial: 'EOB: CPT 99214 denied as bundled with 20610 (CO-97).', decode: decodeCommercial });
+  ok(r.body.text.includes(r28ask), 'part 4, commercial: resubmitting the claim stays a choice');
+  const ownStep = 'I need it by [a date at least 2 weeks before February 11, 2027] so I have time to mail everything to Medicare.';
+  reply = "## 7. Phone script — calling the hospital or doctor's billing office\n" + ownStep + '\n## 8. Records and itemized-bill request letter\nPlease send the records.';
+  r = await call({ part: 5, denial: iSource, decode: decodeI });
+  ok(r.code === 200 && r.body.text.includes(ownStep), "part 5, Original Medicare: the family's own mailing to Medicare stays as written");
+  console.log(`v9.10-v9.14.1 facts tests passed (${n} assertions)`);
 })().catch((e) => { console.error('TEST FAIL', e); process.exit(1); });

@@ -1,4 +1,4 @@
-// Fight Pack facts (v9.10-v9.13): what code now states, removes or tells the writers itself, because the writers
+// Fight Pack facts (v9.10-v9.14.1): what code now states, removes or tells the writers itself, because the writers
 // kept getting it wrong after the prompt said otherwise. api/fightpack.js applies them after the guards.
 
 const MONEY = /\$\d{1,3}(?:,\d{3})*(?:\.\d{2})?/;
@@ -110,11 +110,23 @@ function providerRoute(x) {
   if (/\bto (?:me|us|you|the family)\b|\bown redetermination\b|\bwith (?:my|our|your|the) (?:appeal|request|redetermination)\b/i.test(x)) return false;
   return /corrected claim|resubmi|(?:additional|more|supporting|further) documentation|\bto Medicare\b|\bsubmit\b[^,]{0,40}\b(?:documentation|records?|trip (?:report|sheet)|run (?:report|sheet))\b/i.test(x);
 }
+const CLAIM_OR_RECORDS = /\bclaims?\b|documentation|\brecords?\b|\b(?:trip|run) (?:report|sheet)\b/i;
 const PROVIDER_EDITS = [
   // "Will your company submit additional documentation or appeal on Harold's behalf?" → "… appeal on Harold's behalf?"
   [/\b((?:re)?submit\b[^?.!;\n]{0,90}?),?[ \t]+or[ \t]+(?=(?:file|start|support|request|appeal)\b)/gi, (all, x) => (providerRoute(x) ? '' : all)],
   // "… file an appeal or submit additional documentation on the patient's behalf?" → "… file an appeal on …"
   [/(\b(?:file|start|support)\b[^?.!;\n]{0,60}?)[ \t]+or[ \t]+((?:re)?submit\b[^?.!;\n]{0,60}?)(?=[ \t]+on\b[^?.!;\n]{0,40}\bbehalf\b|[ \t]*[?.!;]|$)/gim, (all, a, x) => (providerRoute(x) ? a : all)],
+  // v9.14.1, run 28's insurer script: "Can the ambulance company resubmit the claim with the trip report, or do we
+  // need to file a redetermination with those records?" → "Do we need to file a redetermination with those
+  // records?" The family's own question is what is left; it keeps a capital only where it starts the sentence.
+  // Only this shape: one helping verb, who would resubmit, what they would do, then the family's own question.
+  // Between the helping verb and "(re)submit" there is no comma, "or", "not" or second helping verb. Without that,
+  // the diff over the stored kits showed run 20's "If the plan does not reprocess it correctly, will your office
+  // appeal or submit additional documentation on my behalf, or do I need to …" cut down to "If the plan do I need to …".
+  // And what would be (re)submitted is a claim or records: the family's own forms are not ("Should I resubmit the
+  // CMS-1696 form, or can I …?" stays). The family's question must stand on its own: "…, or should we?" stays too.
+  [/\b(?:can|could|should|will|would|may|might|does)[ \t]+(?:(?!\b(?:or|not|can|could|should|will|would|may|might|does|do|did)\b)[^?.!;:,\n"“”]){1,70}?[ \t]+((?:re)?submit\b[^?.!;\n]{0,90}?),?[ \t]+or[ \t]+((?:do|does|should|must|will|would|can|could)[ \t]+(?:we|I)\b)(?=[ \t]+[A-Za-z])/gi,
+    (all, x, own, at, line) => (!(providerRoute(x) && CLAIM_OR_RECORDS.test(x)) ? all : /(?:^|[.?!:"“(*])[ \t]*$/.test(line.slice(0, at)) ? own.charAt(0).toUpperCase() + own.slice(1) : own)],
   // a clause that sends the records to Medicare on their own
   [/,?[ \t]+or ask (?:the|your|them|him|her)\b[^.?!;\n]{0,100}?\bto (?:submit|send)\b[^.?!;\n]{0,60}?\bto Medicare\b[^.?!;\n]*/gi, ''],
   [/[ \t]*(?:—|–|;|,)[ \t]*if not, ask (?:them|it|the\b[^.?!;\n]{1,40}?) to (?:submit|send) (?:it|them)\b[^.?!;\n]{0,40}?\bto Medicare\b[^.?!;\n]*/gi, ''],
@@ -142,7 +154,13 @@ const SEND_TO = { 1: 'you', 2: 'me', 3: 'the family', 4: 'us', 5: 'the family', 
 const TO_MEDICARE = String.raw`(?:directly[ \t]+)?to[ \t]+(?:the[ \t]+)?Medicare\b(?:'s)?(?:[ \t]+(?:Part[ \t]+[AB][ \t]+)?(?:claims|appeals)[ \t]+office|[ \t]+address(?:[ \t]+on[ \t]+the[ \t]+(?:letter|notice))?|[ \t]+contractor|[ \t]+appeals)?`;
 // what is sent: never across a comma or a new clause ("… to you, and you mail everything to Medicare" is the family's own step)
 const SENT = String.raw`(?:(?!\b(?:and|then|so)[ \t]+(?:you|I|we)\b|\bto[ \t]+(?:me|us|you|the[ \t]+family)\b)[^.?!;,\n]){1,140}?`;
-const ROUTE_ASK = new RegExp(String.raw`(\b(?:ask|asked|asking|have|request(?:ed|ing)?)\b[^.?!;,\n]{1,140}?\bto[ \t]+(?:send|submit|fax|mail|forward)\b${SENT})${TO_MEDICARE}`, 'gi');
+// Who is asked is someone else (v9.14.1). "have" was in this list and is not asking: run 28's billing script, "so I
+// have time to mail everything to Medicare", came out as "to me", and "You have 120 days … to send your request to
+// Medicare" would have read "to you". "I have asked …" is still reached through "asked". Nor is anyone else asked
+// when no one stands between the asking and the sending ("ask how to submit …", "if you are asked to send …"):
+// those are the family's own steps, and what the family itself sends to Medicare is never redirected.
+const ASKED = String.raw`\b(?:ask|asked|asking|request(?:ed|ing)?)\b(?![ \t]+(?:(?:how|where|when|whether)[ \t]+)?to[ \t]+(?:send|submit|fax|mail|forward)\b)`;
+const ROUTE_ASK = new RegExp(String.raw`(${ASKED}[^.?!;,\n]{1,140}?\bto[ \t]+(?:send|submit|fax|mail|forward)\b${SENT})${TO_MEDICARE}`, 'gi');
 const ROUTE_CAN = new RegExp(String.raw`(\b(?:can|could|will|would)[ \t]+(?:you|your[ \t]+(?:company|office|team)|they)(?:[ \t]+please)?(?:[ \t]+be[ \t]+willing[ \t]+to)?[ \t]+(?:send|fax|forward|mail)\b${SENT})${TO_MEDICARE}(?:[ \t]+and[ \t]+(?:to[ \t]+)?(?:me|us))?`, 'gi');
 const ROUTE_BRACKET = /[ \t]*\[I(?:'ve| have)? (?:also )?asked\b[^\[\]\n]{0,200}?\bto (?:send|submit|fax|mail|forward)\b[^\[\]\n]{0,160}?\b(?:directly to (?:your office|you)|to (?:the )?Medicare\b)[^\[\]\n]*\]/gi;
 function medicareRoute(text) {
