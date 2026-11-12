@@ -57,10 +57,10 @@ function element() {
   const on = {}, cls = new Set(), found = {};
   let html = '';
   const e = {
-    value: '', textContent: '', hidden: false, disabled: false, style: {}, children: [], scrolls: 0, seen: new Set(),
+    value: '', textContent: '', hidden: false, disabled: false, style: {}, children: [], scrolls: 0, focused: 0, seen: new Set(),
     classList: { add: (c) => { cls.add(c); e.seen.add(c); }, remove: (c) => cls.delete(c), contains: (c) => cls.has(c) },
     addEventListener: (t, f) => { (on[t] = on[t] || []).push(f); },
-    removeEventListener() {}, setAttribute() {}, focus() {}, scrollIntoView() { e.scrolls++; }, click() {}, reset() {}, select() {},
+    removeEventListener() {}, setAttribute() {}, focus() { e.focused++; }, scrollIntoView() { e.scrolls++; }, click() {}, reset() {}, select() {},
     querySelector: (sel) => found[sel] || (found[sel] = element()), appendChild: (k) => { e.children.push(k); return k; }, removeChild() {},
     fire: (t) => (on[t] || []).forEach((f) => f({ preventDefault() {} }))
   };
@@ -118,6 +118,7 @@ function open({ hash = '', canStream = true, first = null, holdRetry = false, re
     const body = JSON.parse(opts.body);
     posts.push({ url, body });
     if (url === '/api/unlock') return Promise.resolve(plainReply(200, { token: 'session-' + posts.length }));
+    if (url === '/api/email-kit') return Promise.resolve(plainReply(200, { message: 'Sent. Check your inbox.' }));
     if (body.part === 1 && body.live === true) {
       if (first && !liveAsked) { liveAsked++; return Promise.resolve(first); }
       if (later && liveAsked++) return Promise.resolve(later);
@@ -153,6 +154,8 @@ function open({ hash = '', canStream = true, first = null, holdRetry = false, re
     moves: () => moves,                                        // every time the page was moved to hold the reader's place
     smoothly: () => root.style.scrollBehavior !== 'auto',      // whether the page's own scrolling is still the smooth kind
     readerScrolls: (dy) => { movedBy += dy; },                 // the reader's own scrolling, down the page (+) or back up it (-)
+    ready: () => $('readybar').classList.contains('on'),      // the bar that says the kit is ready, and stays
+    emails: () => posts.filter((c) => c.url === '/api/email-kit').length,
     toasted: () => docBody.children.filter((el) => el.classList.contains('toast')).map((el) => el.querySelector('span').textContent).join(' | '),   // the short message at the foot of the screen
     error: () => ($('error').classList.contains('on') ? $('error').textContent : ''),
     bytes: async (piece) => { feed(piece); await settle(); },
@@ -236,7 +239,8 @@ const shown = (page) => page.$('strength').style.display === 'inline-flex';
     ok(page.moves().length > 0 && page.moves().every((m) => m.x === 0 && !m.seen), 'the place is held at once, not by a scroll the reader watches');
     ok(page.smoothly(), 'and the page\'s own smooth scrolling is left as it was');
     ok(page.$('kitout').scrolls === 0 && page.$('progress').scrolls === 2, 'the page is not sent to the top of the kit');
-    ok(/ready/i.test(page.toasted()), 'so the reader is told the kit is ready where they are (' + page.toasted() + ')');
+    ok(page.ready(), 'so the reader is told the kit is ready where they are, in a bar that stays');
+    ok(!/ready/i.test(page.toasted()), '(not in a notice that is gone in two seconds: ' + page.toasted() + ')');
     ok(/"parts"/.test(page.saved.dmj_fp_kit || ''), 'the finished kit is saved, as today');
     same(page.error(), '', 'and the build raises no error');
     page.$('copyall').fire('click');
@@ -256,16 +260,17 @@ const shown = (page) => page.$('strength').style.display === 'inline-flex';
     await page.releaseRest();
     ok(built(page), '(the kit is built)');
     same(page.moves(), [], 'the page is never moved: nothing this reader is looking at has changed');
-    ok(/ready/i.test(page.toasted()), 'and they are told the kit is ready, where they are');
+    ok(page.ready(), 'and they are told the kit is ready, where they are');
   }
   {
-    // What decides it is whether the reader can see what stands above the kit. Scrolled up far enough to read
-    // their letter over it (the kit starts below the top quarter of the screen), they are left alone, even with
-    // the first document still showing at the foot of the screen; a nudge up the page is not that.
+    // What decides it is what is in the middle of the reader's screen. The kit runs from the progress panel
+    // down. When the panel starts above the middle of the screen, the reader is taken to be watching the kit
+    // and is held. When it starts below the middle, most of what they see stands above the kit, and they are
+    // left alone, even with the first document still showing at the foot of the screen.
     const up = await started({ holdRest: true });
     await up.say({ from: 0, lines: L.slice(0, 3) });
-    up.readerScrolls(-300);
-    ok(up.docsTop() < 664, '(scrolled up 300: the first document is still on screen, lower down)');
+    up.readerScrolls(-400);
+    ok(up.docsTop() < 664, '(scrolled up 400: the first document is still on screen, at its foot)');
     await up.say({ from: 3, lines: L.slice(3, iGrade + 1) });
     await up.done(ANSWER[1]);
     await up.releaseRest();
@@ -278,6 +283,18 @@ const shown = (page) => page.$('strength').style.display === 'inline-flex';
     await nudged.done(ANSWER[1]);
     await nudged.releaseRest();
     same(nudged.docsTop(), top, 'a reader who only nudged the page up is still reading the kit, and is held');
+    // In a real browser (the Safari engine, a phone-sized screen) a reader who moved the page while it was still
+    // gliding into place ended up with the panel 183 px down the screen: the kit across the middle of it, the
+    // first lines in front of them. Under the first rule (the panel in the top quarter) they were not held, and
+    // their text went 490 px down the page when the kit finished.
+    const touched = await started({ holdRest: true });
+    await touched.say({ from: 0, lines: L.slice(0, 3) });
+    touched.readerScrolls(-183);
+    const was = touched.docsTop();
+    await touched.say({ from: 3, lines: L.slice(3, iGrade + 1) });
+    await touched.done(ANSWER[1]);
+    await touched.releaseRest();
+    same(touched.docsTop(), was, 'a reader with the kit across the middle of their screen is held, wherever the page had stopped');
     const deep = await started({ holdRest: true });
     await deep.say({ from: 0, lines: L.slice(0, 3) });
     deep.readerScrolls(900);
@@ -286,6 +303,63 @@ const shown = (page) => page.$('strength').style.display === 'inline-flex';
     await deep.done(ANSWER[1]);
     await deep.releaseRest();
     same(deep.docsTop(), from, 'and so is one far down in the kit, the documents\' top long gone above the screen');
+  }
+
+  // ---------- 1c. the kit is done and the reader was left where they were: a bar says so, and stays ----------
+  // The kit's controls and the email box come back above the reader, out of sight, because the reader is held
+  // where they are reading. The notice that told them the kit was ready was gone in two seconds and said
+  // nothing of where the email box was; down in the documents, they had no way to know. So the page says the
+  // kit is ready in a bar that stays at the foot of the screen until it is used or closed, and its button
+  // takes them to the email box.
+  {
+    const page = await started();
+    await page.say({ from: 0, lines: L.slice(0, 3) });
+    ok(!page.ready(), 'while the kit is being built nothing says it is ready');
+    await page.done(ANSWER[1]);
+    ok(built(page) && page.ready(), 'when the kit is done the bar is up');
+    await settle();
+    ok(page.ready(), 'and it stays: no timer takes it away');
+    const before = page.moves().length;
+    page.$('readymail').fire('click');
+    same(page.$('mailkit').scrolls, 1, '"Email it to me" takes the reader to the email box');
+    same(page.$('mailemail').focused, 1, 'with the cursor in it');
+    ok(!page.ready(), 'and the bar, having done its job, goes');
+    same(page.moves().length, before, '(the reader asked to be taken there: nothing else moves the page)');
+  }
+  {
+    const page = await started();
+    await page.say({ from: 0, lines: L.slice(0, 3) });
+    await page.done(ANSWER[1]);
+    page.$('readyclose').fire('click');
+    ok(!page.ready(), 'the bar can be closed');
+    ok(page.$('mailkit').scrolls === 0 && page.$('mailemail').focused === 0, 'and closing it takes the reader nowhere');
+  }
+  {
+    // it goes when it no longer applies
+    const mailed = await started();
+    await mailed.say({ from: 0, lines: L.slice(0, 3) });
+    await mailed.done(ANSWER[1]);
+    mailed.$('mailemail').value = 'reader@example.com';
+    mailed.$('mailform').fire('submit');
+    await settle();
+    ok(mailed.emails() === 1 && !mailed.ready(), 'once the kit has been emailed the bar goes (' + mailed.emails() + ' sent)');
+    const again = await started();
+    await again.say({ from: 0, lines: L.slice(0, 3) });
+    await again.done(ANSWER[1]);
+    again.$('regen').fire('click');
+    await settle();
+    ok(!again.ready(), 'another build takes it down');
+    const cleared = await started();
+    await cleared.say({ from: 0, lines: L.slice(0, 3) });
+    await cleared.done(ANSWER[1]);
+    cleared.$('forget').fire('click');
+    ok(!cleared.ready(), 'so does clearing the kit from the browser');
+    const ex = await started();
+    await ex.say({ from: 0, lines: L.slice(0, 3) });
+    await ex.done(ANSWER[1]);
+    ex.$('example').fire('click');
+    await settle();
+    ok(ex.$('kitout').classList.contains('sample') && !ex.ready(), 'and so does opening the example, which has no email box');
   }
 
   // ---------- 2. the reply arrives all at once (a network that held it back) ----------
@@ -370,7 +444,7 @@ const shown = (page) => page.$('strength').style.display === 'inline-flex';
     ok(/did not finish/.test(page.error()), 'when sections did not finish, the reader is told (' + page.error().slice(0, 70) + ')');
     same(page.$('error').scrolls, 1, 'and is brought to the message instead of being left reading below it');
     same(page.$('kitout').scrolls, 0, '(the message is above the kit: the page does not go to the kit\'s top)');
-    ok(!/ready/i.test(page.toasted()), 'nothing says the kit is ready');
+    ok(!page.ready() && !/ready/i.test(page.toasted()), 'nothing says the kit is ready');
     ok(!page.$('kitout').classList.contains('live') && !page.$('progress').classList.contains('on') && !page.$('progress').classList.contains('slim'), 'the kit\'s controls are back and the panel is put away');
   }
   {
@@ -404,6 +478,7 @@ const shown = (page) => page.$('strength').style.display === 'inline-flex';
     ok(page.$('kitout').scrolls === 1 && page.$('progress').scrolls === 1, 'and the page moves as it always did: to the panel, then to the kit');
     same(page.moves(), [], 'with no holding in place: there was no reader mid-document to hold');
     same(page.toasted(), '', 'and nothing is announced: the page going to the kit says it');
+    ok(!page.ready(), 'nor is the bar put up: the reader is at the top of the kit, where its controls are');
   }
   {
     // a browser that cannot read a reply piece by piece does not ask for one
@@ -455,6 +530,11 @@ const shown = (page) => page.$('strength').style.display === 'inline-flex';
     ok(says('.kitout.live .copy-btn', 'visibility:hidden'), 'a document\'s own Copy button is hidden while the kit is built');
     ok(!says('.kitout.live .copy-btn', 'display:none'), 'but keeps its place, so the text under it does not move when it comes back');
     ok(says('.progress.slim .plist', 'display:none'), 'and the progress panel, made small, loses its list');
+    // the bar that says the kit is ready: out of the way until it is put up, then fixed to the screen (it must
+    // reach a reader wherever in the kit they are), and never on paper
+    ok(says('.readybar', 'display:none') && says('.readybar', 'position:fixed'), 'the "ready" bar is not shown until it is put up, and is fixed to the screen');
+    ok(says('.readybar.on', 'display:flex'), 'put up, it shows');
+    ok(/@media print\{[^@]*\.readybar\b[^@{]*\{display:none !important\}/.test(css.replace(/\s*\n\s*/g, '')), 'and it is never printed');
   }
 
   complete = true;
