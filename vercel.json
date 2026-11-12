@@ -14,6 +14,9 @@
     },
     "api/email-kit.js": {
       "maxDuration": 30
+    },
+    "api/app-checkin.js": {
+      "maxDuration": 30
     }
   },
   "redirects": [
