@@ -26,7 +26,7 @@ Everything here can be re-run from this repository (section 8).
   - The round-2 audit (run 16) found two Criticals in a new held-out case. The kit dropped the concurrent expedited external review that the denial letter offered. And the doctor's letter made its signer the author of another physician's consult note. Code now adds the concurrent request and turns a first-person clinical act into "[I / Dr. ___]". The run-21 re-audit found no Critical, and the Majors fell from 9 to 4. The third audit (run 26) again found no Critical. The Majors stayed at 4: I fell to 1, and J had two new ones (section 4).
 - **Code alone removes about a third of the old defects.** Replaying today's deterministic layer on the stored outputs of runs 5–20 cuts 244 failures to 163 and adds none. Nothing the model wrote was regenerated.
 - **Held-out cases found the failures that tuning hid.** Four cases were written after tuning. G and H were written after run 5. I and J were written after run 15, with their truth and checks fixed before they were first run. Each round exposed failures the development cases never showed, including both round-2 Criticals.
-- **Code has bugs too, and the checker found them.** Three bugs in the code that reads the model's prose surfaced in runs 11–14 (section 6). Each was fixed and checked against every stored output. A fourth, found by reading run 28, is open (section 7).
+- **Code has bugs too, and the checker found them.** Three bugs in the code that reads the model's prose surfaced in runs 11–14 (section 6). Each was fixed and checked against every stored output. A fourth was found by reading run 28, which no check counted, and fixed the same way in v9.14.1 (section 6).
 - **What remains is mostly prose fidelity.** Typical slips are a lay description relabeled in clinical words, a record described that nobody has seen, or a rule from one plan type applied to another. Code brackets the recurring ones for the clinician. The run-21 re-audit judged both doctor-signed letters signable after a few edits. A clinician must still read the letter before signing it.
 
 ## 1. How the kit is built
@@ -156,7 +156,7 @@ G and H were written after run 5; they informed fixes only after runs 7 and 9. I
 - the unlock flow, free and paid: free tokens per visitor per hour and per day, a token's lifetime budget, and that preview and paid tokens are never throttled;
 - that the kit is only emailed whole: the page script itself, run against a scripted API. A kit still being written, or with a part that failed, stops short or lacks a section, is not sent and the reader is told which part; a whole kit is sent with every character of all ten sections, and nothing else but the one line the page adds (below), including after a reload and when the session it was built in has used up its calls;
 - what the reader is told when the model API refuses a request: a spend limit or credit balance, an unreadable or oversized file, a rate limit, and a passing fault, each in both modes; and the free translator's and letter writer's allowance per visitor;
-- the v9.10–v9.13 facts, rules and guards, on the real lines the model wrote and through the handler (82 assertions);
+- the v9.10–v9.14.1 facts, rules and guards, on the real lines the model wrote and through the handler (112 assertions);
 - the kit as it is emailed and copied: the page's own text path, run over every stored kit. Rule lines and emphasis marks must be gone, and every other character of every section must still be there, in order;
 - the kit on the page: the renderer itself, on literal cases and every stored kit. Italics are shown as italics and no text is left wrapped in asterisks;
 - the homepage's first screen: the order the page is read in, and how much stands before the Build button. The tool follows the headline directly (54 words before the button; the suite fails above 75), progress and the kit open right under it, the pitch and the six cards come after and stay off a printed kit, and every element the page script looks up is on the page once. Pixels need a browser: measured in Chrome, the Build button ends 637 px down on a laptop (it was 1,381) and 655 px down on a 390 × 664 phone (it was 2,441);
@@ -269,21 +269,21 @@ H went 1, 4, 1, 1 and F 3, 0, 4, 4 with no change to the code those cases exerci
 - the decode is no longer than it was: 7,805 words over the ten cases, against 7,787 to 8,081 in runs 19 to 25;
 - every part was written at the first request (60 of 60). One free session carried all 60 calls: its 24-call budget is counted in each server instance's memory (section 7), and no one instance saw 24 of them.
 
-Two things in I's kit are open (section 7). Neither is in the decode, whose instruction is what moved: I's decode sends every record through the family.
+Two things in I's kit needed code, and v9.14.1 is that code (section 5). Neither is in the decode, whose instruction is what moved: I's decode sends every record through the family.
 
-- A defect that code had removed came back in a new form. The insurer script asks: "Can the ambulance company resubmit the claim with the trip report, or do we need to file a redetermination with those records?" On Original Medicare the records go in with the family's own request, and the route guard (v9.12 and v9.12.1) does not know this wording.
-- Reading the kit found a fourth bug in the code that reads the writers' prose, and no check counts it. The billing script says: "I need it by [a date …] so I have time to mail everything to me." The route guard takes "I have time to mail everything to Medicare" for a request made of someone else and turns "to Medicare" into "to me"; replayed on that sentence, it does exactly that. No other stored kit has it.
+- A defect that code had removed came back in a new form. The insurer script asks: "Can the ambulance company resubmit the claim with the trip report, or do we need to file a redetermination with those records?" On Original Medicare the records go in with the family's own request, and the route guard (v9.12 and v9.12.1) did not know this wording. With v9.14.1 the line reads "Do we need to file a redetermination with those records?"
+- Reading the kit found a fourth bug in the code that reads the writers' prose, and no check counts it. The billing script says: "I need it by [a date …] so I have time to mail everything to me." The route guard took "I have time to mail everything to Medicare" for a request made of someone else and turned "to Medicare" into "to me"; put through the handler as it was, that sentence came out exactly so. No other stored kit has it. v9.14.1 leaves the family's own sending steps alone.
 
 G's one failure is its label check firing on a consequence the doctor's letter names ("may lead to … chronic urinary retention or incontinence"), which the label guard leaves alone on purpose.
 
-Replaying today's deterministic layer (v9.13; v9.14 changed no guard) on stored outputs, with no prompt change, shows what code alone fixes. The defect counts went:
+Replaying today's deterministic layer (v9.14.1) on stored outputs, with no prompt change, shows what code alone fixes. The defect counts went:
 
 | Run | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | All |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | As run | 21 | 25 | 14 | 17 | 10 | 9 | 16 | 16 | 14 | 18 | 12 | 18 | 13 | 6 | 22 | 13 | 244 |
 | Replayed | 15 | 14 | 9 | 12 | 6 | 5 | 12 | 11 | 11 | 14 | 9 | 9 | 9 | 2 | 16 | 9 | 163 |
 
-No check that passed as run fails in the replay. Runs 21, 23, 24, 25 and 26 go from 13, 10, 12, 14 and 2 to 10, 9, 11, 14 and 1. Run 28, written under the same guards, is left as it is: all 60 parts unchanged, 13 defects.
+No check that passed as run fails in the replay. Runs 21, 23, 24, 25 and 26 go from 13, 10, 12, 14 and 2 to 10, 9, 11, 14 and 1. Run 28 goes from 13 to 12: one line of one part changes, I's question about resubmitting the claim. The sentence the old guard garbled cannot be put back by a replay, and no check counts it.
 
 ### Must-pass safety checks
 
@@ -407,6 +407,7 @@ v9.11 and v9.12 answered those three, and the third audit (run 26) confirmed it:
 | v9.12.1 | The route guard also covers the run-21 forms ("ask … to send their records to the Medicare claims office", "to Medicare and to me", the letter's "[I have asked … directly to your office]"), in each section's voice; the doctor's-letter spec on Original Medicare offers no peer-to-peer | Run 21's I-4 lines, the re-audit's own examples, were not caught by v9.12. Run 25's doctor's letter offered "[If peer-to-peer is offered, I am available …]" under the rule that says there is none |
 | v9.13 | The decode's "Two requests at once" line says where the expedited external review goes on an insured plan (the state insurance department, which assigns the reviewer), that the reviewer may want the plan's expedited appeal finished first, and to ask the same day if the plan upholds; the writers are told the same. "[my / Dr. ___'s] October 26 consultation"; "not designed to" for a setting "not validated to" a task; the office's offer to fax the records to the contractor itself comes out; the Original Medicare deadline is a day of arrival, counted from presumed receipt | The third audit (run 26): J-R3-2 (borderline Critical), J-2, J-5, I-4 and I-R3-2. The diff gate changed 3 guard lines, 1 route line and the urgent line of C and J only. Run 27: J's decode and §9 send the request to the state insurance department; I's deadline counts from presumed receipt |
 | v9.14 | The decode's writer is asked for the type of denial first, directly under the heading and ahead of the "Read from your letter" list. Nothing else in the instruction moved, and no guard changed. The page is sent the heading the moment it is written | Shown live, the type of denial reached a reader at 12.0 seconds on the median of three pasted cases (9.3 to 18.4 over four kits), against a target of 10: it was written after the thirteen-line list. Replayed on all 169 stored decodes with the line moved, the guards gave the same lines and nothing shown was corrected. Run 28: 2.8 to 6.7 seconds over ten kits (4.4 on the median of the eight pasted cases), the type line first and once in every decode, 13 defects against 10, 12 and 14 in runs 23 to 25, every deadline and identifier exact |
+| v9.14.1 | The Original Medicare route guard, twice. (1) A question that sets someone else's resubmitting of a claim or records beside the family's own request ("Can the ambulance company resubmit the claim …, or do we need to file a redetermination …?") keeps only the family's question. (2) The rule that redirects "ask X to send it to Medicare" no longer counts "have" as asking, nor a request with no one named ("ask how to submit …", "if you are asked to send …"): what the family itself sends to Medicare is never redirected | Run 28, case I. Its insurer script offered Medicare a resubmission in a wording the guard did not know. And its billing script read "so I have time to mail everything to me": the guard had taken "I have time to mail everything to Medicare" for a request made of someone else. "You have 120 days … to send your request to Medicare" would have read "to you". The diff gate over every stored kit, and over all 846 stored parts as the server runs them: one line changes, the run-28 question. The gate also stopped the first form of rule (1), which cut a real run-20 sentence to "If the plan do I need to …" |
 | v9.9 (handler only) | The free path: free tokens per visitor, with a lifetime call budget per token. The reader is told plainly when the account's spend limit is reached or a file cannot be read, instead of "try again". The prompts, plan rules and guards moved to `api/_lib/`, which the site does not serve. Later the same day, the free translator and appeal letter got the same plain budget message and a per-visitor allowance of their own | The site went free on 30 October 2026. Until then `/lib/fightpack-preamble.js` and the other engine files were downloadable from the live site. The translator and letter writer share the account's budget, and until then had no limit per visitor, so one script could have spent it for all three tools |
 
 ## 6. What generalizes
@@ -422,7 +423,7 @@ v9.11 and v9.12 answered those three, and the third audit (run 26) confirmed it:
    - "not validated" for a level of care (runs 16–20, through two prompt fixes);
    - the choice and notice arguments in surprise-billing cases;
    - what a family owes for an ambulance on Original Medicare (every run from 16 to 21; gone in run 23 once code wrote it);
-   - where Original Medicare records go (7 of 8 runs from 16 to 24, through the v9.11 rule; gone in runs 25–27 once code decided the section's own spec by plan, and back once in run 28 in a wording the guard does not know).
+   - where Original Medicare records go (7 of 8 runs from 16 to 24, through the v9.11 rule; gone in runs 25–27 once code decided the section's own spec by plan; back once in run 28 in a wording the guard did not know, which v9.14.1 adds).
 
    Each disappeared only when code enforced it. For relabels, code turns them into prompts for the clinician.
 2. **Negative examples prime the error they name.** The v9.11 records rule quoted the phrases to avoid, "as additional documentation" and "a corrected claim", and run 24 wrote both. v9.12 says only what to do.
@@ -434,7 +435,7 @@ v9.11 and v9.12 answered those three, and the third audit (run 26) confirmed it:
    - the phone labels swallowed the previous number;
    - the banner was not idempotent.
 
-   One misfire got through. The v9.4 label guard also bracketed labels named only as risks ("at risk for malnutrition"). Reading a sample of replayed kits missed it, and live run 14 showed it. Since v9.6 the gate is a diff of every stored line a guard change would alter (`qa/guard-diff.js`), read in full before the change ships. The v9.8.3 choice guard went through eight rounds of that diff before it shipped. The gate also stops guards outright. The v9.13 candidate for the third audit's I-3, a bracket on "life-threatening", changed 70 stored lines, most of them D's correct prudent-layperson argument ("would recognize these symptoms as potentially life-threatening"), and was dropped. The v9.12 route guard, run ungated, would have removed 15 correct corrected-claim lines from A, D and E, so it runs only on Original Medicare.
+   One misfire got through. The v9.4 label guard also bracketed labels named only as risks ("at risk for malnutrition"). Reading a sample of replayed kits missed it, and live run 14 showed it. Since v9.6 the gate is a diff of every stored line a guard change would alter (`qa/guard-diff.js`; `qa/replay-diff.js` for the code steps outside the guards), read in full before the change ships. The v9.8.3 choice guard went through eight rounds of that diff before it shipped. The gate also stops guards outright. The v9.13 candidate for the third audit's I-3, a bracket on "life-threatening", changed 70 stored lines, most of them D's correct prudent-layperson argument ("would recognize these symptoms as potentially life-threatening"), and was dropped. The v9.12 route guard, run ungated, would have removed 15 correct corrected-claim lines from A, D and E, so it runs only on Original Medicare. The v9.14.1 rule for the resubmission question was stopped once on the way: its first form began at "does not" in a real run-20 sentence and left "If the plan do I need to include the ER records with my appeal?". The diff showed it, and the rule was narrowed before it shipped. An automated review of the pull request then found that the rule also took out what the family itself might submit ("Can I submit additional documentation after the request is filed, or do I need to send everything at once?"). It now applies only when someone else would resubmit.
 6. **A checker matches words, not priorities.** An independent reader is needed.
 7. **Every fix can break something else.** The run after each change is part of the change. J-6 is the example: the fix for the run-16 quotes worked, and run 21 misstated the same therapy notes in a new way.
 8. **Deterministic code has bugs too, and they sit where code reads the model's prose.** Three bugs were found, all in code, not in the model:
@@ -444,7 +445,7 @@ v9.11 and v9.12 answered those three, and the third audit (run 26) confirmed it:
 
    Each surfaced only when the model phrased something in a new way. The checker caught all three, two of them by comparing the tracker's facts with hand-derived truth. Code that parses model output needs the same discipline as the guards: run it on every stored output before it ships.
 
-   A fourth is open, and the checker did not catch it. In run 28 the Original Medicare route guard read the family's own step, "so I have time to mail everything to Medicare", as a request made of someone else, and wrote "to me" (section 4). It was found by reading the kit.
+   A fourth was not caught by the checker. In run 28 the Original Medicare route guard read the family's own step, "so I have time to mail everything to Medicare", as a request made of someone else, and wrote "to me" (section 4). It was found by reading the kit. The cause was one word, "have", in the guard's list of asking verbs. v9.14.1 took it out, and the unit tests now hold the family's own sending steps as written. The checker still has no check for a sentence of that kind.
 
 ## 7. Known limits
 
@@ -457,10 +458,8 @@ v9.11 and v9.12 answered those three, and the third audit (run 26) confirmed it:
   - I-3 (a severity upgrade in the doctor's letter) and J-R3-1 (tolerance overstated) are prose: the doctor must read the letter before signing. The bracket tried for I-3 would have damaged correct letters (section 6).
   - Minors remain, among them: the daughter's records requests lean on the CMS-1696 form, which is not a HIPAA authorization (I-N3); J's insurer script names no number and asks for the expedited appeal fifth (J-12); J's doctor's letter carries no EXPEDITED label (J-8).
   - A fourth audit of I and J, on a v9.13 or v9.14 run (27 or 28), is the next check.
-- **Two Original Medicare route items from run 28 are open.**
-  - The insurer script asked whether the ambulance company can "resubmit the claim with the trip report". The route guard knows the forms of runs 16 to 24, not this one.
-  - The same guard turned the family's own step, "so I have time to mail everything to Medicare", into "to me" in the billing script.
-  - Both need a guard change, and a guard change goes through the diff of every stored line before it ships (section 6).
+- **Run 28's two Original Medicare route items are answered in code, and not yet seen in a live run.** v9.14.1 takes the resubmission out of the insurer script's question and leaves the family's own sending steps alone (section 5). A replay of run 28 shows the first. A new build of case I on the live site is the check that is left.
+- **The route guard knows the wordings it has seen.** Each new one so far has needed its own rule (runs 16 to 24, then run 28). The checker's records-route check is what catches the next.
 - **The live decode has been timed from a server, not from a phone.** Run 28's times are a script's, on a server's connection (section 1). No reader's own build has been timed.
 - **Clinician letters still need a clinician's read.**
   - The label guard covers nine recurring relabels. Others, and invented level-of-care rules, are not caught.
@@ -506,6 +505,10 @@ node replay-guards.js runs21 runs21-replay && FP_TODAY=2026-10-30 node fp-check.
 
 # before shipping a guard change: every stored line it would change, against the deployed version
 OLD=/path/to/previous/api/_lib/fightpack-guards.js node guard-diff.js runs19 runs20 runs21
+# the same gate for the code steps outside the guards (api/fightpack.js, api/_lib/fightpack-facts.js): replay every
+# stored run in a checkout of the deployed version and in this one, then list every line the two treat differently
+for r in $(ls -d runs* | grep -v replay); do node replay-guards.js $r $r-replay; done   # in both checkouts
+node replay-diff.js /path/to/previous/qa
 
 # unbracketed relabels by case, term and section
 node relabel-map.js runs21

@@ -213,7 +213,7 @@ api/_lib/           the Fight Pack engine, kept out of the public site (Vercel s
                     fightpack-preamble.js / -sections.js / -rules.js / -prompts.js — the kit writer's rules, as prose
                     fightpack-guards.js — the deterministic text guards and the safety renderer
                     fightpack-limits.js — settings, vehicles and waits; choice and notice (v9.8.2–v9.8.3)
-                    fightpack-facts.js — the ambulance bill, policy numbers, the doctor's expedited request (v9.10), where Original Medicare records go (v9.11–v9.12), the urgent external-review route (v9.13)
+                    fightpack-facts.js — the ambulance bill, policy numbers, the doctor's expedited request (v9.10), where Original Medicare records go (v9.11–v9.12, v9.14.1), the urgent external-review route (v9.13)
                     fightpack-live.js — the live first read: reads the model's stream and decides which guarded lines of the decode can be shown
 lib/                code-library data (CPT in three modules, ICD-10, denial reasons); unlock.js (tokens); files.js (attachments);
                     checkin.js (the two check-in emails and their signed links; api/checkin.js takes the answers;
