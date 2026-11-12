@@ -2,8 +2,10 @@
 // unlock with the preview code, part 1 (the decode) first, then parts 2–6 in parallel
 // carrying the decode, with the client's retry rules.
 // Usage: FP_CODE=<preview code> [FP_RUN=runs2] node fp-run.js [caseId ...]
-//    or: FP_FREE=1 node fp-run.js <caseId> — the free path a visitor takes. A free token covers about four kits
-//        and a visitor gets three an hour, so use the preview code (never throttled) for a full ten-case run.
+//    or: FP_FREE=1 node fp-run.js [caseId ...] — the free path a visitor takes. A free session covers 24 calls
+//        (about four kits) and a visitor gets three sessions an hour; when the server stops taking one, the runner
+//        gets the next, as the page does. That is enough for all ten cases once in an hour, with a dozen calls
+//        to spare for re-asks. The preview code is never throttled.
 //    add FP_LIVE=1 to ask for part 1 live, as the page does, and time its lines: how long until the first line,
 //        the type of denial, the case strength and the finished section (qa/live-client.js).
 const fs = require('fs');
@@ -15,6 +17,7 @@ const RUN = process.env.FP_RUN || 'runs';
 const only = process.argv.slice(2);
 const CONCURRENCY = Number(process.env.FP_CONC || 2);
 const LIVE = /^(1|true|yes)$/i.test(process.env.FP_LIVE || '');
+const FREE = /^(1|true|yes)$/i.test(process.env.FP_FREE || '');
 
 async function postJSON(url, body, ms) {
   const ctrl = new AbortController();
@@ -50,12 +53,28 @@ async function postLive(url, body, ms) {
 
 async function unlock() {
   // FP_FREE=1 takes the free path the page uses when the site is free ({free:true}, no code).
-  const free = /^(1|true|yes)$/i.test(process.env.FP_FREE || '');
   const code = process.env.FP_CODE;
-  if (!free && !code) throw new Error('FP_CODE missing (or set FP_FREE=1)');
-  const r = await postJSON(BASE + '/api/unlock', free ? { free: true } : { code }, 30000);
+  if (!FREE && !code) throw new Error('FP_CODE missing (or set FP_FREE=1)');
+  const r = await postJSON(BASE + '/api/unlock', FREE ? { free: true } : { code }, 30000);
   if (!r.ok) throw new Error('unlock failed: ' + r.status + ' ' + JSON.stringify(r.data));
   return r.data.token;
+}
+// The session the run's calls go out under. On the free path, a session the server no longer takes (401: it
+// has had its 24 calls) is replaced once per call, as the page replaces it. Parts 2-6 go out together, so
+// several can be refused at once: they share one new session rather than asking for one each.
+const session = { token: null, renewing: null };
+async function withSession(send, refused) {
+  const used = session.token;
+  let res = await send(used);
+  if (!res.ok && res.status === 401 && FREE) {
+    if (refused) refused(res);
+    if (session.token === used) {
+      session.renewing = session.renewing || unlock().then((t) => { session.token = t; session.renewing = null; console.log('new free session (the last one had its share of calls)'); });
+      await session.renewing;
+    }
+    res = await send(session.token);
+  }
+  return res;
 }
 function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
 // A corpus file sent the way the page sends it: a PDF as a document, a photo as an image.
@@ -67,21 +86,21 @@ function attach(name) {
   return { kind: m[0], media_type: m[1], data: fs.readFileSync(path.join(__dirname, 'corpus', name)).toString('base64') };
 }
 
-async function fetchPart(p, token, inp, extraBody, dir, log) {
+async function fetchPart(p, inp, extraBody, dir, log) {
   // src: 'qa' marks these kits in the site's own count, so test runs can be left out of "kits built by place".
-  const body = () => Object.assign({ token, part: p, src: 'qa' }, inp, extraBody || {});
-  const ask = () => postJSON(BASE + '/api/fightpack', body());
+  const body = (token) => Object.assign({ token, part: p, src: 'qa' }, inp, extraBody || {});
   const attempts = [];
   const rec = (res, retry) => attempts.push({ status: res.status, ms: res.ms, stop: res.data.stop, missing: res.data.missing, usage: res.data.usage, retry, live: res.live || undefined });
+  const ask = () => withSession((token) => postJSON(BASE + '/api/fightpack', body(token)), (res) => rec(res, 'session'));
   // FP_LIVE: part 1 is asked for live the first time, as the page asks; asking again is done the plain way.
   const liveAsk = LIVE && p === 1;
-  let res = await (liveAsk ? postLive(BASE + '/api/fightpack', body()) : ask()); rec(res);
+  let res = await (liveAsk ? withSession((token) => postLive(BASE + '/api/fightpack', body(token)), (r) => rec(r, 'session')) : ask()); rec(res);
   if (liveAsk) {
     const id = path.basename(dir);
     const sec = (ms) => (ms === null ? 'never' : (ms / 1000).toFixed(1) + 's');
     if (res.live) console.log(`[${id}] live · first ${sec(res.live.first_ms)} · type ${sec(res.live.type_ms)} · grade ${sec(res.live.grade_ms)} · done ${sec(res.live.done_ms)} · redo ${res.live.redo} · ${res.live.messages} messages`);
     else console.log(`[${id}] live · the server answered the plain way (status ${res.status}, ${res.ms} ms): no lines to time`);
-    if (!res.ok) console.log(`[${id}] live · FAILED with ${res.status} ${JSON.stringify(res.data).slice(0, 160)}; part 1 is asked for again the plain way, so it is written twice`);
+    if (!res.ok) console.log(`[${id}] live · FAILED with ${res.status} ${JSON.stringify(res.data).slice(0, 160)}` + (res.status === 0 || res.status >= 500 ? '; part 1 is asked for again the plain way, so it is written twice' : ''));
   }
   if (!res.ok && (res.status === 0 || res.status >= 500)) { await sleep(1500); res = await ask(); rec(res, '5xx'); }
   if (res.ok && res.data.missing && res.data.missing.length) {
@@ -93,20 +112,20 @@ async function fetchPart(p, token, inp, extraBody, dir, log) {
   return res;
 }
 
-async function runCase(c, token) {
+async function runCase(c) {
   const dir = path.join(__dirname, RUN, c.id);
   fs.mkdirSync(dir, { recursive: true });
   const inp = { denial: c.denial || '', extra: c.extra || '', file: attach(c.file), records: attach(c.records) };
   const log = [];
   const parts = {};
   const t0 = Date.now();
-  const r1 = await fetchPart(1, token, inp, null, dir, log);
+  const r1 = await fetchPart(1, inp, null, dir, log);
   if (!r1.ok) { console.log(`[${c.id}] part 1 FAILED ${r1.status} ${JSON.stringify(r1.data).slice(0, 200)}`); return { log, wall_ms: Date.now() - t0 }; }
   parts[1] = r1.data.text || '';
   const t1 = Date.now();
   console.log(`[${c.id}] decode ok · ${r1.ms} ms · ${parts[1].length} chars`);
   const decode = parts[1].slice(0, 8000); // the client's cap (fightpack.js)
-  const rest = await Promise.all([2, 3, 4, 5, 6].map((p) => fetchPart(p, token, inp, { decode }, dir, log)));
+  const rest = await Promise.all([2, 3, 4, 5, 6].map((p) => fetchPart(p, inp, { decode }, dir, log)));
   rest.forEach((res, i) => { const p = i + 2; if (res.ok) parts[p] = res.data.text || ''; console.log(`[${c.id}] part ${p} ${res.ok ? 'ok' : 'FAILED ' + res.status} · ${res.ms} ms · stop=${res.data.stop} · missing=${(res.data.missing || []).length} · cache_read=${res.data.usage ? res.data.usage.cache_read : '?'}`); });
   const wall = { total_ms: Date.now() - t0, decode_ms: t1 - t0, parallel_ms: Date.now() - t1 };
   console.log(`[${c.id}] wall ${Math.round(wall.total_ms / 1000)}s (decode ${Math.round(wall.decode_ms / 1000)}s + parallel ${Math.round(wall.parallel_ms / 1000)}s)`);
@@ -116,15 +135,15 @@ async function runCase(c, token) {
 }
 
 (async () => {
-  const token = await unlock();
-  console.log('unlocked; token length', token.length);
+  session.token = await unlock();
+  console.log('unlocked; token length', session.token.length);
   const todo = cases.filter((c) => !only.length || only.includes(c.id));
   const queue = todo.slice();
   const results = {};
   async function worker() {
     while (queue.length) {
       const c = queue.shift();
-      try { results[c.id] = await runCase(c, token); } catch (e) { results[c.id] = { error: String(e) }; console.log(`[${c.id}] ERROR ${e}`); }
+      try { results[c.id] = await runCase(c); } catch (e) { results[c.id] = { error: String(e) }; console.log(`[${c.id}] ERROR ${e}`); }
     }
   }
   await Promise.all(Array.from({ length: Math.min(CONCURRENCY, todo.length) }, worker));

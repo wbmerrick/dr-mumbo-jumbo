@@ -52,13 +52,16 @@ const blank = (line) => !line.trim();
 // Which lines of a guarded text may be on the page now. None until the section's heading opens it
 // (a sentence the model put first is dropped by the guards once the heading arrives). Never the
 // newest line: the next one can still change it (a line code inserts under "Urgent", a list that
-// goes on). Nothing from the first held line on.
+// goes on). The heading is the exception: the guards have already made it the section's exact
+// heading, whatever the model wrote, and nothing after it changes it, so it is shown the moment it
+// is complete and the reader has something on the page a line sooner. Nothing from the first held
+// line on.
 function showable(text) {
   let lines = String(text).split('\n');
   while (lines.length && blank(lines[0])) lines.shift();
   while (lines.length && blank(lines[lines.length - 1])) lines.pop();
   if (!lines.length || !lines[0].startsWith('## 1.')) return [];
-  lines.pop();
+  if (lines.length > 1) lines.pop();
   const held = lines.findIndex((line) => HELD.some((re) => re.test(line)));
   if (held >= 0) lines = lines.slice(0, held);
   while (lines.length && blank(lines[lines.length - 1])) lines.pop();

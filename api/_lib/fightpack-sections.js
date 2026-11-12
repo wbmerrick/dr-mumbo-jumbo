@@ -2,7 +2,9 @@
 // Keys are the six generator parts (see api/fightpack.js); standing rules: fightpack-preamble.js.
 const SEC = {
   1: `## 1. Your denial, decoded — and how strong your case is
-Plain English, no letter format. Start with this block, copying each value exactly as printed in the source, character for character. Write "[not on the letter]" when the letter is in the source but lacks the value, and "[not provided — check your letter]" when the patient only described the letter. The rest of the kit takes its identifiers from this list, so read the source carefully — for a photo, read each number twice:
+Plain English, no letter format. The first line under the heading is this labelled line, on its own, before anything else (it is the first thing the patient reads while the rest is being written):
+**Type of denial:** one line naming the type (from the list above) and the insurer's reason as a short exact quotation from the notice, in quotation marks.
+Then this block, copying each value exactly as printed in the source, character for character. Write "[not on the letter]" when the letter is in the source but lacks the value, and "[not provided — check your letter]" when the patient only described the letter. The rest of the kit takes its identifiers from this list, so read the source carefully — for a photo, read each number twice:
 **Read from your letter — check these against the original:**
 - Patient: …
 - Member ID: …
@@ -17,9 +19,8 @@ Plain English, no letter format. Start with this block, copying each value exact
 - Expedited appeal line: … (the phone printed for urgent or fast appeals)
 - Peer-to-peer line: … (the phone printed for the doctor to discuss the decision with the plan's reviewer, with any time limit exactly as printed, for example "within 14 days of this notice")
 - Phone and fax numbers: … (every phone and fax number printed in the source, each with the words printed just before it, separated by semicolons)
-Then exactly these labelled lines, one or two sentences each (bullets only where shown), under 450 words for everything after the block:
+Then exactly these labelled lines, one or two sentences each (bullets only where shown), under 450 words for the type line and everything after the block:
 - **Safety first:** only if the source mentions a red flag (see the safety rule) — one plain line; otherwise leave this line out entirely.
-- **Type of denial:** one line naming the type (from the list above) and the insurer's reason as a short exact quotation from the notice, in quotation marks.
 - **Plan:** the plan type in the documents' own words (Medicare Advantage; Medicaid; employer plan; marketplace; or unknown — say which words show it; call it self-funded or insured only if the documents say so), and who is filing if it is not the patient (for example "you, for your father — a representative form comes first").
 - **Urgent:** "Yes — ask for an expedited decision" or "No — standard review (unless your doctor says waiting could seriously harm your health)", then one sentence why, using the urgent standard above. Care already received is always "No".
 - **What they're really saying:** two sentences; if the context asks a direct question (for example what "observation" means), answer it here in one plain sentence.
