@@ -154,10 +154,12 @@ const pause = (ms) => new Promise((r) => setTimeout(r, ms));
 //                                   ask once more, and if it is still mid-way, do not claim it.
 //   anything else (forge_not_enabled, or no name at all): a refusal like any other.
 // The hash is only ever sent to Resend, which has the address itself; it is not logged or kept.
+//
+// `from` is 'app' when the app asked (api/app-checkin.js): the same two emails in the app's words.
 const ALREADY_SET = 'invalid_idempotent_request';
 const MID_WAY = /^(?:concurrent_idempotent_requests|resource_locked)$/;
-async function scheduleCheckins(cfg, to, kid) {
-  const mails = checkin.emails(kid);
+async function scheduleCheckins(cfg, to, kid, from) {
+  const mails = checkin.emails(kid, Date.now(), from);
   if (!mails) return [];
   const who = crypto.createHash('sha256').update('dmj-checkin|' + to).digest('hex').slice(0, 16);
   const set = [];
@@ -272,3 +274,9 @@ module.exports = async (req, res) => {
   }
   res.status(200).json({ ok: true, checkins: set.length, message });
 };
+
+// For api/app-checkin.js, which schedules the same two emails without a kit: one sender, one set
+// of rules for what Resend's answers mean.
+module.exports.EMAIL_RE = EMAIL_RE;
+module.exports.resendConfig = resendConfig;
+module.exports.scheduleCheckins = scheduleCheckins;

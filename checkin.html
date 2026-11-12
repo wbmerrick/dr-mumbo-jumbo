@@ -103,6 +103,16 @@
     waiting: ['Counted. Thank you.', "The deadlines at the end of your kit show when the insurer's written answer is due. If that date has passed, section 6 of your kit is the script for calling them. If the answer comes later, you can reply to the check-in email and tell us."],
     nosend: ['Counted. Thank you for saying so.', 'If the deadline on your letter has not passed, the kit in your inbox still works. If something in the kit got in the way, reply to the check-in email and tell us what.']
   };
+  // The same, for a reader whose check-in was asked for in the app (their links carry v=app):
+  // they have no kit in their inbox and no numbered sections, so these name the documents.
+  var AFTER_APP = {
+    sent: ['Counted. Thank you.', "The insurer's clock is running now, and the deadlines in your Fight Pack show when their written answer is due. One more email will come, about four weeks after you turned on check-ins, to ask how it turned out."],
+    notyet: ['Counted. Thank you.', "An appeal only counts once it is sent, and the deadline printed on your letter is the one that matters. If you are waiting for someone else to sign or send a letter, the note for your doctor's office in your Fight Pack is the one to hand them with it."],
+    won: ['Counted. That is a denial overturned.', 'Thank you for telling us. If you would like to say how it went, reply to the check-in email.'],
+    lost: ['Counted. Thank you for telling us.', 'A second no is not the last word. "Records request and round two" in your Fight Pack is written for this, and the time you have to act is printed on the letter you just received.'],
+    waiting: ['Counted. Thank you.', "The deadlines in your Fight Pack show when the insurer's written answer is due. If that date has passed, the phone scripts in your Fight Pack are for calling them. If the answer comes later, you can reply to the check-in email and tell us."],
+    nosend: ['Counted. Thank you for saying so.', 'If the deadline on your letter has not passed, your Fight Pack in the app still works. If something in it got in the way, reply to the check-in email and tell us what.']
+  };
   var ask = $('ask'), done = $('done'), nolink = $('nolink'), answers = $('answers'), msg = $('msg');
 
   // One value from the link. '' when it is not there; null when it cannot be read.
@@ -116,6 +126,8 @@
     try{ return decodeURIComponent(m[1].replace(/\+/g, ' ')); }catch(e){ return null; }
   }
   var link = { k: param('k'), s: param('s'), d: param('d'), t: param('t') }, picked = param('a');
+  // Which words to answer in. This is not sent anywhere and decides nothing else.
+  var after = param('v') === 'app' ? AFTER_APP : AFTER;
   // Read once, the link comes out of the address bar: before the analytics script below this one
   // in loading order (it is deferred) can see it, and so it is not left in the browser's history.
   try{ if(carried && window.history && window.history.replaceState) window.history.replaceState(null, '', loc.pathname || '/checkin'); }catch(e){}
@@ -139,7 +151,7 @@
         busy = false;
         if(res.ok){
           counted = true;
-          $('thanks').textContent = AFTER[key][0]; $('next').textContent = AFTER[key][1];
+          $('thanks').textContent = after[key][0]; $('next').textContent = after[key][1];
           ask.hidden = true; done.hidden = false;
           return;
         }

@@ -16,6 +16,7 @@ Live at https://dr-mumbo-jumbo.com (hosted on Vercel; the domain is registered a
 | `/how-its-tested` | How the Fight Pack is tested, with the bottom-line numbers from `docs/fightpack-qa.md`. | `how-its-tested.html` |
 | `/privacy`, `/terms` | Privacy and terms, in plain words. | `privacy.html`, `terms.html` |
 | `/checkin` | The page a check-in email opens: one question, an answer to tap. Not indexed, not in the sitemap. | `checkin.html` → `POST /api/checkin` |
+| `POST /api/app-checkin` | Check-ins asked for from the app: a ticket per question for in-app answers, and the two emails if an address is given. Nothing on the site calls it. | `api/app-checkin.js` |
 | `/sitemap.xml` | Generated sitemap for every page above. | `api/sitemap.js` |
 | `POST /api/lead` | Fight Pack waitlist signup (email + what they're fighting). | `api/lead.js` → Supabase |
 
@@ -123,6 +124,36 @@ Things to know before relying on them:
 - Pressing "Email me my kit" twice does not double them: each carries an idempotency key (kit, question, a hash of the address) that Resend keeps for 24 hours.
 - `kit_emailed` now carries `src` and `checkins` (0, 1 or 2 scheduled). It does not carry the kit's tag: that request is the one holding the reader's address, which is kept for launch news in the same second, and a tag there would sit beside it by time.
 
+### Check-ins from the app
+
+The app has no kit to email, so it turns check-ins on with `POST /api/app-checkin` instead. Nothing on the site calls this endpoint.
+
+The request is `{ token, kid, email }`. `token` is a session token from `/api/unlock`, required. `kid` is the app's own random tag for these check-ins (letters and digits, 6 to 24); the app keeps it and sends the same one if it asks again. `email` is optional.
+
+The answer is `{ ok, kid, checkins, tickets, message }`:
+
+- `tickets` has one entry per question, `{ k, s, d, t }`: what a check-in link carries, less the answer. The app asks the question on its own screen (3 days on, then 28) and posts the ticket with the tapped answer, `{ k, s, d, t, a }`, to `/api/checkin`. It is counted as any answer is: `evt = 'checkin'` with `kid`, `stage` and `answer`. A ticket stops working after 180 days, as a link does.
+- If an address was given, the two emails are scheduled with Resend as the site's are (week 4 first, the same idempotency keys, the same `checkin_failed` count when one cannot be set), in the app's words: they do not speak of a kit email or numbered sections. `checkins` is how many were set and `message` is what to tell the reader. Their links carry `v=app`, which `/checkin` reads only to choose its words.
+
+One row is counted per request: `evt = 'app_checkin'` with `kid` and `emails` (0, 1 or 2). Answers that came from the app's check-ins, by question:
+
+```sql
+with a as (
+  select distinct on (data->>'kid', data->>'stage') data->>'kid' as kid, data->>'stage' as stage, data->>'answer' as answer
+  from public.dmj_events where evt = 'checkin' order by data->>'kid', data->>'stage', id desc
+)
+select a.stage, a.answer, count(*) as readers
+from a where a.kid in (select data->>'kid' from public.dmj_events where evt = 'app_checkin') group by 1, 2 order by 1, 3 desc;
+```
+
+Things to know:
+
+- **The address is not kept.** It goes to Resend for the two emails and nowhere else: not the waitlist (a kit email's address is kept there for launch news; this one is not), not a count.
+- **`privacy.html` does not describe this yet.** Its "Check-ins" paragraph says they are asked for under "Email me my kit". Before an app that calls this endpoint reaches a reader, that paragraph needs the app's case: an address typed in the app is handed to Resend for two emails and not kept by us.
+- **Turning check-ins off in the app does not cancel emails already scheduled.** The site's key cannot cancel. The emails say to reply to stop the second one, and that is cancelled by hand in Resend, as above.
+- Each visitor may ask 10 times a day (per server instance, like the other allowances), on top of the session token.
+- **There are no CORS headers.** A native app does not need them. A web page on another origin cannot call this endpoint, or `/api/unlock`, until they are added for that origin.
+
 ### The one line the page adds to a kit
 
 Every document in a kit is written by the model except one line. The fourth document is the note the reader hands over with the letter someone else has to sign (the doctor's office, the billing office, or HR). As the kit is put on the page, `fightpack.js` adds one bullet to that note saying what wrote the drafts and where it is (`ORIGIN_LINE`, added by `withOrigin()`): whoever signs a letter should know a tool drafted it, and that office handles denials every week. It is in what is shown, copied, printed and emailed, above the note's closing thank-you, and not in the kit saved in the browser or in `sample-kit.json`, which stay exactly what the writers wrote. No other document gets it. `qa/tests/test-checkin-page.js` pins it against all the recorded kits.
@@ -166,7 +197,8 @@ api/_lib/           the Fight Pack engine, kept out of the public site (Vercel s
                     fightpack-limits.js — settings, vehicles and waits; choice and notice (v9.8.2–v9.8.3)
                     fightpack-facts.js — the ambulance bill, policy numbers, the doctor's expedited request (v9.10), where Original Medicare records go (v9.11–v9.12), the urgent external-review route (v9.13)
 lib/                code-library data (CPT in three modules, ICD-10, denial reasons); unlock.js (tokens); files.js (attachments);
-                    checkin.js (the two check-in emails and their signed links; api/checkin.js takes the answers).
+                    checkin.js (the two check-in emails and their signed links; api/checkin.js takes the answers;
+                    api/app-checkin.js turns them on for the app).
                     These stay publicly readable (static hosting serves them; vercel.json only redirects the plain /lib/ path),
                     so nothing secret or proprietary goes here.
 qa/                 the Fight Pack test corpus, live runner, checker, replay, unit tests and evidence
