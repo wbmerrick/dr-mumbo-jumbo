@@ -54,14 +54,14 @@ const whole = (text, more) => ({ done: Object.assign({ part: 1, text, stop: 'end
 const plainReply = (status, data) => ({ ok: status >= 200 && status < 300, status, headers: { get: () => 'application/json; charset=utf-8' }, json: () => Promise.resolve(data) });
 
 function element() {
-  const on = {}, cls = new Set();
+  const on = {}, cls = new Set(), found = {};
   let html = '';
   const e = {
     value: '', textContent: '', hidden: false, disabled: false, style: {}, children: [], scrolls: 0, seen: new Set(),
     classList: { add: (c) => { cls.add(c); e.seen.add(c); }, remove: (c) => cls.delete(c), contains: (c) => cls.has(c) },
     addEventListener: (t, f) => { (on[t] = on[t] || []).push(f); },
     removeEventListener() {}, setAttribute() {}, focus() {}, scrollIntoView() { e.scrolls++; }, click() {}, reset() {}, select() {},
-    querySelector: () => element(), appendChild: (k) => { e.children.push(k); return k; }, removeChild() {},
+    querySelector: (sel) => found[sel] || (found[sel] = element()), appendChild: (k) => { e.children.push(k); return k; }, removeChild() {},
     fire: (t) => (on[t] || []).forEach((f) => f({ preventDefault() {} }))
   };
   Object.defineProperty(e, 'className', { get: () => [...cls].join(' '), set: (v) => { cls.clear(); String(v).split(/\s+/).filter(Boolean).forEach((c) => { cls.add(c); e.seen.add(c); }); } });
@@ -77,7 +77,8 @@ function element() {
 //   retryFails  that re-ask is then answered with a server error
 //   holdRest    parts 2-6 stay unanswered until page.releaseRest()
 //   later       a plain reply to give every live request after the first
-function open({ hash = '', canStream = true, first = null, holdRetry = false, retryFails = false, holdRest = false, later = null } = {}) {
+//   failParts   these parts (of 2-6) are answered with a server error, every time they are asked for
+function open({ hash = '', canStream = true, first = null, holdRetry = false, retryFails = false, holdRest = false, later = null, failParts = [] } = {}) {
   const els = {};
   const $ = (id) => els[id] || (els[id] = element());
   const posts = [];
@@ -88,14 +89,16 @@ function open({ hash = '', canStream = true, first = null, holdRetry = false, re
   let liveAsked = 0;
   let release = null;
   const rest = [];
-  // A stand-in for layout: how far down the screen the documents start. Above them, top to bottom, stand the
-  // progress panel (shrunk or full, while it is up), the kit's heading (a row taller once the strength tag is
-  // on it) and the kit's controls (hidden while the kit is built in view of the reader). Less however far the
-  // page has been moved to make up for a change (window.scrollBy).
+  // A stand-in for layout, on a screen 664 high. A build leaves the progress panel at the top of the screen
+  // (the page scrolls it there). Under it, top to bottom: the panel itself (shrunk or full, while it is up),
+  // the kit's heading (a row taller once the strength tag is on it), the kit's controls (hidden while the kit
+  // is built in view of the reader), and then the documents. Everything moves up the screen by however far
+  // the page has been scrolled since: by the page to make up for a change (window.scrollBy), or by the reader.
   let movedBy = 0;
   const moves = [];
   const has = (id, c) => $(id).classList.contains(c);
   const above = () => (has('progress', 'on') ? (has('progress', 'slim') ? 124 : 392) : 0) + 60 + ($('strength').style.display === 'inline-flex' ? 40 : 0) + (has('kitout', 'live') ? 0 : 540);
+  $('progress').getBoundingClientRect = () => ({ top: -movedBy });
   $('docs').getBoundingClientRect = () => ({ top: above() - movedBy });
   const read = () => new Promise((resolve) => {
     if (stream.queue.length) resolve({ done: false, value: stream.queue.shift() });
@@ -121,22 +124,22 @@ function open({ hash = '', canStream = true, first = null, holdRetry = false, re
       stream = { queue: [], waiting: null, ended: false };
       return Promise.resolve({ ok: true, status: 200, headers: { get: () => 'text/event-stream; charset=utf-8' }, body: { getReader: () => ({ read, cancel() {}, releaseLock() {} }) }, json: () => Promise.reject(new Error('not json')) });
     }
-    const answer = body.part === 1 && retryFails ? plainReply(502, { error: 'upstream', message: HICCUP.message })
+    const answer = (body.part === 1 && retryFails) || failParts.includes(body.part) ? plainReply(502, { error: 'upstream', message: HICCUP.message })
       : plainReply(200, { part: body.part, stop: 'end_turn', missing: [], text: ANSWER[body.part] });
     if (body.part === 1 && holdRetry && !release) return new Promise((resolve) => { release = () => resolve(answer); });
     if (body.part > 1 && holdRest) return new Promise((resolve) => { rest.push(() => resolve(answer)); });
     return Promise.resolve(answer);
   };
   const keeps = (bag) => ({ getItem: (k) => (k in bag ? bag[k] : null), setItem: (k, v) => { bag[k] = String(v); }, removeItem: (k) => { delete bag[k]; } });
-  const win = { matchMedia: () => ({ matches: true }), location: { hash, search: '', hostname: 'dr-mumbo-jumbo.com' }, va() {}, sessionStorage: keeps({}), print() { printed++; },
+  const win = { matchMedia: () => ({ matches: true }), location: { hash, search: '', hostname: 'dr-mumbo-jumbo.com' }, va() {}, sessionStorage: keeps({}), print() { printed++; }, innerHeight: 664,
     // the page moved by hand, as (x, y); `seen` is whether the reader would watch it glide (the site's pages scroll smoothly unless told otherwise)
     scrollBy(x, y) { moves.push({ x, y, seen: root.style.scrollBehavior !== 'auto' }); movedBy += y; } };
-  const root = element();
+  const root = element(), docBody = element();
   const navigator = { clipboard: { writeText: (text) => { copied.push(text); return Promise.resolve(); } } };
   const soon = (fn, ms) => { if (ms <= 2000) Promise.resolve().then(fn); return 1; };
   class FileReader { readAsDataURL() { this.result = 'data:application/pdf;base64,JVBERi0x'; Promise.resolve().then(() => this.onload()); } }
   new Function('window', 'document', 'localStorage', 'navigator', 'fetch', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'AbortController', 'FileReader', 'TextDecoder', 'Response', js)(
-    win, { getElementById: $, createElement: () => element(), body: element(), documentElement: root, referrer: '' }, keeps(saved), navigator, fetch, soon, () => {}, () => 0, () => {},
+    win, { getElementById: $, createElement: () => element(), body: docBody, documentElement: root, referrer: '' }, keeps(saved), navigator, fetch, soon, () => {}, () => 0, () => {},
     class { constructor() { this.signal = {}; } abort() {} }, FileReader, canStream ? TextDecoder : undefined, canStream ? Response : undefined);
   const page = {
     $, saved,
@@ -149,6 +152,8 @@ function open({ hash = '', canStream = true, first = null, holdRetry = false, re
     docsTop: () => $('docs').getBoundingClientRect().top,      // where the documents start on screen
     moves: () => moves,                                        // every time the page was moved to hold the reader's place
     smoothly: () => root.style.scrollBehavior !== 'auto',      // whether the page's own scrolling is still the smooth kind
+    readerScrolls: (dy) => { movedBy += dy; },                 // the reader's own scrolling, down the page (+) or back up it (-)
+    toasted: () => docBody.children.filter((el) => el.classList.contains('toast')).map((el) => el.querySelector('span').textContent).join(' | '),   // the short message at the foot of the screen
     error: () => ($('error').classList.contains('on') ? $('error').textContent : ''),
     bytes: async (piece) => { feed(piece); await settle(); },
     say: async (message) => { feed(frame(message)); await settle(); },
@@ -231,11 +236,56 @@ const shown = (page) => page.$('strength').style.display === 'inline-flex';
     ok(page.moves().length > 0 && page.moves().every((m) => m.x === 0 && !m.seen), 'the place is held at once, not by a scroll the reader watches');
     ok(page.smoothly(), 'and the page\'s own smooth scrolling is left as it was');
     ok(page.$('kitout').scrolls === 0 && page.$('progress').scrolls === 2, 'the page is not sent to the top of the kit');
+    ok(/ready/i.test(page.toasted()), 'so the reader is told the kit is ready where they are (' + page.toasted() + ')');
     ok(/"parts"/.test(page.saved.dmj_fp_kit || ''), 'the finished kit is saved, as today');
     same(page.error(), '', 'and the build raises no error');
     page.$('copyall').fire('click');
     await settle();
     ok(page.copied().length === 1 && /Read from your letter/.test(page.copied()[0]), 'and Copy everything works again');
+  }
+
+  // ---------- 1b. a reader who has gone back up to their letter is left where they are ----------
+  {
+    const page = await started({ holdRest: true });
+    await page.say({ from: 0, lines: L.slice(0, 3) });
+    page.readerScrolls(-2000);
+    ok(page.docsTop() > 664, '(the reader has scrolled back up: the documents are off the bottom of the screen)');
+    await page.say({ from: 3, lines: L.slice(3, iGrade + 1) });
+    ok(shown(page), '(the strength tag has appeared, down in the kit)');
+    await page.done(ANSWER[1]);
+    await page.releaseRest();
+    ok(built(page), '(the kit is built)');
+    same(page.moves(), [], 'the page is never moved: nothing this reader is looking at has changed');
+    ok(/ready/i.test(page.toasted()), 'and they are told the kit is ready, where they are');
+  }
+  {
+    // What decides it is whether the reader can see what stands above the kit. Scrolled up far enough to read
+    // their letter over it (the kit starts below the top quarter of the screen), they are left alone, even with
+    // the first document still showing at the foot of the screen; a nudge up the page is not that.
+    const up = await started({ holdRest: true });
+    await up.say({ from: 0, lines: L.slice(0, 3) });
+    up.readerScrolls(-300);
+    ok(up.docsTop() < 664, '(scrolled up 300: the first document is still on screen, lower down)');
+    await up.say({ from: 3, lines: L.slice(3, iGrade + 1) });
+    await up.done(ANSWER[1]);
+    await up.releaseRest();
+    same(up.moves(), [], 'a reader looking at what is above the kit is not moved, though documents show below');
+    const nudged = await started({ holdRest: true });
+    await nudged.say({ from: 0, lines: L.slice(0, 3) });
+    nudged.readerScrolls(-100);
+    const top = nudged.docsTop();
+    await nudged.say({ from: 3, lines: L.slice(3, iGrade + 1) });
+    await nudged.done(ANSWER[1]);
+    await nudged.releaseRest();
+    same(nudged.docsTop(), top, 'a reader who only nudged the page up is still reading the kit, and is held');
+    const deep = await started({ holdRest: true });
+    await deep.say({ from: 0, lines: L.slice(0, 3) });
+    deep.readerScrolls(900);
+    const from = deep.docsTop();
+    await deep.say({ from: 3, lines: L.slice(3, iGrade + 1) });
+    await deep.done(ANSWER[1]);
+    await deep.releaseRest();
+    same(deep.docsTop(), from, 'and so is one far down in the kit, the documents\' top long gone above the screen');
   }
 
   // ---------- 2. the reply arrives all at once (a network that held it back) ----------
@@ -312,6 +362,24 @@ const shown = (page) => page.$('strength').style.display === 'inline-flex';
     ok(!page.$('progress').classList.contains('on') && !page.$('progress').classList.contains('slim') && page.$('buy').disabled === false, 'the panel is put away and Build can be pressed again');
   }
 
+  // ---------- 4c. watched live, and two of the other parts fail: the reader is brought to the message ----------
+  {
+    const page = await started({ failParts: [3, 5] });
+    await page.say({ from: 0, lines: L.slice(0, 3) });
+    await page.done(ANSWER[1]);
+    ok(/did not finish/.test(page.error()), 'when sections did not finish, the reader is told (' + page.error().slice(0, 70) + ')');
+    same(page.$('error').scrolls, 1, 'and is brought to the message instead of being left reading below it');
+    same(page.$('kitout').scrolls, 0, '(the message is above the kit: the page does not go to the kit\'s top)');
+    ok(!/ready/i.test(page.toasted()), 'nothing says the kit is ready');
+    ok(!page.$('kitout').classList.contains('live') && !page.$('progress').classList.contains('on') && !page.$('progress').classList.contains('slim'), 'the kit\'s controls are back and the panel is put away');
+  }
+  {
+    // the same failure with no live view (the server answered the plain way) ends as it always did
+    const page = await started({ failParts: [3, 5], first: plainReply(200, { part: 1, stop: 'end_turn', missing: [], text: ANSWER[1] }) });
+    ok(/did not finish/.test(page.error()), '(a plain build with two parts failing: the reader is told)');
+    ok(page.$('kitout').scrolls === 1 && page.$('error').scrolls === 0, 'and the page goes to the kit, as it always did');
+  }
+
   // ---------- 5. no line ever comes ----------
   {
     // the server fails before the first line: a plain error, and the one retry there has always been
@@ -335,6 +403,7 @@ const shown = (page) => page.$('strength').style.display === 'inline-flex';
     ok(!page.$('kitout').seen.has('live') && !page.$('progress').seen.has('slim'), 'with nothing ever marked live or shrunk');
     ok(page.$('kitout').scrolls === 1 && page.$('progress').scrolls === 1, 'and the page moves as it always did: to the panel, then to the kit');
     same(page.moves(), [], 'with no holding in place: there was no reader mid-document to hold');
+    same(page.toasted(), '', 'and nothing is announced: the page going to the kit says it');
   }
   {
     // a browser that cannot read a reply piece by piece does not ask for one

@@ -412,9 +412,15 @@
   // (Some browsers do this by themselves; where one has, there is nothing left to make up.) The site's pages
   // scroll smoothly (nocturne.css), which here would be a glide the reader watches, so it is switched off for
   // the one move, and put back.
+  // Only a reader who is in the kit is held. Everything these changes touch lies from the progress panel down,
+  // so one who has gone back up the page far enough to see what stands above it (the panel starts below the top
+  // quarter of their screen) is looking at things that do not move, and moving the page would be the jump -
+  // even with the first document still in sight at the foot of the screen.
   function holdPlace(change){
+    var inKit = progress.getBoundingClientRect().top < window.innerHeight / 4;
     var before = docsEl.getBoundingClientRect().top;
     change();
+    if(!inKit) return;
     var moved = docsEl.getBoundingClientRect().top - before;
     if(!moved) return;
     var root = document.documentElement, was = root.style.scrollBehavior;
@@ -578,18 +584,25 @@
       }));
     }).then(function(){
       building = false; buy.disabled = false;
-      // The panel goes and, after a live view, the kit's controls come back: both above the documents. A reader
-      // who watched the first section being written is somewhere in the kit, reading, and is not moved.
-      var putAway = function(){ progress.classList.remove('on'); progress.classList.remove('slim'); kitout.classList.remove('live'); };
-      if(liveShown) holdPlace(putAway); else putAway();
-      stopMorph(morphEl);
-      renderKit();
       // A part that arrived short did not finish either; the reader hears about it the same way.
       [1,2,3,4,5,6].forEach(function(p){ if(parts[p] && gaps[p]) failures.push(PART_LABEL[p] + ' (' + gaps[p] + ')'); });
+      // The panel goes and, after a live view, the kit's controls come back: both above the documents. A reader
+      // who watched the first section being written is taken to be in the kit, reading, and is not moved -
+      // unless sections are missing, which they have to be shown.
+      var putAway = function(){ progress.classList.remove('on'); progress.classList.remove('slim'); kitout.classList.remove('live'); };
+      var held = liveShown && !failures.length;
+      if(held) holdPlace(putAway); else putAway();
+      stopMorph(morphEl);
+      renderKit();
       track('kit_built', { outcome: failures.length ? 'partial' : 'complete' });
       stash();
       if(failures.length){ showError('Most of your kit is below, but these sections did not finish: ' + failures.join('; ') + '. ' + tryAgain()); }
-      if(!liveShown) kitout.scrollIntoView({ behavior:'smooth', block:'start' });
+      // How the reader learns the build is over. Left where they are, they are told there. With sections
+      // missing after a live view, they are brought to the message. With no live view the page goes to the
+      // top of the kit, as it always has.
+      if(held) toast('Your Fight Pack is ready');
+      else if(liveShown) errbox.scrollIntoView({ behavior:'smooth', block:'center' });
+      else kitout.scrollIntoView({ behavior:'smooth', block:'start' });
     }).catch(function(e){
       building = false; buy.disabled = false;
       progress.classList.remove('on'); stopMorph(morphEl);

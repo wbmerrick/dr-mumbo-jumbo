@@ -68,9 +68,11 @@ function showable(text) {
 // Text in as the model writes it; out, what the page should change: "from line N, these lines".
 // guard: the text so far -> the same text as the reader would get it. It is run on whole lines only
 // (up to the last line break), each time a line is completed.
-// redo counts the times a line already sent was changed or taken back. The guards are written so
-// that this does not happen (a line's rewrite depends on that line and the ones above it), and the
-// stored sections bear it out; the count is how anyone would find out if that stopped being true.
+// redo counts the times a line already sent was changed or taken back. In the order the section is
+// written, every rewrite depends on lines that come before it, and the stored sections bear that
+// out: none was ever corrected. Two rewrites do look ahead in principle (the line code adds under
+// "Urgent" and the Original Medicare route both read lines further down), so a section written out of
+// order could show a line and then change it. The count is how anyone would find out.
 function liveReader(guard) {
   let text = '';
   let seen = 0;     // how far the text has been considered: up to and including its last line break
@@ -89,6 +91,13 @@ function liveReader(guard) {
       if (from < shown.length) redo++;
       shown = now;
       return { from, lines: now.slice(from) };
+    },
+    // The finished section is in. The model's last line never ends with a line break, so push() never
+    // considers it; whatever it changes above lands only when the finished section replaces the lines the
+    // page holds. If those lines are not how the finished section begins, that is a correction too.
+    settle(finished) {
+      const lines = String(finished).split('\n');
+      if (shown.some((line, i) => lines[i] !== line)) redo++;
     },
     raw: () => text,
     redo: () => redo

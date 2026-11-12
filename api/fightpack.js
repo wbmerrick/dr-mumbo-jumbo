@@ -579,16 +579,19 @@ module.exports = async (req, res) => {
 
   // The live first read: the page may ask for the decode line by line as it is written, so a reader sees
   // something true about their own letter in seconds instead of a progress panel. Only the decode, only
-  // when asked with live: true, and FIGHTPACK_LIVE=off in the environment switches it off with no code change.
+  // when asked with live: true, and FIGHTPACK_LIVE=off in the environment (then a redeploy) switches it off with no code change.
   // Every line sent early has been through decodeText, the function the finished decode comes from.
-  const live = body.live === true && part === 1 && !/^off$/i.test(process.env.FIGHTPACK_LIVE || '');
+  const live = body.live === true && part === 1 && !/^(?:0|false|off|no)$/i.test(String(process.env.FIGHTPACK_LIVE || '').trim()); // the words FIGHTPACK_FREE takes (lib/unlock.js)
 
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 110000);
 
   // A live reply turns into a stream of messages when there is a first line to send (streaming), not
   // before: until then it is answered, and fails, exactly as a plain request does. If the reader leaves
-  // (gone), the model is told to stop, and nothing more is written or counted.
+  // (gone), the model is told to stop, and nothing more is written or counted. That is best effort: it
+  // works wherever the server is told the reader has gone. Vercel tells a function only when request
+  // cancellation is switched on for it (vercel.json, supportsCancellation), which this project has not
+  // done, so on the deployed site the answer is most likely read to its end and counted, as it always was.
   let streaming = false;
   let gone = false;
   if (live) res.on('close', () => { if (!res.writableEnded) { gone = true; ctrl.abort(); } });
@@ -648,7 +651,7 @@ module.exports = async (req, res) => {
       const reader = liveReader((soFar) => decodeText(soFar, c));
       const model = { stop_reason: null, usage: null };
       let textBlocks = 0;
-      let trouble = null;
+      let whole = false; // the model said it had finished (message_stop)
       const take = (text) => { const change = reader.push(text); if (change) say(change); };
       for await (const ev of modelEvents(upstream.body)) {
         if (ev.type === 'message_start') {
@@ -661,19 +664,24 @@ module.exports = async (req, res) => {
           if (ev.content_block && ev.content_block.type === 'text' && textBlocks++) take('\n');
         } else if (ev.type === 'content_block_delta') {
           if (ev.delta && ev.delta.type === 'text_delta') take(ev.delta.text);
-        } else if (ev.type === 'error') {
-          trouble = ev;
-          break;
+        } else if (ev.type === 'message_stop') {
+          whole = true;
         }
       }
       clearTimeout(timer);
       if (gone) return;
-      if (trouble) {
-        const t = upstreamTrouble(500, trouble);
+      // A stream that stopped before the model said it had finished - after an "error" event of the model's,
+      // or for no stated reason - is a failure: what there is of the section is not the section. (A plain
+      // answer cut short cannot be read at all, and the page asks again; a stream cut short reads perfectly
+      // well up to the cut, so it has to be noticed here.)
+      if (!whole) {
+        const t = upstreamTrouble(500, null);
         answer(t.status, { error: t.error, message: t.message });
         return;
       }
-      const r = await finish(reader.raw().trim(), model, Object.assign({}, c, { redo: reader.redo() }));
+      const raw = reader.raw().trim();
+      reader.settle(decodeText(raw, c)); // a line on the page that the finished section replaces is a correction too
+      const r = await finish(raw, model, Object.assign({}, c, { redo: reader.redo() }));
       answer(r.status, r.body);
       return;
     }

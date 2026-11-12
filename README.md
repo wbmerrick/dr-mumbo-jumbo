@@ -38,7 +38,7 @@ Set these in Vercel → Project → Settings → Environment Variables, then red
 | `ANTHROPIC_MODEL` | no | Override the default model for the free tools. |
 | `FIGHTPACK_MODEL` | no | Model for the Fight Pack (default `claude-sonnet-4-5`). |
 | `FIGHTPACK_FREE` | no | The Fight Pack is free unless this is `0` (or `false` / `off`). Set it to `0` when payments go live. |
-| `FIGHTPACK_LIVE` | no | The kit's first section is shown line by line as it is written unless this is `off` (see "Live first read" below). |
+| `FIGHTPACK_LIVE` | no | The kit's first section is shown line by line as it is written unless this is `off` (`0`, `false` and `no` mean the same; see "Live first read" below). |
 | `STRIPE_SECRET_KEY` | for payments | Stripe secret key (`sk_test_…` to rehearse, `sk_live_…` to sell). |
 | `STRIPE_PRICE_ID` | for payments | The one-time price (`price_…`) from the Stripe product. |
 | `FIGHTPACK_SECRET` | yes (any random string) | Signs the unlock tokens (free or paid), combined with the Stripe key when there is one. |
@@ -85,12 +85,13 @@ The kit's first section (the decode) is shown line by line while it is being wri
 - A line is sent only after the text so far has been through the same guards as the finished section (`decodeText`). The newest line is always held back, and the section's two closing lines, "What you may actually owe" and "Do this first", arrive only with the finished section, because code can rewrite them (`api/_lib/fightpack-live.js`).
 - A request without `live`, parts 2–6, and anything that fails before the first line are answered exactly as before.
 - On the page (`fightpack.js`), the lines are drawn in the first document while the progress panel shrinks to its heading and status line. They are kept apart from the kit: nothing live is saved, copied, printed, emailed or passed to parts 2–6. From the first lines until the whole kit is done the page shows the documents and nothing else of the kit: the copy, print, email, rebuild and fix controls and the deadline tracker come back when it is done.
-- A reader who is watching is taken to be reading, so nothing moves the documents on their screen: when the strength tag appears above them, when the finished section replaces the live one, and when the kit is done (its controls return and the progress panel goes), the page holds its place (`holdPlace`) instead of scrolling to the top of the kit.
-- If the stream fails part-way or the section comes back short, the page clears the live text and asks again the plain way. A browser that cannot read a reply piece by piece never asks for one.
-- A live first section adds one number to its count line: `redo`, how many times a line already on screen had to be corrected. It should always be 0; the guards are written so that a line's rewrite depends only on that line and the ones above it.
-- If the reader leaves while the first section is being written, the model call is stopped and that part is not counted.
+- A reader who is watching is taken to be reading, so nothing moves the documents on their screen: when the strength tag appears above them, when the finished section replaces the live one, and when the kit is done (its controls return and the progress panel goes), the page holds its place (`holdPlace`) instead of scrolling to the top of the kit. A reader who has gone back up the page to their letter is left where they are.
+- When the kit is done after a live view, the page says so in a short notice ("Your Fight Pack is ready") and does not move. If some sections did not finish, it takes the reader to the message that names them.
+- If the stream fails part-way or the section comes back short, the page clears the live text and asks again the plain way. A model stream that stops before its closing message is a failure too, never a finished section. A browser that cannot read a reply piece by piece never asks for one.
+- A live first section adds one number to its count line: `redo`, how many times a line already on screen had to be corrected. It is checked as the lines are sent and once more against the finished section. It should always be 0, and was for every one of the 169 recorded kits replayed through the live path. It is a tripwire, not a proof: two rewrites read lines further down (the line the code adds under "Urgent", and the Original Medicare route), so a section written in an unusual order could show a line and then correct it.
+- If the reader leaves while the first section is being written, the server stops the model call and does not count that part, but only where it is told the reader has gone. A plain Node server is told. Vercel tells a function only when request cancellation is switched on for it (`supportsCancellation` in `vercel.json`), and this project has not switched it on. On the deployed site the call therefore most likely runs to its end and the part is counted, exactly as before this change.
 
-**Off switch:** set `FIGHTPACK_LIVE=off` in Vercel → Environment Variables and redeploy. The server then ignores `live` and the site behaves as it did before. No code change is needed.
+**Off switch:** set `FIGHTPACK_LIVE=off` in Vercel → Environment Variables and redeploy (`0`, `false` and `no` mean the same). The server then ignores `live` and the site behaves as it did before. No code change is needed.
 
 ### Switching on Fight Pack payments (later)
 

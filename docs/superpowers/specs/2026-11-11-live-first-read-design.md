@@ -163,14 +163,21 @@ If the timing targets are missed because the response is held back, the site sti
 
 ## Changed while building
 
-Four things turned out differently from the text above. Each was found by a test or a real-browser run, and the code follows this section where the two differ.
+Ten things turned out differently from the text above. The first four were found while building, by a test or a real-browser run. The last six came from the independent review of the finished branch and the checks that followed it. The code follows this section where the two differ.
 
 1. **The controls come back when the kit is done, not when the first section is finished.** They sit above the documents. Bringing them back the moment the first section finished pushed the text the reader was reading off the screen (about 540 pixels on a phone, seen in a real browser). Now, from the first lines until the whole kit is done, the page shows the documents under the small progress panel and nothing else.
 2. **The page holds the reader's place.** When the strength tag appears, when the finished section replaces the live one, and when the kit is done (controls return, progress panel goes), the documents stay where they are on screen. This replaces "the page does not scroll again": the page is moved by exactly as much as the layout above the reader changed, at once, so the reader sees no movement.
 3. **The off switch needs a redeploy.** Setting `FIGHTPACK_LIVE=off` takes effect on the next deployment; no code change is needed.
 4. **"Type of denial" is released later than estimated.** A line is shown only when the line after it is complete. Replayed over the 169 stored first sections, the type of denial is released 29% of the way through the section and the case strength at 69%, not the 20% and 63% where they begin. For a 25-second section that is roughly 8 to 9 seconds and 17 to 19 seconds. The reader's own details ("Read from your letter") are released from 4%, about 3 seconds.
 
-Also: a reader who leaves while the first section is being written now stops the model call, so that part is not counted; and `test-source.js`'s list of request fields gains `live`.
+5. **A stream that stops early is a failure.** If the AI's stream ends without its closing message, the server reports a failure and the page asks again the plain way. Before, the text so far would have been taken as a finished section.
+6. **`redo` is also checked when the section finishes.** The AI's last line has no line break, so whatever it changes lands only with the finished section. The lines on screen are compared with the finished section once more, and a difference counts. Two rewrites read lines further down (the line the code adds under "Urgent", and the Original Medicare route), so `redo` is a tripwire, not a proof that a shown line can never change.
+7. **How a build ends after a live view.** The reader is left where they are, so the page says "Your Fight Pack is ready" in a short notice. If some sections did not finish, the page takes the reader to the message that names them instead of leaving them below it.
+8. **Only a reader who is in the kit is held.** A reader who has gone back up the page to their letter (the progress panel starts below the top quarter of their screen) is not moved, because nothing they are looking at changes. In a real browser, before this, a reader part of the way back up was moved by about 400 pixels on a phone when the kit finished.
+9. **The off switch takes `off`, `0`, `false` or `no`**, in any letter case, the same words `FIGHTPACK_FREE` takes.
+10. **Stopping when the reader leaves is best effort.** The server stops the model call, and does not count the part, where it is told the reader has gone. A plain Node server is told. Vercel tells a function only when request cancellation is switched on for it (`supportsCancellation` in `vercel.json`), which this project has not done. On the deployed site the call therefore most likely runs to its end and the part is counted, as before this change.
+
+Also: `test-source.js`'s list of request fields gains `live`.
 
 ## Not in this change
 

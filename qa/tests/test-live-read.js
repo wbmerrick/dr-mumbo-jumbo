@@ -85,22 +85,25 @@ const DENIAL = 'NOTICE OF ADVERSE DETERMINATION. Prior authorization denied.';
 // the way. Each event is an "event:" line, a "data:" line and a blank line. A list of texts is an
 // answer in that many content blocks.
 // errorAfter: n - the API's own "error" event follows the n-th delta, and the stream ends there.
-function sse(text, { step = 20, crlf = false, errorAfter } = {}) {
+// cutAfter: n - the stream simply ends after the n-th delta: no error, and none of the closing events.
+function sse(text, { step = 20, crlf = false, errorAfter, cutAfter } = {}) {
   const events = [{ type: 'message_start', message: { id: 'msg_test', type: 'message', role: 'assistant', content: [], model: 'claude-test', stop_reason: null, stop_sequence: null, usage: { input_tokens: 11, output_tokens: 1 } } }];
   let deltas = 0;
   let failed = errorAfter === 0;
+  let cut = cutAfter === 0;
   [].concat(text).forEach((block, index) => {
-    if (failed) return;
+    if (failed || cut) return;
     events.push({ type: 'content_block_start', index, content_block: { type: 'text', text: '' } });
     if (!index) events.push({ type: 'ping' });
-    for (let i = 0; i < block.length && !failed; i += step) {
+    for (let i = 0; i < block.length && !failed && !cut; i += step) {
       events.push({ type: 'content_block_delta', index, delta: { type: 'text_delta', text: block.slice(i, i + step) } });
       if (++deltas === errorAfter) failed = true;
+      if (deltas === cutAfter) cut = true;
     }
-    if (!failed) events.push({ type: 'content_block_stop', index });
+    if (!failed && !cut) events.push({ type: 'content_block_stop', index });
   });
   if (failed) events.push({ type: 'error', error: { type: 'overloaded_error', message: 'Overloaded' } });
-  else {
+  else if (!cut) {
     events.push({ type: 'message_delta', delta: { stop_reason: 'end_turn', stop_sequence: null }, usage: { output_tokens: 7 } });
     events.push({ type: 'message_stop' });
   }
@@ -231,6 +234,19 @@ const TOO_LONG = 'That took too long. Try again — the kit builds in short pass
   cut.push('## 1. T\na\nb\nc\n');
   same(cut.push('stop\n'), { from: 2, lines: [] }, 'lines the guards removed are taken back');
   same(cut.redo(), 1, 'and counted');
+  // The section's last line never ends with a line break, so the reader never considers it on its own:
+  // whatever it changes above lands only when the finished section replaces the live one. That is a
+  // correction too, and settle() is where it is counted.
+  const late = L.liveReader((p) => (/END/.test(p) ? p : p.replace('middle\n', 'middle\nADDED\n')));
+  same(late.push('## 1. T\nearly\nmiddle\nlater\n'), { from: 0, lines: ['## 1. T', 'early', 'middle', 'ADDED'] }, '(a line the guards add while the text is still arriving is sent)');
+  same(late.push('END'), null, '(the last line has no line break: nothing is sent for it)');
+  same(late.redo(), 0, '(and so far nothing sent has been changed)');
+  late.settle('## 1. T\nearly\nmiddle\nlater\nEND');
+  same(late.redo(), 1, 'a finished text that does not begin with the lines sent is a correction, and is counted');
+  const fine = L.liveReader((p) => p);
+  fine.push('## 1. T\na\nb\n');
+  fine.settle('## 1. T\na\nb\nc');
+  same(fine.redo(), 0, 'a finished text that begins with the lines sent is not');
 
   // ---------- 3. the live reply ----------
   // The handler's 110-second limit is caught here rather than left to run: a test fires it by hand,
@@ -244,7 +260,7 @@ const TOO_LONG = 'That took too long. Try again — the kit builds in short pass
   for (const s of FIRST) {
     const a = await plain(s.text), b = await live(s.text);
     same(b.done, a.body, s.file + ': the finished section is the plain reply');
-    ok(inOrder(b.shown, ((b.done || {}).text || '').split('\n')), s.file + ': every line shown is a line of the finished section, in order');
+    same(b.shown, ((b.done || {}).text || '').split('\n').slice(0, b.shown.length), s.file + ': the lines shown are how the finished section begins, line for line');
     ok(!b.shown.some(isHeld), s.file + ': the two held lines are not shown before the end');
     same(b.redo, 0, s.file + ': nothing shown had to be corrected');
   }
@@ -294,6 +310,16 @@ const TOO_LONG = 'That took too long. Try again — the kit builds in short pass
     await plain(S, { body: { kid: 'kitCOUNT2' } });
     ok(lineOf('kitCOUNT2').part === 1 && !('redo' in lineOf('kitCOUNT2')), 'a plain first section is counted exactly as before');
   }
+  // 3.1b a correction that lands only with the finished section is counted too. Here the code adds its own
+  //      "Two requests at once" line under "Urgent" while the text arrives; the writer's last line then says
+  //      the same thing in its own words, so the finished section does not carry the code's line.
+  {
+    const lineOf = (kid) => lines.find((l) => l.kid === kid) || {};
+    const U = S.split('\n').filter((l) => !/^\*\*Two requests at once/.test(l)).join('\n').replace(/(\*\*Do this first:\*\*[^\n]*)$/, '$1 You can make two requests at once.');
+    const b = await live(U, { body: { kid: 'kitREDO01' } });
+    ok(b.shown.some((l) => /^\*\*Two requests at once/.test(l)) && !/^\*\*Two requests at once/m.test(b.done.text), '(the code\'s line was shown, and the finished section does not have it)');
+    same(lineOf('kitREDO01').redo, 1, 'the count says a line on screen was replaced when the section finished');
+  }
   // 3.2 the AI refuses the request outright: today's error, not a stream
   {
     const b = await live(S, { status: 529 });
@@ -316,6 +342,20 @@ const TOO_LONG = 'That took too long. Try again — the kit builds in short pass
     same(b.messages[b.messages.length - 1], { error: Object.assign({ status: 502 }, HICCUP) }, 'the stream ends with the error');
     ok(!b.messages.some((m) => m.done) && b.res.writableEnded, 'with no finished section, and the reply ended');
     same(lines.length, before, 'and no part is counted');
+  }
+  // 3.4b the AI's stream just stops part-way, with no error and none of its closing events: what there is of
+  //      the section is not a finished section (a plain answer cut short cannot even be read, and is asked for again)
+  {
+    const before = lines.length;
+    const b = await live(S, { sse: { cutAfter: 150 } });
+    ok(b.stream && b.shown.length > 0, 'lines were on the page when the stream stopped');
+    same(b.messages[b.messages.length - 1], { error: Object.assign({ status: 502 }, HICCUP) }, 'a stream that stops before its end is a failure, not a finished section');
+    ok(!b.messages.some((m) => m.done) && b.res.writableEnded, 'no finished section is sent, and the reply is ended');
+    same(lines.length, before, 'and no part is counted');
+    const none = await live(S, { sse: { cutAfter: 0 } });
+    ok(!none.stream && none.res.code === 502, 'a stream that stops before any text is a plain error (' + none.res.code + ')');
+    same(none.res.body, HICCUP, 'the hiccup, not "came back empty": something was cut off');
+    same(lines.length, before, 'and still nothing is counted');
   }
   // 3.5 the connection to the AI breaks part-way
   {
@@ -362,10 +402,10 @@ const TOO_LONG = 'That took too long. Try again — the kit builds in short pass
   }
   // 3.9 not live: the off switch, any part but the first, anything but the boolean
   {
-    for (const off of ['off', 'OFF']) {
+    for (const off of ['off', 'OFF', '0', 'false', 'no', ' off ']) {
       process.env.FIGHTPACK_LIVE = off;
       const b = await live(S);
-      ok(!b.stream && b.res.code === 200 && typeof b.res.body.text === 'string' && !('stream' in asked.body), 'FIGHTPACK_LIVE=' + off + ': the request is answered as today, and the AI is asked as today');
+      ok(!b.stream && b.res.code === 200 && typeof b.res.body.text === 'string' && !('stream' in asked.body), 'FIGHTPACK_LIVE=' + JSON.stringify(off) + ': the request is answered as today, and the AI is asked as today (the words FIGHTPACK_FREE takes)');
     }
     delete process.env.FIGHTPACK_LIVE;
     const two = await live('## 2. Your appeal letter\nBody.', { body: { part: 2, decode: S } });
@@ -427,4 +467,4 @@ const TOO_LONG = 'That took too long. Try again — the kit builds in short pass
   complete = true;
   assert(fails.length === 0, fails.length + ' of ' + n + ' checks failed:\n  - ' + fails.slice(0, 16).join('\n  - ') + (fails.length > 16 ? '\n  … and ' + (fails.length - 16) + ' more' : ''));
   console.log('live-read tests passed (' + n + ' checks)');
-})().catch((e) => { console.log = realLog; console.error(e.stack || e); process.exit(1); });
+})().catch((e) => { console.log = realLog; complete = true; console.error(e.stack || e); process.exit(1); });
